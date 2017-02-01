@@ -30,8 +30,8 @@ public:
         pchMessageStart[2] = 0xb4;
         pchMessageStart[3] = 0xd9;
         vAlertPubKey = ParseHex("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
-        nDefaultPort = 8333;
-        nRPCPort = 8332;
+        nDefaultPort = 17511;   // 8333
+        nRPCPort = 17510;       // 8332
         bnProofOfWorkLimit = CBigNum(~uint256(0) >> 24);    // 32
         nSubsidyHalvingInterval = 210000;
 
@@ -119,8 +119,8 @@ public:
         pchMessageStart[2] = 0x09;
         pchMessageStart[3] = 0x07;
         vAlertPubKey = ParseHex("04302390343f91cc401d56d68b123028bf52e5fca1939df127f63c6467cdf9c8e2c14b61104cf817d0b780da337893ecc4aaff1309e536162dabbdb45200ca2b0a");
-        nDefaultPort = 18333;
-        nRPCPort = 18332;
+        nDefaultPort = 57511;   // 18333
+        nRPCPort = 57510;       // 18332
         strDataDir = "testnet3";
 
         // Modify the testnet genesis block so the timestamp is valid for a later start.    Измените блок генезис testnet так чтобы временная метка была действительна для позднего старта.
@@ -165,7 +165,7 @@ public:
         genesis.nTime = 1450707000; // 1296688602;
         genesis.nBits = 0x207fffff;
         genesis.nNonce = 1709647;
-        nDefaultPort = 18444;
+        nDefaultPort = 57555;   // 18444
         strDataDir = "regtest";
 
 
