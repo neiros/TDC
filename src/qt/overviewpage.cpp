@@ -220,114 +220,124 @@ void OverviewPage::showOutOfSyncWarning(bool fShow)
 
 /*************************** новое ******************************/
 
-//void OverviewPage::on_ButtonSendTrans_clicked()          ////////// новое //////////
-//{
+void OverviewPage::on_ButtonSendTrans_clicked()          ////////// новое //////////
+{
 
-////    ui->label_SendTrans->setText("STr");        ////////// новое //////////
+//    ui->label_SendTrans->setText("STr");        ////////// новое //////////
 
 
 
-//    double inAmount = ui->doubleSpinBoxAmount->value();
-//    int inQuantity = ui->spinBoxQuantity->value();
+    double inAmount = ui->doubleSpinBoxAmount->value();
+    int inQuantity = ui->spinBoxQuantity->value();
 
 //    std::map<CTxDestination, std::string>::iterator mi = pwalletMain->mapAddressBook.begin();
 //    const CBitcoinAddress& address = (*mi).first;       // берём первый адрес из mapAddressBook
 
-//    SendCoinsRecipient recipient;
+//    ui->AddresForRepeatSend->setText(QString::fromStdString(address.ToString()));
+
+    if(!ui->AddresForRepeatSend->hasAcceptableInput() ||
+       (walletModel && !walletModel->validateAddress(ui->AddresForRepeatSend->text())))
+    {
+        ui->AddresForRepeatSend->setText("Enter valid addres");
+        return;
+    }
+
+    SendCoinsRecipient recipient;
 //    recipient.address = QString::fromStdString(address.ToString());
-//    recipient.amount = inAmount * COIN;
+    recipient.address = ui->AddresForRepeatSend->text();
+    recipient.amount = inAmount * COIN;
 
-//    QList<SendCoinsRecipient> recipients;
-//    recipients.append(recipient);
+    QList<SendCoinsRecipient> recipients;
+    recipients.append(recipient);
 
 
 
+    for (int i = 0; i < inQuantity; i++)
+    {
+        WalletModel::UnlockContext ctx(walletModel->requestUnlock());
+        if(!ctx.isValid())
+        {
+            // Unlock wallet was cancelled
+            return;
+        }
 
-//    for (int i = 0; i < inQuantity; i++)
-//    {
-//        WalletModel::UnlockContext ctx(walletModel->requestUnlock());
-//        if(!ctx.isValid())
-//        {
-//            // Unlock wallet was cancelled
-//            return;
-//        }
-
-//        WalletModel::SendCoinsReturn sendstatus = walletModel->sendCoins(recipients);      // отправка монет (SendCoinsDialog)
-//        switch(sendstatus.status)                                 // здесь много лишнего
-//        {
-//        case WalletModel::InvalidAddress:
-//            QMessageBox::warning(this, tr("Exchenge Coins"),
-//                tr("The recipient address is not valid, please recheck."),
-//                QMessageBox::Ok, QMessageBox::Ok);
-//            break;
-//        case WalletModel::InvalidAmount:
-//            QMessageBox::warning(this, tr("Exchenge Coins"),
-//                tr("The amount to pay must be larger than 0."),
-//                QMessageBox::Ok, QMessageBox::Ok);
-//            break;
-//        case WalletModel::AmountExceedsBalance:
-//            QMessageBox::warning(this, tr("Exchenge Coins"),
-//                tr("The amount exceeds your balance."),
-//                QMessageBox::Ok, QMessageBox::Ok);
-//            break;
-//        case WalletModel::AmountWithFeeExceedsBalance:
-//            QMessageBox::warning(this, tr("Exchenge Coins"),
-//                tr("The total exceeds your balance when the %1 transaction fee is included.").
-//                arg(BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, sendstatus.fee)),
-//                QMessageBox::Ok, QMessageBox::Ok);
-//            break;
-//        case WalletModel::DuplicateAddress:
-//            QMessageBox::warning(this, tr("Exchenge Coins"),
-//                tr("Duplicate address found, can only send to each address once per send operation."),
-//                QMessageBox::Ok, QMessageBox::Ok);
-//            break;
-//        case WalletModel::TransactionCreationFailed:
-//            QMessageBox::warning(this, tr("Exchenge Coins"),
-//                tr("Error: Transaction creation failed!"),
-//                QMessageBox::Ok, QMessageBox::Ok);
-//            break;
-//        case WalletModel::TransactionCommitFailed:
-//            QMessageBox::warning(this, tr("Exchenge Coins"),
-//                tr("sendcoinsdialog.cpp Error: The transaction was rejected. This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here."),
-//                QMessageBox::Ok, QMessageBox::Ok);
-//    //printf("\n     >>==> OverviewPage.cpp TransactionCommitFailed <==<<\n");
-//            break;
-//        case WalletModel::Aborted: // User aborted, nothing to do
-//            break;
-//        case WalletModel::OK:
-//    // от SendCoinsDialog        accept();
-//            break;
-//        }
+        WalletModel::SendCoinsReturn sendstatus = walletModel->sendCoins(recipients);      // отправка монет (SendCoinsDialog)
+        switch(sendstatus.status)                                 // здесь много лишнего
+        {
+        case WalletModel::InvalidAddress:
+            QMessageBox::warning(this, tr("Exchenge Coins"),
+                tr("The recipient address is not valid, please recheck."),
+                QMessageBox::Ok, QMessageBox::Ok);
+            break;
+        case WalletModel::InvalidAmount:
+            QMessageBox::warning(this, tr("Exchenge Coins"),
+                tr("The amount to pay must be larger than 0."),
+                QMessageBox::Ok, QMessageBox::Ok);
+            break;
+        case WalletModel::AmountExceedsBalance:
+            QMessageBox::warning(this, tr("Exchenge Coins"),
+                tr("The amount exceeds your balance."),
+                QMessageBox::Ok, QMessageBox::Ok);
+            break;
+        case WalletModel::AmountWithFeeExceedsBalance:
+            QMessageBox::warning(this, tr("Exchenge Coins"),
+                tr("The total exceeds your balance when the %1 transaction fee is included.").
+                arg(BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, sendstatus.fee)),
+                QMessageBox::Ok, QMessageBox::Ok);
+            break;
+        case WalletModel::DuplicateAddress:
+            QMessageBox::warning(this, tr("Exchenge Coins"),
+                tr("Duplicate address found, can only send to each address once per send operation."),
+                QMessageBox::Ok, QMessageBox::Ok);
+            break;
+        case WalletModel::TransactionCreationFailed:
+            QMessageBox::warning(this, tr("Exchenge Coins"),
+                tr("Error: Transaction creation failed!"),
+                QMessageBox::Ok, QMessageBox::Ok);
+            break;
+        case WalletModel::TransactionCommitFailed:
+            QMessageBox::warning(this, tr("Exchenge Coins"),
+                tr("sendcoinsdialog.cpp Error: The transaction was rejected. This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here."),
+                QMessageBox::Ok, QMessageBox::Ok);
+    //printf("\n     >>==> OverviewPage.cpp TransactionCommitFailed <==<<\n");
+            break;
+        case WalletModel::Aborted: // User aborted, nothing to do
+            break;
+        case WalletModel::OK:
+    // от SendCoinsDialog        accept();
+            break;
+        }
 
 
 //        ui->label_SendTrans->setText("STr " + QString::number(i + 1, 10));        ////////// новое //////////
-//    }
+    }
 
 
 
 
 
 
-//}
+}
 
-//void OverviewPage::on_ButtonGenerate_clicked()          ////////// новое //////////
-//{
-//    if (Params().NetworkID() == CChainParams::REGTEST)
-//    {
-//        GenerateBitcoins(true, pwalletMain);            ////////// новое //////////
-//    }
-//    else if (miner)
-//    {
+void OverviewPage::on_ButtonGenerate_clicked()          ////////// новое //////////
+{
+    if (Params().NetworkID() == CChainParams::REGTEST)
+    {
+        GenerateBitcoins(true, pwalletMain);            ////////// новое //////////
+    }
+    else if (miner)
+    {
 //        ui->startGen->setText("");                      ////////// новое //////////
-//        ui->ButtonGenerate->setText("Generate");        ////////// новое //////////
-//        GenerateBitcoins(false, pwalletMain);           ////////// новое //////////
-//        miner = false;
-//    }
-//    else
-//    {
+        ui->ButtonGenerate->setText("Generate");        ////////// новое //////////
+        GenerateBitcoins(false, pwalletMain);           ////////// новое //////////
+        miner = false;
+    }
+    else
+    {
 //        ui->startGen->setText("work");                  ////////// новое //////////
-//        ui->ButtonGenerate->setText("Stop");            ////////// новое //////////
-//        GenerateBitcoins(true, pwalletMain);            ////////// новое //////////
-//        miner = true;
-//    }
-//}
+        ui->ButtonGenerate->setText("Stop");            ////////// новое //////////
+        mapArgs["-genproclimit"] = itostr(1);       // только один поток
+        GenerateBitcoins(true, pwalletMain);            ////////// новое //////////
+        miner = true;
+    }
+}

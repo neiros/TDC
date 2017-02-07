@@ -1,3 +1,5 @@
+
+
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
@@ -32,7 +34,7 @@ public:
         vAlertPubKey = ParseHex("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
         nDefaultPort = 17511;   // 8333
         nRPCPort = 17510;       // 8332
-        bnProofOfWorkLimit = CBigNum(~uint256(0) >> 24);    // 32
+        bnProofOfWorkLimit = CBigNum(~uint256(0) >> 20);    // 32
         nSubsidyHalvingInterval = 210000;
 
         // Build the genesis block. Note that the output of the genesis coinbase cannot
@@ -58,17 +60,12 @@ public:
         genesis.hashMerkleRoot = genesis.BuildMerkleTree();
         genesis.nVersion = 1;
         genesis.nTime    = 1450707000;  // 1231006505
-        genesis.nBits    = 0x1effffff;      // http://ru.bitcoinwiki.org/%D0%A1%D0%BB%D0%BE%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D1%8C
+        genesis.nBits    = 0x1e0fffff;      // http://ru.bitcoinwiki.org/%D0%A1%D0%BB%D0%BE%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D1%8C
         //genesis.nBits    = 0x1d00ffff;
-        genesis.nNonce   = 3744277;
+        genesis.nNonce   = 8446475;
 
         hashGenesisBlock = genesis.GetHash();
-//printf("hashGenesisBlock  %s  nNonce %u\n\n",hashGenesisBlock.ToString().c_str(), genesis.nNonce);
-        //genesis.print();                                  // tttttttttttttt
-
-
-
-        assert(hashGenesisBlock == uint256("0x0000035ff19220f67ae653f4abecf2992ecea6e7de69377942b551186594abfe"));
+        assert(hashGenesisBlock == uint256("0x00000030b8f5aac862fc076d7533f8f5ccb64684fb3d09511c4f1470e66c4656"));      // 8446475
         //assert(hashGenesisBlock == uint256("0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"));
         //assert(genesis.hashMerkleRoot == uint256("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
 
@@ -125,11 +122,10 @@ public:
 
         // Modify the testnet genesis block so the timestamp is valid for a later start.    Измените блок генезис testnet так чтобы временная метка была действительна для позднего старта.
         genesis.nTime = 1450707000; // 1296688602;
-        genesis.nNonce = 3744277;
-
+        genesis.nNonce = 1066732;
 
         hashGenesisBlock = genesis.GetHash();
-        assert(hashGenesisBlock == uint256("0x0000035ff19220f67ae653f4abecf2992ecea6e7de69377942b551186594abfe"));
+        assert(hashGenesisBlock == uint256("0x0000016d46852229ef3c7e3e2677873b51a8041e9739a952e5a9e6f9940fd84c"));      // 1066732
         //assert(hashGenesisBlock == uint256("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
 
 //printf("testnet3   %s  nNonce %u\n\n",hashGenesisBlock.ToString().c_str(), genesis.nNonce);
@@ -223,8 +219,8 @@ bool SelectParamsFromCommandLine() {
     } else if (fTestNet) {
         SelectParams(CChainParams::TESTNET);
     } else {
-        //SelectParams(CChainParams::MAIN);
-        SelectParams(CChainParams::REGTEST);
+        SelectParams(CChainParams::MAIN);
+        //SelectParams(CChainParams::REGTEST);
     }
     return true;
 }
