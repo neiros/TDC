@@ -208,7 +208,45 @@ Value getwork(const Array& params, bool fHelp)
         pblock->vtx[0].vin[0].scriptSig = mapNewBlock[pdata->hashMerkleRoot].second;
         pblock->hashMerkleRoot = pblock->BuildMerkleTree();
 
-        return CheckWork(pblock, *pwalletMain, *pMiningKey);
+
+//*****************************************************************
+        uint256 hashTarget;
+
+        CBigNum maxBigNum = CBigNum(~uint256(0));
+        CBigNum sumTrDifTemplate = 0;
+
+        BOOST_FOREACH(CTransaction& tx, pblock->vtx)
+        {
+            TransM trM;
+
+//            trM.vinM = tx.vin;    // почемуто в wallet.cpp подобное работает, а здесь нет
+            BOOST_FOREACH(const CTxIn& txin, tx.vin)
+                trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
+
+            BOOST_FOREACH (const CTxOut& out, tx.vout)
+                trM.voutM.push_back(CTxOut(out.nValue, CScript()));
+
+            trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
+
+            CBigNum bntx = CBigNum(SerializeHash(trM));
+            sumTrDifTemplate += maxBigNum / bntx;
+
+//printf(">>>>> BOOST_FOREACH pblock->vtx    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", SerializeHash(trM).GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), pblocktemplate->sumTrDif.ToString().c_str());
+        }
+
+        CBigNum divideTarget = maxBigNum / CBigNum().SetCompact(pblock->nBits);
+
+        if (divideTarget <= sumTrDifTemplate)
+            hashTarget = maxBigNum.getuint256();
+        else
+            hashTarget = (maxBigNum / (divideTarget - sumTrDifTemplate)).getuint256();       // уменьшение целевого значения сложности
+
+
+
+        return CheckWork(pblock, *pwalletMain, *pMiningKey, sumTrDifTemplate);
+
+//*****************************************************************
+//        return CheckWork(pblock, *pwalletMain, *pMiningKey);
     }
 }
 

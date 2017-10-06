@@ -8,6 +8,7 @@
 #include "uint256.h"
 #include "serialize.h"
 #include "script.h"
+#include "Lyra2RE/Lyra2RE.h"
 
 #include <stdio.h>
 
@@ -190,8 +191,7 @@ public:
     int nVersion;
     std::vector<CTxIn> vin;
     std::vector<CTxOut> vout;
-    int tBlock;     // в такой системе этот параметр не особо нужен, разве что ради экспериментов  ////////// новое //////////
-                    // yне забыть поменять где это надо на pindexBest->pprev->GetBlockHash() !!!
+    int tBlock;                                                 ////////// новое //////////
     unsigned int nLockTime;
 
     CTransaction()

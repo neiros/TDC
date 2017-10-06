@@ -1,5 +1,3 @@
-
-
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
@@ -35,6 +33,7 @@ public:
         nDefaultPort = 17511;   // 8333
         nRPCPort = 17510;       // 8332
         bnProofOfWorkLimit = CBigNum(~uint256(0) >> 20);    // 32
+
         nSubsidyHalvingInterval = 210000;
 
         // Build the genesis block. Note that the output of the genesis coinbase cannot
@@ -59,14 +58,14 @@ public:
         genesis.hashPrevBlock = 0;
         genesis.hashMerkleRoot = genesis.BuildMerkleTree();
         genesis.nVersion = 1;
-        genesis.nTime    = 1450707000;  // 1231006505
-        genesis.nBits    = 0x1e0fffff;      // http://ru.bitcoinwiki.org/%D0%A1%D0%BB%D0%BE%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D1%8C
-        //genesis.nBits    = 0x1d00ffff;
-        genesis.nNonce   = 8446475;
+        genesis.nTime    = 1505250000;  // 1231006505
+        genesis.nBits    = 0x1e0fffff;  // 0x1e00ffff
+        //genesis.nBits    = 0x1d00ffff;      // http://ru.bitcoinwiki.org/%D0%A1%D0%BB%D0%BE%D0%B6%D0%BD%D0%BE%D1%81%D1%82%D1%8C
+        genesis.nNonce   = 5371502;
 
         hashGenesisBlock = genesis.GetHash();
-        assert(hashGenesisBlock == uint256("0x00000030b8f5aac862fc076d7533f8f5ccb64684fb3d09511c4f1470e66c4656"));      // 8446475
-        //assert(hashGenesisBlock == uint256("0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"));
+
+        assert(hashGenesisBlock == uint256("0x000000126816b5be97ac52296161c0b06139de4bcc8eef01b22091a2455131e8"));
         //assert(genesis.hashMerkleRoot == uint256("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
 
         base58Prefixes[PUBKEY_ADDRESS] = 65;    // T https://en.bitcoin.it/wiki/List_of_address_prefixes
@@ -116,20 +115,17 @@ public:
         pchMessageStart[2] = 0x09;
         pchMessageStart[3] = 0x07;
         vAlertPubKey = ParseHex("04302390343f91cc401d56d68b123028bf52e5fca1939df127f63c6467cdf9c8e2c14b61104cf817d0b780da337893ecc4aaff1309e536162dabbdb45200ca2b0a");
-        nDefaultPort = 57511;   // 18333
-        nRPCPort = 57510;       // 18332
+        nDefaultPort = 57511;// 18333
+        nRPCPort = 57510;// 18332
         strDataDir = "testnet3";
 
         // Modify the testnet genesis block so the timestamp is valid for a later start.    Измените блок генезис testnet так чтобы временная метка была действительна для позднего старта.
-        genesis.nTime = 1450707000; // 1296688602;
-        genesis.nNonce = 1066732;
+        genesis.nTime = 1505550000; // 1296688602;
+        genesis.nNonce = 1705622;
 
         hashGenesisBlock = genesis.GetHash();
-        assert(hashGenesisBlock == uint256("0x0000016d46852229ef3c7e3e2677873b51a8041e9739a952e5a9e6f9940fd84c"));      // 1066732
+        assert(hashGenesisBlock == uint256("0x0000047df774a1b4cb067a5b14a93e3f12117f73367fca3f708550ce0f053ed4"));
         //assert(hashGenesisBlock == uint256("000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
-
-//printf("testnet3   %s  nNonce %u\n\n",hashGenesisBlock.ToString().c_str(), genesis.nNonce);
-
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -156,20 +152,17 @@ public:
         pchMessageStart[1] = 0xbf;
         pchMessageStart[2] = 0xb5;
         pchMessageStart[3] = 0xda;
-        nSubsidyHalvingInterval = 150;
-        bnProofOfWorkLimit = CBigNum(~uint256(0) >> 1);
-        genesis.nTime = 1450707000; // 1296688602;
+        nSubsidyHalvingInterval = 2100;
+        bnProofOfWorkLimit = CBigNum(~uint256(0) >> 1);    // 1
+        genesis.nTime = 1505550000; // 1296688602;
         genesis.nBits = 0x207fffff;
-        genesis.nNonce = 1709647;
-        nDefaultPort = 57555;   // 18444
+        genesis.nNonce = 1359182;
+        nDefaultPort = 57555;// 18444
         strDataDir = "regtest";
 
-
         hashGenesisBlock = genesis.GetHash();
-        assert(hashGenesisBlock == uint256("0x000001d9670f8c345fa2791a399c4ccfb9bd7d2c18b5fad0425abf29f5556f78"));
+        assert(hashGenesisBlock == uint256("0x000013d66f2905df39758c27da741215379d191e46e2443e546cd3877b4fabec"));
         //assert(hashGenesisBlock == uint256("0x0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
-
-//printf("regtest  %s  nNonce %u\n\n",hashGenesisBlock.ToString().c_str(), genesis.nNonce);
 
         vSeeds.clear();  // Regtest mode doesn't have any DNS seeds.                    Regtest режим не имеет любых DNS сидов.
 

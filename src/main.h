@@ -25,9 +25,30 @@ class CNode;
 
 struct CBlockIndexWorkComparator;
 
+/**
+ *                  Часть цепи, рабочая длина блокчейна*/
+static const int PART_CHAIN = 105000;                       ////////// новое //////////   12 * 24 * 365 = 105120 блоков в год
+/**
+ *                  Процент за перенос непотраченного выхода транзакции*/
+static const double RATE_PART_CHAIN = 0.01;                 ////////// новое //////////
+/**
+ *                  Минимальная плата за перенос непотраченного выхода транзакции*/
+static const int MIN_FEE_PART_CHAIN = 10000;                ////////// новое //////////
+/**
+*                   Какому блоку транзакций возвращать комиссии*/
+static const unsigned int BLOCK_TX_FEE = 5;                 ////////// новое //////////
+/**
+ *                  Максимальное количество блоков транзакций используемых при возврате комиссий*/
+static const unsigned int NUMBER_BLOCK_TX = 5;              ////////// новое //////////
+/**
+ *                  Менее такого количества транзакций добавляется очередной блок транзакций*/
+static const unsigned int QUANTITY_TX = 105;                ////////// новое //////////
+
+
+
 /** The maximum allowed size for a serialized block, in bytes (network rule)
  *                  Максимально допустимый размер сериализованную блока в байтах (сетевое правило)*/
-static const unsigned int MAX_BLOCK_SIZE = 2000000;         ////////// новое ////////// было 1000000
+static const unsigned int MAX_BLOCK_SIZE = 5000000;         ////////// новое ////////// было 1000000
 /** The maximum size for mined blocks
  *                  Максимальный размер добываемых блоков*/
 static const unsigned int MAX_BLOCK_SIZE_GEN = MAX_BLOCK_SIZE/2;
@@ -54,11 +75,12 @@ static const unsigned int UNDOFILE_CHUNK_SIZE = 0x100000; // 1 MiB
 static const unsigned int MEMPOOL_HEIGHT = 0x7FFFFFFF;
 /** No amount larger than this (in satoshi) is valid
  *                  не больше этого количеств (в Satoshi) действительно*/
-static const int64 MAX_MONEY = 21000000 * COIN;
+//static const int64 MAX_MONEY = 21000000 * COIN;
+static const int64 MAX_MONEY = 53760000 * COIN;
 inline bool MoneyRange(int64 nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 /** Coinbase transaction outputs can only be spent after this number of new blocks (network rule)
  *                  Транзакционные выходы Coinbase могут расходоваться только после этого количество новых блоков (сетевое правило)*/
-static const int COINBASE_MATURITY = 5;                     ////////// новое ////////// было 100
+static const int COINBASE_MATURITY = 80;                     ////////// новое ////////// было 100
 /** Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp.
  *                  Порог для nLockTime: ниже этого значения интерпретируется как номер блока, в противном случае, как временная метка UNIX.*/
 static const unsigned int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
@@ -195,7 +217,8 @@ bool SendMessages(CNode* pto, bool fSendTrickle);
 void ThreadScriptCheck();
 /** Check whether a block hash satisfies the proof-of-work requirement specified by nBits
  *                  Проверить, удовлетворяет ли хэш блока требованию доказательства-работы указанное в nBits */
-bool CheckProofOfWork(uint256 hash, unsigned int nBits);
+//bool CheckProofOfWork(uint256 hash, unsigned int nBits);
+bool CheckProofOfWorkNEW(std::vector<CTransaction> vtx, uint256 hash, unsigned int nBits);
 /** Calculate the minimum amount of work a received block needs, without knowing its direct parent
  *                  Рассчитайте минимальное количество работы необходимое для получения блока, не зная его прямого родителя*/
 unsigned int ComputeMinWork(unsigned int nBase, int64 nTime);
@@ -217,6 +240,7 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew);
 /** Find the best known block, and make it the tip of the block chain
  *                  Найти наилучший известный блок, и сделать его окончанием цепи блоков*/
 bool ConnectBestBlock(CValidationState &state);
+int GetHeightPartChain(int nHeight);                              ////////// новое //////////
 int64 GetBlockValue(int nHeight, int64 nFees);
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock);
 
@@ -263,7 +287,6 @@ struct TransM
 };
 
 
-//typedef boost::tuple<uint256, CScript> TxHashPriority;
 typedef boost::tuple<uint256, CTxOut> TxHashPriority;
 class TxHashPriorityCompare
 {
@@ -277,7 +300,6 @@ public:
 };
 
 /*************************** новое ******************************/
-
 
 
 
@@ -943,10 +965,10 @@ public:
         return nHeight+1 >= (int)vBlockIndexByHeight.size() ? NULL : vBlockIndexByHeight[nHeight+1];
     }
 
-    bool CheckIndex() const
-    {
-        return CheckProofOfWork(GetBlockHash(), nBits);
-    }
+//    bool CheckIndex() const
+//    {
+//        return CheckProofOfWork(GetBlockHash(), nBits);  здесь нет массива с транзакциями для проверки nBits
+//    }
 
     enum { nMedianTimeSpan=11 };
 
@@ -1364,6 +1386,7 @@ struct CBlockTemplate
     CBlock block;
     std::vector<int64_t> vTxFees;
     std::vector<int64_t> vTxSigOps;
+    CBigNum sumTrDif;
 };
 
 

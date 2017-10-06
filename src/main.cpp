@@ -52,10 +52,10 @@ bool fHaveGUI = false;
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation)
     Сборы меньше этого (в Satoshi) считаются нулевой взнос (для создания транзакции) */
-int64 CTransaction::nMinTxFee = 10000;  // Override(дублирование) with -mintxfee    ////////// новое ////////// было 10000
+int64 CTransaction::nMinTxFee = 10000;  // Override(дублирование) with -mintxfee    ////////// новое //////////
 /** Fees smaller than this (in satoshi) are considered zero fee (for relaying)
     Сборы меньше этого (в Satoshi) считаются нулевой взнос (для ретрансляции) */
-int64 CTransaction::nMinRelayTxFee = 10000;                                         ////////// новое ////////// было 10000
+int64 CTransaction::nMinRelayTxFee = 10000;                                         ////////// новое //////////
 
 CMedianFilter<int> cPeerBlockCounts(8, 0); // Amount of blocks that other nodes claim to have (Количество блоков, которые другие узлы утверждают, что имеют)
 
@@ -74,8 +74,8 @@ double dHashesPerSec = 0.0;
 int64 nHPSTimerStart = 0;
 
 // Settings(Настройки)
-int64 nTransactionFee = 0;
-int64 nMinerTransFee = 1000;                                ////////// новое //////////
+int64 nTransactionFee = 10000;
+int64 nMinerTransFee = 10000;                                   ////////// новое //////////
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1071,7 +1071,7 @@ int CMerkleTx::GetBlocksToMaturity() const
 {
     if (!IsCoinBase())
         return 0;
-    return max(0, (COINBASE_MATURITY+5) - GetDepthInMainChain());         ////////// новое ////////// было COINBASE_MATURITY+20
+    return max(0, (COINBASE_MATURITY+20) - GetDepthInMainChain());         ////////// новое ////////// было COINBASE_MATURITY+20
 }
 
 
@@ -1229,7 +1229,8 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
     }
 
     // Check the header (проверка заголовка)
-    if (!CheckProofOfWork(block.GetHash(), block.nBits))
+//    if (!CheckProofOfWork(block.GetHash(), block.nBits))
+    if (!CheckProofOfWorkNEW(block.vtx, block.GetHash(), block.nBits))
         return error("ReadBlockFromDisk(CBlock&, CDiskBlockPos&) : errors in block header");
 
     return true;
@@ -1252,19 +1253,29 @@ uint256 static GetOrphanRoot(const CBlockHeader* pblock)
     return pblock->GetHash();
 }
 
+int GetHeightPartChain(int nHeight)                                 ////////// новое //////////
+{
+    int ret =  nHeight / 2 > PART_CHAIN ? PART_CHAIN : nHeight / 2;
+    if (ret < COINBASE_MATURITY * 2)
+        return -1;
+    return ret - COINBASE_MATURITY * 2;
+}
+
 int64 GetBlockValue(int nHeight, int64 nFees)
 {
-    int64 nSubsidy = 50 * COIN;
+    int64 nSubsidy = 128 * COIN;                                    ////////// новое //////////
 
-    // Subsidy is cut in half every 210,000 blocks which will occur approximately every 4 years.
-    // Субсидия разрезать пополам каждую 210000 блоков, которые будут происходить примерно раз в 4 года.
-    nSubsidy >>= (nHeight / Params().SubsidyHalvingInterval());
+    // Subsidy is cut in half every 210,000 blocks which will occur approximately every 2 years.
+    // Субсидия разрезать пополам каждую 210000 блоков, которые будут происходить примерно раз в 2 года.
+    nSubsidy >>= (nHeight / Params().SubsidyHalvingInterval());     ////////// новое //////////
+    nSubsidy += 22 * COIN;                                          ////////// новое //////////
 
-    return nSubsidy + nFees;
+    return nSubsidy > nFees ? nSubsidy : nFees;                     ////////// новое //////////
+//    return nSubsidy + nFees;
 }
 
 static const int64 nTargetTimespan = 14 * 24 * 60 * 60; // two weeks
-static const int64 nTargetSpacing = 10 * 60;
+static const int64 nTargetSpacing = 5 * 60;             // 5 minutes
 static const int64 nInterval = nTargetTimespan / nTargetSpacing;
 
 //
@@ -1355,10 +1366,13 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
     return bnNew.GetCompact();
 }
 
-bool CheckProofOfWork(uint256 hash, unsigned int nBits)
+bool CheckProofOfWorkNEW(std::vector<CTransaction> vtx, uint256 hash, unsigned int nBits)
 {
     CBigNum bnTarget;
     bnTarget.SetCompact(nBits);
+
+//printf("===== bnTarget: %s    \nParams().ProofOfWorkLimit(): %s\n", bnTarget.getuint256().GetHex().c_str(), Params().ProofOfWorkLimit().getuint256().GetHex().c_str());
+
 
     // Check range  (проверка диапазона)
     if (bnTarget <= 0 || bnTarget > Params().ProofOfWorkLimit())
@@ -1366,10 +1380,71 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits)
 
     // Check proof of work matches claimed amount (Проверка proof of work состояния заявленной суммы)
     if (hash > bnTarget.getuint256())
-        return error("CheckProofOfWork() : hash doesn't match nBits");
+    {
+        CBigNum maxBigNum = CBigNum(~uint256(0));
+        CBigNum sumTrDif = 0;
+        BOOST_FOREACH(CTransaction& tx, vtx)
+        {
+            TransM trM;
 
+            BOOST_FOREACH(const CTxIn& txin, tx.vin)
+                trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
+
+            BOOST_FOREACH (const CTxOut& out, tx.vout)
+                trM.voutM.push_back(CTxOut(out.nValue, CScript()));
+
+            trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
+
+            CBigNum bntx = CBigNum(SerializeHash(trM));
+            sumTrDif += maxBigNum / bntx;
+
+//printf(">>>>> CheckProofOfWorkNEW    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", SerializeHash(trM).GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), sumTrDif.ToString().c_str());
+        }
+//printf(">>>>> sumTrDif: %s\n\n", sumTrDif.ToString().c_str());
+
+
+        uint256 hashTarget;
+        CBigNum divideTarget = maxBigNum / bnTarget;
+
+        if (divideTarget <= sumTrDif)
+            hashTarget = maxBigNum.getuint256();
+        else
+            hashTarget = (maxBigNum / (divideTarget - sumTrDif)).getuint256();       // уменьшение целевого значения сложности
+
+        if (hash > hashTarget)
+        {
+printf(">>>>> hash: %s>>>>> hashTarget: %s\n\n", hash.ToString().c_str(), hashTarget.ToString().c_str());
+            return error("CheckProofOfWork() : hash doesn't match nBits and sumTrDif");
+        }
+    }
     return true;
 }
+
+
+//bool CheckProofOfWork(uint256 hash, unsigned int nBits)
+//{
+//    CBigNum bnTarget;
+//    bnTarget.SetCompact(nBits);
+
+//    // Check range  (проверка диапазона)
+//    if (bnTarget <= 0 || bnTarget > Params().ProofOfWorkLimit())
+//        return error("CheckProofOfWork() : nBits below minimum work");
+
+////    if (bnTarget <= 0){
+////printf("=== bnTarget: %s    Params().ProofOfWorkLimit(): %s\n", bnTarget.getuint256().GetHex().c_str(), Params().ProofOfWorkLimit().getuint256().GetHex().c_str());
+////        return error("CheckProofOfWork() : nBits below minimum work (bnTarget <= 0)");
+////    }
+////    if (bnTarget > Params().ProofOfWorkLimit()){
+////printf("=== bnTarget: %s    Params().ProofOfWorkLimit(): %s\n", bnTarget.getuint256().GetHex().c_str(), Params().ProofOfWorkLimit().getuint256().GetHex().c_str());
+////        return error("CheckProofOfWork() : nBits below minimum work (bnTarget > Params().ProofOfWorkLimit())");
+////    }
+
+//    // Check proof of work matches claimed amount (Проверка proof of work состояния заявленной суммы)
+//    if (hash > bnTarget.getuint256())
+//        return error("CheckProofOfWork() : hash doesn't match nBits");
+
+//    return true;
+//}
 
 // Return maximum amount of blocks that other nodes claim to have   (Вернуть максимальное количество блоков, подтверждённые другими узлами)
 int GetNumBlocksOfPeers()
@@ -1779,43 +1854,9 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
         return true;
     }
 
-    bool fScriptChecks = pindex->nHeight >= Checkpoints::GetTotalBlocksEstimate();
 
-    // Do not allow blocks that contain transactions which 'overwrite' older transactions,
-    // unless those are already completely spent.
-    // If such overwrites are allowed, coinbases and transactions depending upon those
-    // can be duplicated to remove the ability to spend the first instance -- even after
-    // being sent to another address.
-    // See BIP30 and http://r6.ca/blog/20120206T005236Z.html for more information.
-    // This logic is not necessary for memory pool transactions, as AcceptToMemoryPool
-    // already refuses previously-known transaction ids entirely.
-    // This rule was originally applied all blocks whose timestamp was after March 15, 2012, 0:00 UTC.
-    // Now that the whole chain is irreversibly beyond that time it is applied to all blocks except the
-    // two in the chain that violate it. This prevents exploiting the issue against nodes in their
-    // initial block download.
-    //          Не позволяйте блокам, которые содержат операции, "перезаписывать" старых transactions,
-    //          если те, кто не являются уже полностью израсходованы.
-    //          Если такой перезаписи будут разрешены, coinbases и сделок в зависимости от тех
-    //          могут быть продублированы, чтобы удалить возможность тратить первой инстанции - даже после того,
-    //          направляется к другому адресу.
-    //          См. BIP30 и http://r6.ca/blog/20120206T005236Z.html получить дополнительные сведения.
-    //          Эта логика не является необходимым для операций пула памяти, так как AcceptToMemoryPool
-    //          отказывается уже ранее известных идентификаторов транзакций полностью.
-    //          Это правило было применено все блоки временные метки которых было после 15 марта 2012 года, в 0:00 по UTC.
-    //          Теперь, когда вся цепь необратимо за это время он применяется ко всем блокам, кроме
-    //          два в цепи, которые нарушают его. Это предотвращает эксплуатируя вопрос с узлами в их
-    //          Первоначальная загрузка блока.
-
-//    bool fEnforceBIP30 = (!pindex->phashBlock) || // Enforce on CreateNewBlock invocations which don't have a hash. (Обеспечение на CreateNewBlock вызовы, которые не имеют хэш.)
-//                          !((pindex->nHeight==91842 && pindex->GetBlockHash() == uint256("0x00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec")) ||
-//                           (pindex->nHeight==91880 && pindex->GetBlockHash() == uint256("0x00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721")));
-//    if (fEnforceBIP30) {
-//        for (unsigned int i = 0; i < block.vtx.size(); i++) {
-//            uint256 hash = block.GetTxHash(i);
-//            if (view.HaveCoins(hash) && !view.GetCoins(hash).IsPruned())
-//                return state.DoS(100, error("ConnectBlock() : tried to overwrite transaction"));
-//        }
-//    }
+//    bool fScriptChecks = pindex->nHeight >= Checkpoints::GetTotalBlocksEstimate();
+    bool fScriptChecks = true;
 
      // BIP16 didn't become active until Apr 1 2012 (BIP16 не стал активным до 1 апреля 2012)
     int64 nBIP16SwitchTime = 1333238400;
@@ -1830,8 +1871,6 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
     vector<TxHashPriority> vecTxHashPriority;                           ////////// новое //////////
     vecTxHashPriority.reserve(block.vtx.size());                        ////////// новое //////////
-    int quantityGoodFeesTr = 0;                                         ////////// новое //////////
-    uint256 targetGoodTr = uint256("0x00ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");   ////////// новое //////////
 
     int64 nStart = GetTimeMicros();
     int64 nFees = 0;
@@ -1864,38 +1903,64 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                      return state.DoS(100, error("ConnectBlock() : too many sigops"));
             }
 
-            int64 nTxFees = view.GetValueIn(tx)-GetValueOut(tx);    ////////// новое //////////
-            nFees += nTxFees;                                       ////////// новое //////////
-            if (nTxFees > 0)                                        ////////// новое //////////
-                quantityGoodFeesTr++;                               ////////// новое //////////
-            //nFees += view.GetValueIn(tx)-GetValueOut(tx);
-
-            std::vector<CScriptCheck> vChecks;
-            if (!CheckInputs(tx, state, view, fScriptChecks, flags, nScriptCheckThreads ? &vChecks : NULL))
-                return false;
-            control.Add(vChecks);
+            nFees += view.GetValueIn(tx)-GetValueOut(tx);
 
 
-/*************************** новое ******************************/
+//*****************************************************************
+//************************* Transfer TX ***************************
+            bool txAddScriptCheck = true;                           ////////// новое //////////
+            for (unsigned int j = 0; j < tx.vin.size(); j++)
+            {
+                if (tx.vin[j].scriptSig !=  CScript() << OP_0 << OP_0)
+                    break;
+                txAddScriptCheck = false;                           ////////// новое //////////
 
-            TransM trM;
+                CTransaction txAdd;
 
-            BOOST_FOREACH(const CTxIn& txin, tx.vin)
-                trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
+                if (GetHeightPartChain(pindex->nHeight) != -1)
+                {
+                    CBlock ReadBlock;
+                    ReadBlockFromDisk(ReadBlock, vBlockIndexByHeight[GetHeightPartChain(pindex->nHeight)]);
 
-            trM.voutM = tx.vout;
-            BOOST_FOREACH (CTxOut& out, trM.voutM)
-                out.scriptPubKey = CScript();
+                    BOOST_FOREACH(const CTransaction& txRB, ReadBlock.vtx)
+                    {
+                        uint256 txHash = txRB.GetHash();
+                        if (view.HaveCoins(txHash))
+                        {
+                            const CCoins &coinsOut = view.GetCoins(txHash);
+                            for (unsigned int i = 0; i < txRB.vout.size(); i++)
+                            {
+                                if (coinsOut.IsAvailable(i))
+                                {
+                                    CTxOut out = coinsOut.vout[i];
+                                    int64 rate = out.nValue * RATE_PART_CHAIN;
+                                    if (out.nValue - rate > MIN_FEE_PART_CHAIN)
+                                    {
+                                        out.nValue -= rate;
+                                        txAdd.vout.push_back(out);
+                                    }
+                                    txAdd.vin.push_back(CTxIn(COutPoint(txHash, i), CScript() << OP_0 << OP_0));
+                                }
+                            }
+                        }
+                    }
+                }
 
-            trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
+                if (tx != txAdd)
+                    return false;       // из-за местоположения в массиве возможно срабарывание(не критично)
+                break;
+            }
+//************************* Transfer TX ***************************
+//*****************************************************************
 
-            const CCoins &coins = view.GetCoins(tx.vin[0].prevout.hash);
-            vecTxHashPriority.push_back(TxHashPriority(SerializeHash(trM), CTxOut(nTxFees, coins.vout[tx.vin[0].prevout.n].scriptPubKey)));
 
-//printf("===>> trM     hashTr: %s   %"PRI64d" ConnBl\n", SerializeHash(trM).GetHex().c_str(), nTxFees);
-
-/*************************** новое ******************************/
-
+            if (txAddScriptCheck)                                   ////////// новое //////////  пройдёт только одна txAdd из-за CheckBlock, что выше и UpdateCoins, что ниже
+            {
+                std::vector<CScriptCheck> vChecks;
+                if (!CheckInputs(tx, state, view, fScriptChecks, flags, nScriptCheckThreads ? &vChecks : NULL))
+                    return false;
+                control.Add(vChecks);
+            }
         }
 
         CTxUndo txundo;
@@ -1909,53 +1974,115 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
 
 /*************************** новое ******************************/
-    int retFeesTr = 0;                                                      // определяем количество
-    while (quantityGoodFeesTr > 1 + (8 + 2 * (retFeesTr + 1)) * retFeesTr)  // транзакций с возвратом
-        retFeesTr++;                                                        // увеличенной комиссии
 
-    if (retFeesTr > 0)
-        retFeesTr = (quantityGoodFeesTr / 2) / retFeesTr;   // во сколько раз нужно будет умножить комиссию
-
-    TxHashPriorityCompare comparerHash(true);                                                   ////////// новое //////////
-    std::sort(vecTxHashPriority.begin(), vecTxHashPriority.end(), comparerHash);                ////////// новое //////////
-
-    int64 threshold = nFees * 0.51;                         // порог возврата транзакциям - суммарная величина будет меньше или много меньше 51%
-    unsigned int step = 0;
-    unsigned int ii = 0;
-printf("===>> CB vecTxHashPriority.size() = %i\n", vecTxHashPriority.size());
-    BOOST_FOREACH (const TxHashPriority& THP, vecTxHashPriority)
+    if (pindexBest->nHeight > int(BLOCK_TX_FEE + NUMBER_BLOCK_TX))
     {
-        int64 ret = THP.get<1>().nValue * retFeesTr;
-
-        if (ii == 1 + (8 + 2 * (step + 1)) * step)
+        uint256 useHashBack;
+        for (unsigned int i = 0; i < NUMBER_BLOCK_TX; i++)
         {
-            if (THP.get<0>() > targetGoodTr)                // только тр. с хорошим хешем
-                break;
+            CBlock rBlock;
+            ReadBlockFromDisk(rBlock, vBlockIndexByHeight[pindexBest->nHeight - BLOCK_TX_FEE - i]);
+//printf("\n>>>>> ReadBlockFromDisk(rBlock, pindexPrev)  vtx.size() = %i i = %i\n\n", rBlock.vtx.size(), i);
 
-            if (ret < threshold)
+            if (i == 0)
+                useHashBack = rBlock.GetHash();      // получаем хэш(uint256) первого блока для определения случайной позиции транзакции
+
+            BOOST_FOREACH(CTransaction& tx, rBlock.vtx)
             {
-                if (block.vtx[0].vout[step + 1] != CTxOut(ret, THP.get<1>().scriptPubKey))
-                    printf("!!! - ERROR 1 - !!!\n");
-THP.get<1>().print();
-                threshold -= ret;
+                if (!tx.IsCoinBase())
+                {
+                    TransM trM;
+
+                    int64 nIn = 0;
+                    BOOST_FOREACH(const CTxIn& txin, tx.vin)
+                    {
+                        trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
+
+                        CTransaction getTx;
+                        const uint256 txHash = txin.prevout.hash;
+                        uint256 hashBlock = 0;
+                        if (GetTransaction(txHash, getTx, hashBlock, false))
+                            nIn += getTx.vout[txin.prevout.n].nValue;
+                        //else проверка ошибок, если нужно
+                    }
+
+                    int64 nOut = 0;
+                    BOOST_FOREACH (CTxOut& out, tx.vout)
+                    {
+                        trM.voutM.push_back(CTxOut(out.nValue, CScript()));
+                        nOut += out.nValue;
+                    }
+
+                    int64 nTxFees = nIn - nOut;
+
+                    trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
+
+                    uint256 HashTrM = SerializeHash(trM);
+
+                    CTransaction getTx;
+                    const uint256 txHash = tx.vin[0].prevout.hash;
+                    uint256 hashBlock = 0;
+                    if (GetTransaction(txHash, getTx, hashBlock, false))
+                        vecTxHashPriority.push_back(TxHashPriority(HashTrM, CTxOut(nTxFees, getTx.vout[tx.vin[0].prevout.n].scriptPubKey)));
+                }
             }
-            else if (THP.get<1>().nValue < threshold)       // здесь что-либо подобное этому CTransaction::nMinTxFee вроде бы ненужно
-            {
-                if (block.vtx[0].vout[step + 1] != CTxOut(threshold, THP.get<1>().scriptPubKey))
-                    printf("!!! - ERROR 2 - !!!\n");
-THP.get<1>().print();
-                threshold = 0;
-            }
-            step++;
+            if (vecTxHashPriority.size() > QUANTITY_TX)
+                break;
         }
-        ii++;
-printf("===>> CB vecTxHashPriority   hashTr: %s  %"PRI64d"  step = %i  ii = %i\n", THP.get<0>().GetHex().c_str(), THP.get<1>().nValue, step, ii);
+
+
+        if (vecTxHashPriority.size() > 1)
+        {
+            TxHashPriorityCompare comparerHash(true);
+            std::sort(vecTxHashPriority.begin(), vecTxHashPriority.end(), comparerHash);
+
+            double powsqrt = (useHashBack & CBigNum(uint256(65535)).getuint256()).getdouble() * 0.00001 + 1.2;    // получаем число от 1,2 до 1,85535
+
+// для арифметической прогрессии (a1 + n * d где d = arProgression) определяем a1 как корень powsqrt степени из количества транцакций
+//                                a1 = stepTr       (n - номер промежутка от 0 и более)
+
+            unsigned int stepTr = pow((double)vecTxHashPriority.size(), 1.0 / powsqrt); // величина промежутка
+            unsigned int numPosition = vecTxHashPriority.size() / stepTr;               // количество промежутков
+            unsigned int arProgression = stepTr / numPosition;                          // аргумент арифметической прогрессии при котором последний промежуток почти равен первым двум
+
+            powsqrt = (useHashBack & CBigNum(uint256(262143)).getuint256()).getdouble() * 0.000001;    // число от 0 до 0,262143
+            unsigned int retFeesTt = (stepTr + 1) * (0.4 + powsqrt);                 // во сколько раз нужно умножить возвращаемую комиссию (+1 что бы не было 0)
+
+            unsigned int w = 0;
+            unsigned int cVoutSize = 1;         // начинаем с 1 так как 0 это коинбазовая транзакция
+            unsigned int cSizeVecTx = 0;
+            while (w < numPosition)
+            {
+                useHashBack = Hash(BEGIN(useHashBack),  END(useHashBack));
+
+                unsigned int interval = stepTr + w * arProgression;                     // разбивка vecTxHashPriority на промежутки
+                double position = (useHashBack & CBigNum(uint256(1048575)).getuint256()).getdouble() / 1048575.0;   // получаем число от 0 до 1
+                unsigned int cp = cSizeVecTx + position * interval;
+
+                if (vecTxHashPriority.size() > cp)
+    //            if (vecTxHashPriority.size() > cSizeVecTx + interval)
+                {
+                    int64 ret = vecTxHashPriority[cp].get<1>().nValue * retFeesTt;     // величина возврата
+                    if (ret > CTransaction::nMinTxFee)             // главное что бы нужный CTxOut присутствовол в vout. Соблюдение последовательности необязательно.
+                    {
+                        if (block.vtx[0].vout[cVoutSize] != CTxOut(ret, vecTxHashPriority[cp].get<1>().scriptPubKey))
+                            printf("!!! - ERROR 1 - !!!\n");
+
+                        cVoutSize++;
+                    }
+                }
+                else
+                    break;
+
+                cSizeVecTx += interval + 1;  // +1 что бы не произошло наложения соседних интервалов (максимума и 0), т.е. не происходило выбора одной и той же транзакции дважды
+                w++;
+            }
+        }
+
+        if (GetValueOut(block.vtx[0]) != GetBlockValue(pindexBest->nHeight + 1, nFees))
+            printf("!!! - NewCoin ERROR - !!!   GetValueOut(block.vtx[0]) = %"PRI64d"   GetBlockValue = %"PRI64d"\n", GetValueOut(block.vtx[0]) , GetBlockValue(pindexBest->nHeight + 1, nFees) );
     }
 
-    if (block.vtx[0].vout.size() != step + 1)
-        printf("!!! - size ERROR - !!!   size() = %i   step + 1 = %i\n", block.vtx[0].vout.size(), step + 1);
-
-//printf("!!! - size TRUE - !!!   size() = %i   step + 1 = %i\n", block.vtx[0].vout.size(), step + 1);
 
 /*************************** новое ******************************/
 
@@ -1965,7 +2092,8 @@ printf("===>> CB vecTxHashPriority   hashTr: %s  %"PRI64d"  step = %i  ii = %i\n
         printf("- Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin)\n", (unsigned)block.vtx.size(), 0.001 * nTime, 0.001 * nTime / block.vtx.size(), nInputs <= 1 ? 0 : 0.001 * nTime / (nInputs-1));
 
     if (GetValueOut(block.vtx[0]) > GetBlockValue(pindex->nHeight, nFees))
-        return state.DoS(100, error("ConnectBlock() : coinbase pays too much (actual=%"PRI64d" vs limit=%"PRI64d")", GetValueOut(block.vtx[0]), GetBlockValue(pindex->nHeight, nFees)));
+        return state.DoS(100, error("ConnectBlock() : coinbase pays non-standard (actual=%"PRI64d" vs standard=%"PRI64d")", GetValueOut(block.vtx[0]), GetBlockValue(pindex->nHeight, nFees)));
+//        return state.DoS(100, error("ConnectBlock() : coinbase pays too much (actual=%"PRI64d" vs limit=%"PRI64d")", GetValueOut(block.vtx[0]), GetBlockValue(pindex->nHeight, nFees)));
 
     if (!control.Wait())
         return state.DoS(100, false);
@@ -2014,7 +2142,7 @@ printf("===>> CB vecTxHashPriority   hashTr: %s  %"PRI64d"  step = %i  ii = %i\n
 
 bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
 {
-    // All modifications to the coin state will be done in this cache.      Все изменения в состоянии монет будет сделано в этом кэше.
+    // All modifications to the coin state will be done in this cache.      Все изменения в состоянии монета будет сделано в этом кэше.
     // Only when all have succeeded, we push it to pcoinsTip.               Только когда все удалось, мы толкнём ее к pcoinsTip.
     CCoinsViewCache view(*pcoinsTip, true);
 
@@ -2054,7 +2182,7 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
     BOOST_FOREACH(CBlockIndex* pindex, vDisconnect) {
         CBlock block;
         if (!ReadBlockFromDisk(block, pindex))
-            return state.Abort(_("Failed to read block"));
+            return state.Abort(_("Failed to read block 1"));
         int64 nStart = GetTimeMicros();
         if (!DisconnectBlock(block, state, pindex, view))
             return error("SetBestBlock() : DisconnectBlock %s failed", pindex->GetBlockHash().ToString().c_str());
@@ -2074,7 +2202,7 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
     BOOST_FOREACH(CBlockIndex *pindex, vConnect) {
         CBlock block;
         if (!ReadBlockFromDisk(block, pindex))
-            return state.Abort(_("Failed to read block"));
+            return state.Abort(_("Failed to read block 2"));
         int64 nStart = GetTimeMicros();
         if (!ConnectBlock(block, state, pindex, view)) {
             if (state.IsInvalid()) {
@@ -2341,7 +2469,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         return state.DoS(100, error("CheckBlock() : size limits failed"));
 
     // Check proof of work matches claimed amount   (Проверьте доказательство работы состояния заявленной суммы)
-    if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits))
+    if (fCheckPOW && !CheckProofOfWorkNEW(block.vtx, block.GetHash(), block.nBits))
+//    if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits))
         return state.DoS(50, error("CheckBlock() : proof of work failed"));
 
     // Check timestamp

@@ -227,8 +227,8 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 if (pindexGenesisBlock == NULL && diskindex.GetBlockHash() == Params().HashGenesisBlock())
                     pindexGenesisBlock = pindexNew;
 
-                if (!pindexNew->CheckIndex())
-                    return error("LoadBlockIndex() : CheckIndex failed: %s", pindexNew->ToString().c_str());
+//                if (!pindexNew->CheckIndex())
+//                    return error("LoadBlockIndex() : CheckIndex failed: %s", pindexNew->ToString().c_str());  В CBlockIndex нет массива с транзакциями для проверки nBits в старом CheckProofOfWork
 
                 pcursor->Next();
             } else {

@@ -7,6 +7,7 @@
 
 #include "core.h"
 #include "wallet.h"
+#include "Lyra2RE/Lyra2RE.h"
 
 /** Run the miner threads                                                           Запуск miner потоков */
 void GenerateBitcoins(bool fGenerate, CWallet* pwallet);
@@ -17,7 +18,7 @@ void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& 
 /** Do mining precalculation                                                        Сделать предварительное вычисление майнинга  */
 void FormatHashBuffers(CBlock* pblock, char* pmidstate, char* pdata, char* phash1);
 /** Check mined block                                                               Проверить добытый блок*/
-bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey);
+bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey, CBigNum& sumTrDifTemplate);
 /** Base sha256 mining transform                                                    Базовое sha256 майнинг преобразование  */
 void SHA256Transform(void* pstate, void* pinput, const void* pinit);
 

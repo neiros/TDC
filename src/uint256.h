@@ -294,18 +294,18 @@ public:
     }
 
 
-    std::string GetHex1() const                ////////// новое //////////
-    {
-        char str[1];
-        sprintf(str, "%02x", ((unsigned char*)pn)[sizeof(pn) - (WIDTH * 4 - 1)]);
-        return std::string(str);
-    }
-    std::string GetHex2() const                ////////// новое //////////
-    {
-        char str[1];
-        sprintf(str, "%02x", ((unsigned char*)pn)[sizeof(pn) - (WIDTH * 4)]);
-        return std::string(str);
-    }
+//    std::string GetHex1() const                ////////// новое //////////
+//    {
+//        char str[1];
+//        sprintf(str, "%02x", ((unsigned char*)pn)[sizeof(pn) - (WIDTH * 4 - 1)]);
+//        return std::string(str);
+//    }
+//    std::string GetHex2() const                ////////// новое //////////
+//    {
+//        char str[1];
+//        sprintf(str, "%02x", ((unsigned char*)pn)[sizeof(pn) - (WIDTH * 4)]);
+//        return std::string(str);
+//    }
 
 
     std::string GetHex() const
