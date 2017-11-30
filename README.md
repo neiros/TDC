@@ -1,9 +1,3 @@
 # ---TTC---
 
-Сторонняя поддержка и пожертвования за все время(all donations) :)))
-
-BTC: 1yirJsnmjsTDNCMknokaaYE2kkqYZiUhJ
-
-LTC: LNSDetWtrYFpRreeRbJxewd9h8dHkEZv6X
-
-VTC: VaojHmM6xsFqbzvXqpPK9mJSwokGq25KPk
+This branch only for this page - http://ss-iqr.blogspot.ru/2017/09/ttc.html
