@@ -1021,13 +1021,13 @@ void PrintExceptionContinue(std::exception* pex, const char* pszThread)
 boost::filesystem::path GetDefaultDataDir()
 {
     namespace fs = boost::filesystem;
-    // Windows < Vista: C:\Documents and Settings\Username\Application Data\---TTC---
-    // Windows >= Vista: C:\Users\Username\AppData\Roaming\---TTC---
-    // Mac: ~/Library/Application Support/---TTC---
-    // Unix: ~/.---TTC---
+    // Windows < Vista: C:\Documents and Settings\Username\Application Data\TTC
+    // Windows >= Vista: C:\Users\Username\AppData\Roaming\TTC
+    // Mac: ~/Library/Application Support/TTC
+    // Unix: ~/.TTC
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "---TTC---";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "TTC";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -1039,10 +1039,10 @@ boost::filesystem::path GetDefaultDataDir()
     // Mac
     pathRet /= "Library/Application Support";
     fs::create_directory(pathRet);
-    return pathRet / "---TTC---";
+    return pathRet / "TTC";
 #else
     // Unix
-    return pathRet / ".---TTC---";
+    return pathRet / ".TTC";
 #endif
 #endif
 }
@@ -1083,7 +1083,7 @@ const boost::filesystem::path &GetDataDir(bool fNetSpecific)
 
 boost::filesystem::path GetConfigFile()
 {
-    boost::filesystem::path pathConfigFile(GetArg("-conf", "---TTC---.conf"));
+    boost::filesystem::path pathConfigFile(GetArg("-conf", "TTC.conf"));
     if (!pathConfigFile.is_complete()) pathConfigFile = GetDataDir(false) / pathConfigFile;
     return pathConfigFile;
 }
@@ -1103,8 +1103,8 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
 
     for (boost::program_options::detail::config_file_iterator it(streamConfig, setOptions), end; it != end; ++it)
     {
-        // Don't overwrite existing settings so command line settings override ---TTC---.conf
-        //              Не перезаписывать существующие параметры, параметры командной строки переопределены ---TTC---.conf
+        // Don't overwrite existing settings so command line settings override TTC.conf
+        //              Не перезаписывать существующие параметры, параметры командной строки переопределены TTC.conf
         string strKey = string("-") + it->string_key;
         if (mapSettingsRet.count(strKey) == 0)
         {
@@ -1347,7 +1347,7 @@ void AddTimeData(const CNetAddr& ip, int64 nTime)
                 if (!fMatch)
                 {
                     fDone = true;
-                    string strMessage = _("Warning: Please check that your computer's date and time are correct! If your clock is wrong ---TTC--- will not work properly.");
+                    string strMessage = _("Warning: Please check that your computer's date and time are correct! If your clock is wrong TTC will not work properly.");
                     strMiscWarning = strMessage;
                     printf("*** %s\n", strMessage.c_str());
                     uiInterface.ThreadSafeMessageBox(strMessage, "", CClientUIInterface::MSG_WARNING);

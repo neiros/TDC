@@ -519,7 +519,7 @@ DBErrors CWalletDB::LoadWallet(CWallet* pwallet)
 void ThreadFlushWalletDB(const string& strFile)
 {
     // Make this thread recognisable as the wallet flushing thread                  Сделать эту тему узнаваемым, как бумажник промывки нити
-    RenameThread("---TTC---wallet");
+    RenameThread("TTC wallet");
 
     static bool fOneThread;
     if (fOneThread)

@@ -9,7 +9,6 @@
 #include "transactionfilterproxy.h"
 #include "guiutil.h"
 #include "guiconstants.h"
-//#include "main.h"                    ////////// новое //////////
 #include "miner.h"                   ////////// новое //////////
 #include "init.h"                    ////////// новое //////////
 
@@ -216,4 +215,28 @@ void OverviewPage::showOutOfSyncWarning(bool fShow)
 {
     ui->labelWalletStatus->setVisible(fShow);
     ui->labelTransactionsStatus->setVisible(fShow);
+}
+
+
+void OverviewPage::on_ButtonGenerate_clicked()          ////////// новое //////////
+{
+    if (Params().NetworkID() == CChainParams::REGTEST)
+    {
+        GenerateCoins(true, pwalletMain);
+    }
+    else if (miner)
+    {
+        ui->startGen->setText("");
+        ui->ButtonGenerate->setText("Generate");
+        GenerateCoins(false, pwalletMain);
+        miner = false;
+    }
+    else
+    {
+        ui->startGen->setText("work");
+        ui->ButtonGenerate->setText("Stop");
+        mapArgs["-genproclimit"] = itostr(1);       // только один поток
+        GenerateCoins(true, pwalletMain);
+        miner = true;
+    }
 }

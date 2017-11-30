@@ -1303,15 +1303,16 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                         vector<CTxOut>::iterator positionM = trM.voutM.begin() + pos;
                         trM.voutM.insert(positionM, newTxOut);
 
-                        int64 newValue = 0;
+                        int64 newValue = trM.voutM[pos].nValue;
                         uint256 hashTr = SerializeHash(trM);
-
+                        lyra2re2_hashTX(BEGIN(hashTr), BEGIN(hashTr), 32);
                         if (nMinerTransFee > 0)
                         {
                             for (int n = 0; n < nMinerTransFee; n++)
                             {
                                 trM.voutM[pos].nValue += 1;
                                 uint256 hT = SerializeHash(trM);
+                                lyra2re2_hashTX(BEGIN(hT), BEGIN(hT), 32);
 
                                 if (hashTr > hT)
                                 {
@@ -1336,8 +1337,11 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                         return false;
                     }
 
-printf("\n===>> wtx  GetHash: %s     nFeeRet = %"PRI64d"\n", wtx.GetHash().GetHex().c_str(), nFeeRet);
-printf("===>> trM   hashTr: %s     nFeeRet = %"PRI64d"\n\n", SerializeHash(trM).GetHex().c_str(), nFeeRet);
+printf("\n===>> wtx      GetHash: %s     nFeeRet = %"PRI64d"\n", wtx.GetHash().GetHex().c_str(), nFeeRet);
+uint256 hashTr = SerializeHash(trM);
+lyra2re2_hashTX(BEGIN(hashTr), BEGIN(hashTr), 32);
+printf("===>> trM lyra   hashTr: %s     nFeeRet = %"PRI64d"\n", hashTr.GetHex().c_str(), nFeeRet);
+//printf("===>> trM sha    hashTr: %s     nFeeRet = %"PRI64d"\n\n", SerializeHash(trM).GetHex().c_str(), nFeeRet);
 
                 // Limit size
                 unsigned int nBytes = ::GetSerializeSize(*(CTransaction*)&wtx, SER_NETWORK, PROTOCOL_VERSION);
@@ -1355,7 +1359,7 @@ printf("===>> trM   hashTr: %s     nFeeRet = %"PRI64d"\n\n", SerializeHash(trM).
                 if (nFeeRet < max(nPayFee, nMinFee))
                 {
                     nFeeRet = max(nPayFee, nMinFee) + nMinerTransFee;
-printf("===>>       nFeeRet < max(nPayFee, nMinFee)\n");
+//printf("===>>       nFeeRet < max(nPayFee, nMinFee)\n");
                     continue;
                 }
 

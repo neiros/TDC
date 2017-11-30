@@ -68,7 +68,7 @@ map<uint256, map<uint256, CDataStream*> > mapOrphanTransactionsByPrev;
 // Constant stuff for coinbase transactions we create: (Константные переменные для coinbase сделок мы создаем)
 CScript COINBASE_FLAGS;
 
-const string strMessageMagic = "---TTC--- Signed Message:\n";
+const string strMessageMagic = "TTC Signed Message:\n";
 
 double dHashesPerSec = 0.0;
 int64 nHPSTimerStart = 0;
@@ -1371,9 +1371,6 @@ bool CheckProofOfWorkNEW(std::vector<CTransaction> vtx, uint256 hash, unsigned i
     CBigNum bnTarget;
     bnTarget.SetCompact(nBits);
 
-//printf("===== bnTarget: %s    \nParams().ProofOfWorkLimit(): %s\n", bnTarget.getuint256().GetHex().c_str(), Params().ProofOfWorkLimit().getuint256().GetHex().c_str());
-
-
     // Check range  (проверка диапазона)
     if (bnTarget <= 0 || bnTarget > Params().ProofOfWorkLimit())
         return error("CheckProofOfWork() : nBits below minimum work");
@@ -1395,56 +1392,36 @@ bool CheckProofOfWorkNEW(std::vector<CTransaction> vtx, uint256 hash, unsigned i
 
             trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
 
-            CBigNum bntx = CBigNum(SerializeHash(trM));
+            uint256 HashTr = SerializeHash(trM);
+            lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
+            CBigNum bntx = CBigNum(HashTr);
             sumTrDif += maxBigNum / bntx;
 
-//printf(">>>>> CheckProofOfWorkNEW    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", SerializeHash(trM).GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), sumTrDif.ToString().c_str());
+//printf(">>>>> CheckProofOfWorkNEW    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", HashTr.GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), sumTrDif.ToString().c_str());
         }
 //printf(">>>>> sumTrDif: %s\n\n", sumTrDif.ToString().c_str());
 
+        CBigNum divideTarget = (maxBigNum / CBigNum().SetCompact(nBits)) - 1;
 
-        uint256 hashTarget;
-        CBigNum divideTarget = maxBigNum / bnTarget;
+        int precision = 1000;
+        double snowfox = 2.0;
+        double CDFtrdt = 1 - exp(- (snowfox * sumTrDif.getuint256().getdouble()) / divideTarget.getuint256().getdouble());
+        double CDFsize = 1 - exp(- (double)vtx.size() / (double)QUANTITY_TX);   // от 0 до 1
 
-        if (divideTarget <= sumTrDif)
-            hashTarget = maxBigNum.getuint256();
-        else
-            hashTarget = (maxBigNum / (divideTarget - sumTrDif)).getuint256();       // уменьшение целевого значения сложности
+        int backlash = precision * CDFtrdt * CDFsize;
+
+        uint256 hashTarget = (maxBigNum / (1 + divideTarget - (divideTarget / precision) * backlash)).getuint256();
+
 
         if (hash > hashTarget)
         {
-printf(">>>>> hash: %s>>>>> hashTarget: %s\n\n", hash.ToString().c_str(), hashTarget.ToString().c_str());
+printf(">>>>> hash: %s > hashTarget: %s\n\n", hash.ToString().c_str(), hashTarget.ToString().c_str());
             return error("CheckProofOfWork() : hash doesn't match nBits and sumTrDif");
         }
     }
     return true;
 }
 
-
-//bool CheckProofOfWork(uint256 hash, unsigned int nBits)
-//{
-//    CBigNum bnTarget;
-//    bnTarget.SetCompact(nBits);
-
-//    // Check range  (проверка диапазона)
-//    if (bnTarget <= 0 || bnTarget > Params().ProofOfWorkLimit())
-//        return error("CheckProofOfWork() : nBits below minimum work");
-
-////    if (bnTarget <= 0){
-////printf("=== bnTarget: %s    Params().ProofOfWorkLimit(): %s\n", bnTarget.getuint256().GetHex().c_str(), Params().ProofOfWorkLimit().getuint256().GetHex().c_str());
-////        return error("CheckProofOfWork() : nBits below minimum work (bnTarget <= 0)");
-////    }
-////    if (bnTarget > Params().ProofOfWorkLimit()){
-////printf("=== bnTarget: %s    Params().ProofOfWorkLimit(): %s\n", bnTarget.getuint256().GetHex().c_str(), Params().ProofOfWorkLimit().getuint256().GetHex().c_str());
-////        return error("CheckProofOfWork() : nBits below minimum work (bnTarget > Params().ProofOfWorkLimit())");
-////    }
-
-//    // Check proof of work matches claimed amount (Проверка proof of work состояния заявленной суммы)
-//    if (hash > bnTarget.getuint256())
-//        return error("CheckProofOfWork() : hash doesn't match nBits");
-
-//    return true;
-//}
 
 // Return maximum amount of blocks that other nodes claim to have   (Вернуть максимальное количество блоков, подтверждённые другими узлами)
 int GetNumBlocksOfPeers()
@@ -1566,8 +1543,6 @@ void UpdateTime(CBlockHeader& block, const CBlockIndex* pindexPrev)
 
 
 
-
-
 const CTxOut &CCoinsViewCache::GetOutputFor(const CTxIn& input)
 {
     const CCoins &coins = GetCoins(input.prevout.hash);
@@ -1671,7 +1646,6 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCach
 
         }
 
-//printf("CheckInputs() : value in < value out   nValueIn = %"PRI64d"   GetValueOut(tx) = %"PRI64d"\n", nValueIn, GetValueOut(tx));
 
         if (nValueIn < GetValueOut(tx))
             return state.DoS(100, error("CheckInputs() : %s value in < value out", tx.GetHash().ToString().c_str()));
@@ -1831,7 +1805,7 @@ bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigne
 static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
 void ThreadScriptCheck() {
-    RenameThread("---TTC---scriptch");
+    RenameThread("TTC-scriptch");
     scriptcheckqueue.Thread();
 }
 
@@ -1908,13 +1882,10 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
 //*****************************************************************
 //************************* Transfer TX ***************************
-            bool txAddScriptCheck = true;                           ////////// новое //////////
-            for (unsigned int j = 0; j < tx.vin.size(); j++)
-            {
-                if (tx.vin[j].scriptSig !=  CScript() << OP_0 << OP_0)
-                    break;
-                txAddScriptCheck = false;                           ////////// новое //////////
+            bool txAddScriptCheck = true;
 
+            if (tx.vin[0].scriptSig ==  CScript() << OP_0 << OP_0)
+            {
                 CTransaction txAdd;
 
                 if (GetHeightPartChain(pindex->nHeight) != -1)
@@ -1925,6 +1896,12 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                     BOOST_FOREACH(const CTransaction& txRB, ReadBlock.vtx)
                     {
                         uint256 txHash = txRB.GetHash();
+
+                        double RPC = RATE_PART_CHAIN;
+                        if (txRB.vin[0].scriptSig == CScript() << OP_0 << OP_0)
+                            if (!txRB.IsCoinBase())
+                                RPC *= 10.0;        // десятикратное увеличение комиссии второго и последующих переносов
+
                         if (view.HaveCoins(txHash))
                         {
                             const CCoins &coinsOut = view.GetCoins(txHash);
@@ -1933,7 +1910,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                                 if (coinsOut.IsAvailable(i))
                                 {
                                     CTxOut out = coinsOut.vout[i];
-                                    int64 rate = out.nValue * RATE_PART_CHAIN;
+                                    int64 rate = out.nValue * RPC;
                                     if (out.nValue - rate > MIN_FEE_PART_CHAIN)
                                     {
                                         out.nValue -= rate;
@@ -1946,13 +1923,12 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                     }
                 }
 
-                if (tx != txAdd)
-                    return false;       // из-за местоположения в массиве возможно срабарывание(не критично)
-                break;
+                if (tx == txAdd)
+                    txAddScriptCheck = false;
             }
+
 //************************* Transfer TX ***************************
 //*****************************************************************
-
 
             if (txAddScriptCheck)                                   ////////// новое //////////  пройдёт только одна txAdd из-за CheckBlock, что выше и UpdateCoins, что ниже
             {
@@ -2018,6 +1994,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                     trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
 
                     uint256 HashTrM = SerializeHash(trM);
+                    lyra2re2_hashTX(BEGIN(HashTrM), BEGIN(HashTrM), 32);
 
                     CTransaction getTx;
                     const uint256 txHash = tx.vin[0].prevout.hash;

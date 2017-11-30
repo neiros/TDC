@@ -59,7 +59,7 @@ Value setgenerate(const Array& params, bool fHelp)
     }
     mapArgs["-gen"] = (fGenerate ? "1" : "0");
 
-    GenerateBitcoins(fGenerate, pwalletMain);
+    GenerateCoins(fGenerate, pwalletMain);
     return Value::null;
 }
 
@@ -112,10 +112,10 @@ Value getwork(const Array& params, bool fHelp)
             "If [data] is specified, tries to solve the block and returns true if it was successful.");
 
     if (vNodes.empty())
-        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "---TTC--- is not connected!");
+        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "TTC is not connected!");
 
     if (IsInitialBlockDownload())
-        throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "---TTC--- is downloading blocks...");
+        throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "TTC is downloading blocks...");
 
     typedef map<uint256, pair<CBlock*, CScript> > mapNewBlock_t;
     static mapNewBlock_t mapNewBlock;    // FIXME: thread safety
@@ -210,10 +210,8 @@ Value getwork(const Array& params, bool fHelp)
 
 
 //*****************************************************************
-        uint256 hashTarget;
-
         CBigNum maxBigNum = CBigNum(~uint256(0));
-        CBigNum sumTrDifTemplate = 0;
+        CBigNum sumTrDif = 0;
 
         BOOST_FOREACH(CTransaction& tx, pblock->vtx)
         {
@@ -228,22 +226,15 @@ Value getwork(const Array& params, bool fHelp)
 
             trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
 
-            CBigNum bntx = CBigNum(SerializeHash(trM));
-            sumTrDifTemplate += maxBigNum / bntx;
+            uint256 hashTr = SerializeHash(trM);
+            lyra2re2_hashTX(BEGIN(hashTr), BEGIN(hashTr), 32);
+            CBigNum bntx = CBigNum(hashTr);
+            sumTrDif += maxBigNum / bntx;
 
-//printf(">>>>> BOOST_FOREACH pblock->vtx    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", SerializeHash(trM).GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), pblocktemplate->sumTrDif.ToString().c_str());
+//printf(">>>>> BOOST_FOREACH pblock->vtx    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", hashTr.GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), pblocktemplate->sumTrDif.ToString().c_str());
         }
 
-        CBigNum divideTarget = maxBigNum / CBigNum().SetCompact(pblock->nBits);
-
-        if (divideTarget <= sumTrDifTemplate)
-            hashTarget = maxBigNum.getuint256();
-        else
-            hashTarget = (maxBigNum / (divideTarget - sumTrDifTemplate)).getuint256();       // уменьшение целевого значения сложности
-
-
-
-        return CheckWork(pblock, *pwalletMain, *pMiningKey, sumTrDifTemplate);
+        return CheckWork(pblock, *pwalletMain, *pMiningKey, sumTrDif);
 
 //*****************************************************************
 //        return CheckWork(pblock, *pwalletMain, *pMiningKey);
@@ -292,10 +283,10 @@ Value getblocktemplate(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid mode");
 
     if (vNodes.empty())
-        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "---TTC--- is not connected!");
+        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "TTC is not connected!");
 
     if (IsInitialBlockDownload())
-        throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "---TTC--- is downloading blocks...");
+        throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "TTC is downloading blocks...");
 
     // Update block                                                             Обновление блока
     static unsigned int nTransactionsUpdatedLast;

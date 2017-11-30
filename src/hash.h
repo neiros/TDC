@@ -12,6 +12,7 @@
 #include <openssl/ripemd.h>
 #include <vector>
 
+
 template<typename T1>
 inline uint256 Hash(const T1 pbegin, const T1 pend)
 {

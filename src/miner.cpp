@@ -11,7 +11,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// BitcoinMiner
+// TTC-Miner
 //
 
 int static FormatHashBlocks(void* pbuffer, unsigned int len)
@@ -343,6 +343,12 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
             BOOST_FOREACH(CTransaction& tx, ReadBlock.vtx)
             {
                 uint256 txHash = tx.GetHash();
+
+                double RPC = RATE_PART_CHAIN;
+                if (tx.vin[0].scriptSig == CScript() << OP_0 << OP_0)
+                    if (!tx.IsCoinBase())
+                        RPC *= 10.0;        // десятикратное увеличение комиссии второго и последующих переносов
+
                 if (view.HaveCoins(txHash))
                 {
                     const CCoins &coinsOut = view.GetCoins(txHash);
@@ -351,7 +357,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                         if (coinsOut.IsAvailable(i))
                         {
                             CTxOut out = coinsOut.vout[i];
-                            int64 rate = out.nValue * RATE_PART_CHAIN;
+                            int64 rate = out.nValue * RPC;
                             if (out.nValue - rate > MIN_FEE_PART_CHAIN)
                             {
                                 out.nValue -= rate;
@@ -417,6 +423,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                         trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
 
                         uint256 HashTrM = SerializeHash(trM);
+                        lyra2re2_hashTX(BEGIN(HashTrM), BEGIN(HashTrM), 32);
 
                         CTransaction getTx;
                         const uint256 txHash = tx.vin[0].prevout.hash;
@@ -546,12 +553,13 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
 
             trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
 
-            CBigNum bntx = CBigNum(SerializeHash(trM));
+            uint256 HashTr = SerializeHash(trM);
+            lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
+            CBigNum bntx = CBigNum(HashTr);
             pblocktemplate->sumTrDif += maxBigNum / bntx;
-//printf(">>>>> BOOST_FOREACH pblock->vtx    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", SerializeHash(trM).GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), pblocktemplate->sumTrDif.ToString().c_str());
+//printf(">>>>> BOOST_FOREACH pblock->vtx    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", HashTr.GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), pblocktemplate->sumTrDif.ToString().c_str());
         }
 //printf(">>>>> pblocktemplate->sumTrDif: %s\n %s\n", pblocktemplate->sumTrDif.ToString().c_str(), maxBigNum.ToString().c_str());
-
 
 
 
@@ -632,37 +640,30 @@ void FormatHashBuffers(CBlock* pblock, char* pmidstate, char* pdata, char* phash
 }
 
 
-bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey, CBigNum& sumTrDifTemplate)
+bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey, CBigNum psumTrDif)
 {
     uint256 hash = pblock->GetHash();
-    //    uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
-    uint256 hashTarget;
-
-
 
     CBigNum maxBigNum = CBigNum(~uint256(0));
-    CBigNum divideTarget = maxBigNum / CBigNum().SetCompact(pblock->nBits);
+    CBigNum divideTarget = (maxBigNum / CBigNum().SetCompact(pblock->nBits)) - 1;
 
-    if (divideTarget <= sumTrDifTemplate)
-        hashTarget = maxBigNum.getuint256();
-    else
-        hashTarget = (maxBigNum / (divideTarget - sumTrDifTemplate)).getuint256();       // уменьшение целевого значения сложности
+    int precision = 1000;
+    double snowfox = 2.0;
+    double CDFtrdt = 1 - exp(- (snowfox * psumTrDif.getuint256().getdouble()) / divideTarget.getuint256().getdouble());
+    double CDFsize = 1 - exp(- (double)pblock->vtx.size() / (double)QUANTITY_TX);
 
+    int backlash = precision * CDFtrdt * CDFsize;
 
-printf(">>>>> CheckWork    divideTarget: %s\n               sumTrDifTemplate: %s\ndivideTarget - sumTrDifTemplate: %s\n",
-       divideTarget.ToString().c_str(), sumTrDifTemplate.ToString().c_str(), (divideTarget - sumTrDifTemplate).ToString().c_str());
-printf(">>>>> CheckWork      hashTarget: %s\n", hashTarget.ToString().c_str());
-
+    uint256 hashTarget = (maxBigNum / (1 + divideTarget - (divideTarget / precision) * backlash)).getuint256();
 
 
     if (hash > hashTarget)
         return false;
 
     //// debug print
-    printf("BitcoinMiner:\n");
-    printf("proof-of-work found  \n     hash: %s  \n   target: %s\n", hash.GetHex().c_str(), hashTarget.GetHex().c_str());
-//    printf("proof-of-work found  \n     hash: %s  \n   target: %s\n", hash.GetHex().c_str(), CBigNum().SetCompact(pblock->nBits).getuint256().GetHex().c_str());
-//    printf("proof-of-work found  \n     hash: %s  \n   target: %s\ntarget+TX: %s\n", hash.GetHex().c_str(), CBigNum().SetCompact(pblock->nBits).getuint256().GetHex().c_str(), hashTarget.GetHex().c_str());
+    printf("TTC-Miner:\n");
+//    printf("proof-of-work found  \n     hash: %s  \n   target: %s\n", hash.GetHex().c_str(), hashTarget.GetHex().c_str());
+    printf("proof-of-work found  \n      hash: %s  \nnew target: %s\nold target: %s\n", hash.GetHex().c_str(), hashTarget.ToString().c_str(), CBigNum().SetCompact(pblock->nBits).getuint256().GetHex().c_str());
     pblock->print();
     printf("generated %s\n", FormatMoney(pblock->vtx[0].vout[0].nValue).c_str());
 
@@ -670,7 +671,7 @@ printf(">>>>> CheckWork      hashTarget: %s\n", hashTarget.ToString().c_str());
     {
         LOCK(cs_main);
         if (pblock->hashPrevBlock != hashBestChain)
-            return error("BitcoinMiner : generated block is stale");
+            return error("TTC-Miner : generated block is stale");
 
         // Remove key from key pool                                                 Удаление ключа из пула ключей
         reservekey.KeepKey();
@@ -684,15 +685,15 @@ printf(">>>>> CheckWork      hashTarget: %s\n", hashTarget.ToString().c_str());
         // Process this block the same as if we had received it from another node   Обработать этот блок такой же, как если бы мы получили ее от другого узла
         CValidationState state;
         if (!ProcessBlock(state, NULL, pblock))
-            return error("BitcoinMiner : ProcessBlock, block not accepted");
+            return error("TTC-Miner : ProcessBlock, block not accepted");
     }
 
     return true;
 }
 
-void static BitcoinMiner(CWallet *pwallet)
+void static TTCminer(CWallet *pwallet)
 {
-    printf("BitcoinMiner started\n");
+    printf("TTC-Miner started\n");
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
     RenameThread("Transib-miner");
 
@@ -718,11 +719,11 @@ void static BitcoinMiner(CWallet *pwallet)
         if (!pblocktemplate.get())
             return;
         CBlock *pblock = &pblocktemplate->block;
-        CBigNum sumTrDifTemplate = pblocktemplate->sumTrDif;                          ////////// новое //////////
+        CBigNum psumTrDif = pblocktemplate->sumTrDif;                          ////////// новое //////////
         IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
 
 
-        printf("Running BitcoinMiner with %"PRIszu" transactions in block (%u bytes)\n", pblock->vtx.size(),
+        printf("Running TTC-Miner with %"PRIszu" transactions in block (%u bytes)\n", pblock->vtx.size(),
                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
 
         //
@@ -736,25 +737,28 @@ void static BitcoinMiner(CWallet *pwallet)
 
         unsigned int& nBlockTime = *(unsigned int*)(pdata + 64 + 4);
         unsigned int& nBlockBits = *(unsigned int*)(pdata + 64 + 8);
-        unsigned int& nBlockNonce = *(unsigned int*)(pdata + 64 + 12);
+//        unsigned int& nBlockNonce = *(unsigned int*)(pdata + 64 + 12);
 
 
         //
         // Search
         //
         int64 nStart = GetTime();
-//        uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
-        uint256 hashTarget;
-
-
 
         CBigNum maxBigNum = CBigNum(~uint256(0));
-        CBigNum divideTarget = maxBigNum / CBigNum().SetCompact(pblock->nBits);
+        CBigNum divideTarget = (maxBigNum / CBigNum().SetCompact(pblock->nBits)) - 1;                               // 1 это защита от возможного / на 0
 
-        if (divideTarget <= sumTrDifTemplate)
-            hashTarget = maxBigNum.getuint256();
-        else
-            hashTarget = (maxBigNum / (divideTarget - sumTrDifTemplate)).getuint256();       // уменьшение целевого значения сложности
+        int precision = 1000; // точность коректировки сложности (0.0001)
+        double snowfox = 2.0; // повышающий коэффициент суммы сложностей транзакций (чем больше значение, тем больший вес хешей транзакций при расчёте хеша блока)
+        double CDFtrdt = 1 - exp(- (snowfox * psumTrDif.getuint256().getdouble()) / divideTarget.getuint256().getdouble()); // от 0 до 1
+        double CDFsize = 1 - exp(- (double)pblock->vtx.size() / (double)QUANTITY_TX);  // от 0 до 1 тем меньше, чем меньше size() относительно QUANTITY_TX
+
+        int backlash = precision * CDFtrdt * CDFsize;   // люфт, смещение
+
+        uint256 hashTarget = (maxBigNum / (1 + divideTarget - (divideTarget / precision) * backlash)).getuint256(); // 1 это защита от возможного / на 0
+
+//printf(">>>>> Calculation target\n divideTarget: %s\n      CDFtrdt: %f\n      CDFsize: %f\n     backlash: %i\n   hashTarget: %s\n",
+//               divideTarget.ToString().c_str(), CDFtrdt, CDFsize, backlash, hashTarget.ToString().c_str());
 
 
         while (true)
@@ -765,14 +769,14 @@ void static BitcoinMiner(CWallet *pwallet)
 
             for (;;)
             {
-                lyra2re2_hash(BEGIN(pblock->nVersion), BEGIN(thash));
+                lyra2re2_hashTX(BEGIN(pblock->nVersion), BEGIN(thash), 80);
 
                 if (thash <= hashTarget)
                 {
                     // Found a solution
-                    printf("Entering to found a solution section. Hash: %s", thash.GetHex().c_str());
+                    printf("Entering to found a solution section. Hash: %s\n", thash.GetHex().c_str());
                     SetThreadPriority(THREAD_PRIORITY_NORMAL);
-                    CheckWork(pblock, *pwallet, reservekey, sumTrDifTemplate);
+                    CheckWork(pblock, *pwallet, reservekey, psumTrDif);
                     SetThreadPriority(THREAD_PRIORITY_LOWEST);
 
                     // In regression test mode, stop mining after a block is found. This        В регрессивном тестовом режиме, остановить добычу после найденного блока.
@@ -822,7 +826,7 @@ void static BitcoinMiner(CWallet *pwallet)
             boost::this_thread::interruption_point();
             if (vNodes.empty() && Params().NetworkID() != CChainParams::REGTEST)
                 break;
-            if (nBlockNonce >= 0xffff0000)
+            if (pblock->nNonce >= 0xffff0000)
                 break;
             if (nTransactionsUpdated != nTransactionsUpdatedLast && GetTime() - nStart > 60)
                 break;
@@ -842,12 +846,12 @@ void static BitcoinMiner(CWallet *pwallet)
     } }
     catch (boost::thread_interrupted)
     {
-        printf("BitcoinMiner terminated\n");
+        printf("TTC-Miner terminated\n");
         throw;
     }
 }
 
-void GenerateBitcoins(bool fGenerate, CWallet* pwallet)
+void GenerateCoins(bool fGenerate, CWallet* pwallet)
 {
     static boost::thread_group* minerThreads = NULL;
 
@@ -871,5 +875,5 @@ void GenerateBitcoins(bool fGenerate, CWallet* pwallet)
 
     minerThreads = new boost::thread_group();
     for (int i = 0; i < nThreads; i++)
-        minerThreads->create_thread(boost::bind(&BitcoinMiner, pwallet));
+        minerThreads->create_thread(boost::bind(&TTCminer, pwallet));
 }
