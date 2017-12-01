@@ -56,7 +56,7 @@ namespace boost {
 #ifdef _WIN32_IE
 #undef _WIN32_IE
 #endif
-#define _WIN32_IE 0x0501
+#define _WIN32_IE 0x0501 // нужно для SHGetSpecialFolderPathA
 #define WIN32_LEAN_AND_MEAN 1
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -69,7 +69,7 @@ namespace boost {
 
 using namespace std;
 
-map<string, string> mapArgs;
+map<string, string> mapArgs;                    //std::map - ассоциативный контейнер содержит пары ключ-значение с уникальными ключами
 map<string, vector<string> > mapMultiArgs;
 bool fDebug = false;
 bool fDebugNet = false;
@@ -85,7 +85,7 @@ CMedianFilter<int64> vTimeOffsets(200,0);
 volatile bool fReopenDebugLog = false;
 bool fCachedPath[2] = {false, false};
 
-// Init OpenSSL library multithreading support
+// Init OpenSSL library multithreading support  (Init библиотеки OpenSSL поддержку многопоточности)
 static CCriticalSection** ppmutexOpenSSL;
 void locking_callback(int mode, int i, const char* file, int line)
 {
@@ -104,23 +104,23 @@ class CInit
 public:
     CInit()
     {
-        // Init OpenSSL library multithreading support
+        // Init OpenSSL library multithreading support  (Init библиотеки OpenSSL поддержку многопоточности)
         ppmutexOpenSSL = (CCriticalSection**)OPENSSL_malloc(CRYPTO_num_locks() * sizeof(CCriticalSection*));
         for (int i = 0; i < CRYPTO_num_locks(); i++)
             ppmutexOpenSSL[i] = new CCriticalSection();
         CRYPTO_set_locking_callback(locking_callback);
 
 #ifdef WIN32
-        // Seed random number generator with screen scrape and other hardware sources
+        // Seed random number generator with screen scrape and other hardware sources  (Начальный генератор случайных чисел с экрана царапины и другие источники аппаратных)
         RAND_screen();
 #endif
 
-        // Seed random number generator with performance counter
+        // Seed random number generator with performance counter  (Начальный генератор случайных чисел счетчиков производительности)
         RandAddSeed();
     }
     ~CInit()
     {
-        // Shutdown OpenSSL library multithreading support
+        // Shutdown OpenSSL library multithreading support  (Выключение OpenSSL библиотеки поддержки многопоточности)
         CRYPTO_set_locking_callback(NULL);
         for (int i = 0; i < CRYPTO_num_locks(); i++)
             delete ppmutexOpenSSL[i];
@@ -138,7 +138,7 @@ instance_of_cinit;
 
 void RandAddSeed()
 {
-    // Seed with CPU performance counter
+    // Seed with CPU performance counter  (Начало со счетчиком производительности процессора)
     int64 nCounter = GetPerformanceCounter();
     RAND_add(&nCounter, sizeof(nCounter), 1.5);
     memset(&nCounter, 0, sizeof(nCounter));
@@ -148,15 +148,15 @@ void RandAddSeedPerfmon()
 {
     RandAddSeed();
 
-    // This can take up to 2 seconds, so only do it every 10 minutes
+    // This can take up to 2 seconds, so only do it every 10 minutes (Это может занять до 2 секунд, так что сделать это только каждые 10 минут)
     static int64 nLastPerfmon;
     if (GetTime() < nLastPerfmon + 10 * 60)
         return;
     nLastPerfmon = GetTime();
 
 #ifdef WIN32
-    // Don't need this on Linux, OpenSSL automatically uses /dev/urandom
-    // Seed with the entire set of perfmon data
+    // Don't need this on Linux, OpenSSL automatically uses /dev/urandom        Не нужно это на Linux, автоматически использует OpenSSL /dev/urandom
+    // Seed with the entire set of perfmon data                                 Начало со всей совокупностью данных системного монитора
     unsigned char pdata[250000];
     memset(pdata, 0, sizeof(pdata));
     unsigned long nSize = sizeof(pdata);
@@ -176,8 +176,8 @@ uint64 GetRand(uint64 nMax)
     if (nMax == 0)
         return 0;
 
-    // The range of the random source must be a multiple of the modulus
-    // to give every possible output value an equal possibility
+    // The range of the random source must be a multiple of the modulus         Диапазон случайного источника должна быть кратна модулю,
+    // to give every possible output value an equal possibility                 чтобы дать каждому возможному значению выходного равные возможности
     uint64 nRange = (std::numeric_limits<uint64>::max() / nMax) * nMax;
     uint64 nRand = 0;
     do
@@ -205,19 +205,19 @@ uint256 GetRandHash()
 
 
 //
-// OutputDebugStringF (aka printf -- there is a #define that we really
-// should get rid of one day) has been broken a couple of times now
-// by well-meaning people adding mutexes in the most straightforward way.
-// It breaks because it may be called by global destructors during shutdown.
-// Since the order of destruction of static/global objects is undefined,
-// defining a mutex as a global object doesn't work (the mutex gets
-// destroyed, and then some later destructor calls OutputDebugStringF,
-// maybe indirectly, and you get a core dump at shutdown trying to lock
-// the mutex).
+// OutputDebugStringF (aka printf -- there is a #define that we really          OutputDebugStringF (иначе Е - есть #define, что мы действительно
+// should get rid of one day) has been broken a couple of times now             должны избавиться от одного дня) была нарушена пару раз теперь
+// by well-meaning people adding mutexes in the most straightforward way.       по благонамеренные люди добавления мьютексы в самый простой способ.
+// It breaks because it may be called by global destructors during shutdown.    Это разбивает потому что она может быть вызвана глобальным деструкторов при завершении работы.
+// Since the order of destruction of static/global objects is undefined,        Поскольку порядок уничтожения статических / глобальных объектов не определен,
+// defining a mutex as a global object doesn't work (the mutex gets             определение мьютекс как глобальный объект не работает (мьютекс разрушается,
+// destroyed, and then some later destructor calls OutputDebugStringF,          а затем некоторые более поздние деструктор вызывает OutputDebugStringF,
+// maybe indirectly, and you get a core dump at shutdown trying to lock         может быть, косвенно, и вы получите дамп памяти при выключении пытается
+// the mutex).                                                                  заблокировать мьютекс).
 
 static boost::once_flag debugPrintInitFlag = BOOST_ONCE_INIT;
-// We use boost::call_once() to make sure these are initialized in
-// in a thread-safe manner the first time it is called:
+// We use boost::call_once() to make sure these are initialized in              Мы используем повышение :: call_once (), чтобы убедиться, что эти инициализируются в
+// in a thread-safe manner the first time it is called:                         поточно-образом в первый раз он так и называется:
 static FILE* fileout = NULL;
 static boost::mutex* mutexDebugLog = NULL;
 
@@ -235,7 +235,7 @@ static void DebugPrintInit()
 
 int OutputDebugStringF(const char* pszFormat, ...)
 {
-    int ret = 0; // Returns total number of characters written
+    int ret = 0; // Returns total number of characters written  (Возвращает общее количество записанных символов)
     if (fPrintToConsole)
     {
         // print to console
@@ -281,7 +281,7 @@ int OutputDebugStringF(const char* pszFormat, ...)
     {
         static CCriticalSection cs_OutputDebugStringF;
 
-        // accumulate and output a line at a time
+        // accumulate and output a line at a time (накапливать и выводить линии в то время)
         {
             LOCK(cs_OutputDebugStringF);
             static std::string buffer;
@@ -387,14 +387,14 @@ void ParseString(const string& str, char c, vector<string>& v)
 
 string FormatMoney(int64 n, bool fPlus)
 {
-    // Note: not using straight sprintf here because we do NOT want
-    // localized number formatting.
+    // Note: not using straight sprintf here because we do NOT want         Замечание: использование прямых Sprintf здесь, потому что мы не хотим
+    // localized number formatting.                                         локализованных форматирования числа.
     int64 n_abs = (n > 0 ? n : -n);
     int64 quotient = n_abs/COIN;
     int64 remainder = n_abs%COIN;
     string str = strprintf("%"PRI64d".%08"PRI64d, quotient, remainder);
 
-    // Right-trim excess zeros before the decimal point:
+    // Right-trim excess zeros before the decimal point:  (Правой обрезают избыток нулей до запятой:)
     int nTrim = 0;
     for (int i = str.size()-1; (str[i] == '0' && isdigit(str[i-2])); --i)
         ++nTrim;
@@ -443,7 +443,7 @@ bool ParseMoney(const char* pszIn, int64& nRet)
     for (; *p; p++)
         if (!isspace(*p))
             return false;
-    if (strWhole.size() > 10) // guard against 63 bit overflow
+    if (strWhole.size() > 10) // guard against 63 bit overflow  (принимать меры против 63 бит переполнения)
         return false;
     if (nUnits < 0 || nUnits > COIN)
         return false;
@@ -485,7 +485,7 @@ bool IsHex(const string& str)
 
 vector<unsigned char> ParseHex(const char* psz)
 {
-    // convert hex dump to vector
+    // convert hex dump to vector (конвертировать дамп в вектор)
     vector<unsigned char> vch;
     while (true)
     {
@@ -549,6 +549,10 @@ void ParseParameters(int argc, const char* const argv[])
         mapArgs[str] = strValue;
         mapMultiArgs[str].push_back(strValue);
     }
+    mapArgs["-txindex"] = "1";                                          ////////// новое //////////
+    mapMultiArgs["-txindex"].push_back("1");                            ////////// новое //////////
+
+
 
     // New 0.6 features:
     BOOST_FOREACH(const PAIRTYPE(string,string)& entry, mapArgs)
@@ -626,19 +630,19 @@ string EncodeBase64(const unsigned char* pch, size_t len)
         int enc = *(pch++);
         switch (mode)
         {
-            case 0: // we have no bits
+            case 0: // we have no bits  (у нас нет битов)
                 strRet += pbase64[enc >> 2];
                 left = (enc & 3) << 4;
                 mode = 1;
                 break;
 
-            case 1: // we have two bits
+            case 1: // we have two bits  (у нас есть два бита)
                 strRet += pbase64[left | (enc >> 4)];
                 left = (enc & 15) << 2;
                 mode = 2;
                 break;
 
-            case 2: // we have four bits
+            case 2: // we have four bits  (у нас есть четыре бита)
                 strRet += pbase64[left | (enc >> 6)];
                 strRet += pbase64[enc & 63];
                 mode = 0;
@@ -697,24 +701,24 @@ vector<unsigned char> DecodeBase64(const char* p, bool* pfInvalid)
          p++;
          switch (mode)
          {
-             case 0: // we have no bits and get 6
+             case 0: // we have no bits and get 6  (у нас нет битов и получаем 6)
                  left = dec;
                  mode = 1;
                  break;
 
-              case 1: // we have 6 bits and keep 4
+              case 1: // we have 6 bits and keep 4  (у нас есть 6 бит и держим 4)
                   vchRet.push_back((left<<2) | (dec>>4));
                   left = dec & 15;
                   mode = 2;
                   break;
 
-             case 2: // we have 4 bits and get 6, we keep 2
+             case 2: // we have 4 bits and get 6, we keep 2  (у нас есть 4 бита и получаем 6, мы держим 2)
                  vchRet.push_back((left<<4) | (dec>>2));
                  left = dec & 3;
                  mode = 3;
                  break;
 
-             case 3: // we have 2 bits and get 6
+             case 3: // we have 2 bits and get 6  (У нас есть 2 бита и получаем 6)
                  vchRet.push_back((left<<6) | dec);
                  mode = 0;
                  break;
@@ -724,19 +728,19 @@ vector<unsigned char> DecodeBase64(const char* p, bool* pfInvalid)
     if (pfInvalid)
         switch (mode)
         {
-            case 0: // 4n base64 characters processed: ok
+            case 0: // 4n base64 characters processed: ok  (4n base64 символов обработанные: ОК)
                 break;
 
-            case 1: // 4n+1 base64 character processed: impossible
+            case 1: // 4n+1 base64 character processed: impossible  (4n+1 base64 характер обработанные: невозможно)
                 *pfInvalid = true;
                 break;
 
-            case 2: // 4n+2 base64 characters processed: require '=='
+            case 2: // 4n+2 base64 characters processed: require '=='  (4n +2 base64 символов обрабатываются: ​​требуются '==')
                 if (left || p[0] != '=' || p[1] != '=' || decode64_table[(unsigned char)p[2]] != -1)
                     *pfInvalid = true;
                 break;
 
-            case 3: // 4n+3 base64 characters processed: require '='
+            case 3: // 4n+3 base64 characters processed: require '='  (4n +3 base64 символов обрабатываются: ​​требуется '=')
                 if (left || p[0] != '=' || decode64_table[(unsigned char)p[1]] != -1)
                     *pfInvalid = true;
                 break;
@@ -855,41 +859,41 @@ vector<unsigned char> DecodeBase32(const char* p, bool* pfInvalid)
                  mode = 1;
                  break;
 
-              case 1: // we have 5 bits and keep 2
+              case 1: // we have 5 bits and keep(держим) 2
                   vchRet.push_back((left<<3) | (dec>>2));
                   left = dec & 3;
                   mode = 2;
                   break;
 
-             case 2: // we have 2 bits and keep 7
+             case 2: // we have 2 bits and keep(держим) 7
                  left = left << 5 | dec;
                  mode = 3;
                  break;
 
-             case 3: // we have 7 bits and keep 4
+             case 3: // we have 7 bits and keep(держим) 4
                  vchRet.push_back((left<<1) | (dec>>4));
                  left = dec & 15;
                  mode = 4;
                  break;
 
-             case 4: // we have 4 bits, and keep 1
+             case 4: // we have 4 bits, and keep(держим) 1
                  vchRet.push_back((left<<4) | (dec>>1));
                  left = dec & 1;
                  mode = 5;
                  break;
 
-             case 5: // we have 1 bit, and keep 6
+             case 5: // we have 1 bit, and keep(держим) 6
                  left = left << 5 | dec;
                  mode = 6;
                  break;
 
-             case 6: // we have 6 bits, and keep 3
+             case 6: // we have 6 bits, and keep(держим) 3
                  vchRet.push_back((left<<2) | (dec>>3));
                  left = dec & 7;
                  mode = 7;
                  break;
 
-             case 7: // we have 3 bits, and keep 0
+             case 7: // we have 3 bits, and keep(держим) 0
                  vchRet.push_back((left<<5) | dec);
                  mode = 0;
                  break;
@@ -902,7 +906,7 @@ vector<unsigned char> DecodeBase32(const char* p, bool* pfInvalid)
             case 0: // 8n base32 characters processed: ok
                 break;
 
-            case 1: // 8n+1 base32 characters processed: impossible
+            case 1: // 8n+1 base32 characters processed: impossible(невозможно)
             case 3: //   +3
             case 6: //   +6
                 *pfInvalid = true;
@@ -1017,13 +1021,13 @@ void PrintExceptionContinue(std::exception* pex, const char* pszThread)
 boost::filesystem::path GetDefaultDataDir()
 {
     namespace fs = boost::filesystem;
-    // Windows < Vista: C:\Documents and Settings\Username\Application Data\Bitcoin
-    // Windows >= Vista: C:\Users\Username\AppData\Roaming\Bitcoin
-    // Mac: ~/Library/Application Support/Bitcoin
-    // Unix: ~/.bitcoin
+    // Windows < Vista: C:\Documents and Settings\Username\Application Data\TTC
+    // Windows >= Vista: C:\Users\Username\AppData\Roaming\TTC
+    // Mac: ~/Library/Application Support/TTC
+    // Unix: ~/.TTC
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "Bitcoin";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "TTC";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -1035,10 +1039,10 @@ boost::filesystem::path GetDefaultDataDir()
     // Mac
     pathRet /= "Library/Application Support";
     fs::create_directory(pathRet);
-    return pathRet / "Bitcoin";
+    return pathRet / "TTC";
 #else
     // Unix
-    return pathRet / ".bitcoin";
+    return pathRet / ".TTC";
 #endif
 #endif
 }
@@ -1052,8 +1056,8 @@ const boost::filesystem::path &GetDataDir(bool fNetSpecific)
 
     fs::path &path = pathCached[fNetSpecific];
 
-    // This can be called during exceptions by printf, so we cache the
-    // value so we don't have to do memory allocations after that.
+    // This can be called during exceptions by printf, so we cache the      Это может вызвать исключение в printf, поэтому мы кэшировать
+    // value so we don't have to do memory allocations after that.          значения, поэтому мы не должны сделать распределение памяти после этого.
     if (fCachedPath[fNetSpecific])
         return path;
 
@@ -1079,7 +1083,7 @@ const boost::filesystem::path &GetDataDir(bool fNetSpecific)
 
 boost::filesystem::path GetConfigFile()
 {
-    boost::filesystem::path pathConfigFile(GetArg("-conf", "bitcoin.conf"));
+    boost::filesystem::path pathConfigFile(GetArg("-conf", "TTC.conf"));
     if (!pathConfigFile.is_complete()) pathConfigFile = GetDataDir(false) / pathConfigFile;
     return pathConfigFile;
 }
@@ -1091,7 +1095,7 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
     if (!streamConfig.good())
         return; // No bitcoin.conf file is OK
 
-    // clear path cache after loading config file
+    // clear path cache after loading config file                                   очистить путь кэша после загрузки файла конфигурации
     fCachedPath[0] = fCachedPath[1] = false;
 
     set<string> setOptions;
@@ -1099,12 +1103,13 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
 
     for (boost::program_options::detail::config_file_iterator it(streamConfig, setOptions), end; it != end; ++it)
     {
-        // Don't overwrite existing settings so command line settings override bitcoin.conf
+        // Don't overwrite existing settings so command line settings override TTC.conf
+        //              Не перезаписывать существующие параметры, параметры командной строки переопределены TTC.conf
         string strKey = string("-") + it->string_key;
         if (mapSettingsRet.count(strKey) == 0)
         {
             mapSettingsRet[strKey] = it->value[0];
-            // interpret nofoo=1 as foo=0 (and nofoo=0 as foo=1) as long as foo not set)
+            // interpret(интерпретировать) nofoo=1 as foo=0 (and nofoo=0 as foo=1) as long as foo not set)
             InterpretNegativeSetting(strKey, mapSettingsRet);
         }
         mapMultiSettingsRet[strKey].push_back(it->value[0]);
@@ -1141,7 +1146,7 @@ bool RenameOver(boost::filesystem::path src, boost::filesystem::path dest)
 
 void FileCommit(FILE *fileout)
 {
-    fflush(fileout);                // harmless if redundantly called
+    fflush(fileout);                // harmless if redundantly called  (безвредны, если избыточно вызывается)
 #ifdef WIN32
     _commit(_fileno(fileout));
 #else
@@ -1173,6 +1178,8 @@ bool TruncateFile(FILE *file, unsigned int length) {
 
 // this function tries to raise the file descriptor limit to the requested number.
 // It returns the actual file descriptor limit (which may be more or less than nMinFD)
+//                  Эта функция пытается повысить лимит дескриптора файла на число запрошенных.
+//                  Это возвращает фактический предел дескриптора файла (который могут быть больше или меньше nMinFD)
 int RaiseFileDescriptorLimit(int nMinFD) {
 #if defined(WIN32)
     return 2048;
@@ -1194,6 +1201,8 @@ int RaiseFileDescriptorLimit(int nMinFD) {
 
 // this function tries to make a particular range of a file allocated (corresponding to disk space)
 // it is advisory, and the range specified in the arguments will never contain live data
+//                  Эта функция пытается внести определенный диапазон файлых системных ресурсов (соответствующих дисковому пространству)
+//                  это является консультативным, и диапазон, определенный в аргументах, никогда не будет сдерживать живые данные
 void AllocateFileRange(FILE *file, unsigned int offset, unsigned int length) {
 #if defined(WIN32)
     // Windows-specific version
@@ -1238,12 +1247,12 @@ void AllocateFileRange(FILE *file, unsigned int offset, unsigned int length) {
 
 void ShrinkDebugFile()
 {
-    // Scroll debug.log if it's getting too big
+    // Scroll debug.log if it's getting too big                                 Прокрутить debug.log, если становится слишком большим
     boost::filesystem::path pathLog = GetDataDir() / "debug.log";
     FILE* file = fopen(pathLog.string().c_str(), "r");
     if (file && GetFilesize(file) > 10 * 1000000)
     {
-        // Restart the file with some of the end
+        // Restart the file with some of the end                                Перезагрузить файл с некоторыми из конца
         char pch[200000];
         fseek(file, -sizeof(pch), SEEK_END);
         int nBytes = fread(pch, 1, sizeof(pch), file);
@@ -1268,13 +1277,13 @@ void ShrinkDebugFile()
 
 
 //
-// "Never go to sea with two chronometers; take one or three."
-// Our three time sources are:
-//  - System clock
-//  - Median of other nodes clocks
-//  - The user (asking the user to fix the system clock if the first two disagree)
+// "Never go to sea with two chronometers; take one or three."                      Никогда не выходят в море с двумя хронометров; возьмите один или три
+// Our three time sources are:                                                      Наши три источника времени:
+//  - System clock                                                                  - системные часы
+//  - Median of other nodes clocks                                                  - медианное(среднее) время других узлов
+//  - The user (asking the user to fix the system clock if the first two disagree)  - пользователь (попросить пользователя исправить системные часы, если первые два не совпадают)
 //
-static int64 nMockTime = 0;  // For unit testing
+static int64 nMockTime = 0;  // For unit testing                                    Для модульного тестирования
 
 int64 GetTime()
 {
@@ -1304,19 +1313,19 @@ void AddTimeData(const CNetAddr& ip, int64 nTime)
 {
     int64 nOffsetSample = nTime - GetTime();
 
-    // Ignore duplicates
+    // Ignore duplicates                                                            Игнорировать дубликаты
     static set<CNetAddr> setKnown;
     if (!setKnown.insert(ip).second)
         return;
 
-    // Add data
+    // Add data                                                                     Добавление данных
     vTimeOffsets.input(nOffsetSample);
     printf("Added time data, samples %d, offset %+"PRI64d" (%+"PRI64d" minutes)\n", vTimeOffsets.size(), nOffsetSample, nOffsetSample/60);
     if (vTimeOffsets.size() >= 5 && vTimeOffsets.size() % 2 == 1)
     {
         int64 nMedian = vTimeOffsets.median();
         std::vector<int64> vSorted = vTimeOffsets.sorted();
-        // Only let other nodes change our time by so much
+        // Only let other nodes change our time by so much                          Только давайте другим узлам изменить наше время на так много
         if (abs64(nMedian) < 70 * 60)
         {
             nTimeOffset = nMedian;
@@ -1329,6 +1338,7 @@ void AddTimeData(const CNetAddr& ip, int64 nTime)
             if (!fDone)
             {
                 // If nobody has a time different than ours but within 5 minutes of ours, give a warning
+                //              Если никто не имеет время, отличное чем наш, но в пределах наших 5 минут, дайть предупреждение
                 bool fMatch = false;
                 BOOST_FOREACH(int64 nOffset, vSorted)
                     if (nOffset != 0 && abs64(nOffset) < 5 * 60)
@@ -1337,7 +1347,7 @@ void AddTimeData(const CNetAddr& ip, int64 nTime)
                 if (!fMatch)
                 {
                     fDone = true;
-                    string strMessage = _("Warning: Please check that your computer's date and time are correct! If your clock is wrong Bitcoin will not work properly.");
+                    string strMessage = _("Warning: Please check that your computer's date and time are correct! If your clock is wrong TTC will not work properly.");
                     strMiscWarning = strMessage;
                     printf("*** %s\n", strMessage.c_str());
                     uiInterface.ThreadSafeMessageBox(strMessage, "", CClientUIInterface::MSG_WARNING);
@@ -1357,7 +1367,7 @@ uint32_t insecure_rand_Rz = 11;
 uint32_t insecure_rand_Rw = 11;
 void seed_insecure_rand(bool fDeterministic)
 {
-    //The seed values have some unlikely fixed points which we avoid.
+    //The seed values have some unlikely fixed points which we avoid.               значения сидов вряд ли имеют некоторые фиксированные точки, которых мы избегаем.
     if(fDeterministic)
     {
         insecure_rand_Rz = insecure_rand_Rw = 11;
@@ -1387,7 +1397,7 @@ string FormatFullVersion()
     return CLIENT_BUILD;
 }
 
-// Format the subversion field according to BIP 14 spec (https://en.bitcoin.it/wiki/BIP_0014)
+// Format the subversion field according to(формат поля subversion согласно) BIP 14 spec (https://en.bitcoin.it/wiki/BIP_0014)
 std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments)
 {
     std::ostringstream ss;
@@ -1420,7 +1430,7 @@ boost::filesystem::path GetTempPath() {
 #if BOOST_FILESYSTEM_VERSION == 3
     return boost::filesystem::temp_directory_path();
 #else
-    // TODO: remove when we don't support filesystem v2 anymore
+    // TODO: remove when we don't support filesystem v2 anymore                 удалить, когда мы больше не будем поддерживать файловую систему v2
     boost::filesystem::path path;
 #ifdef WIN32
     char pszPath[MAX_PATH] = "";
@@ -1448,12 +1458,12 @@ void runCommand(std::string strCommand)
 void RenameThread(const char* name)
 {
 #if defined(PR_SET_NAME)
-    // Only the first 15 characters are used (16 - NUL terminator)
+    // Only the first 15 characters are used (16 - NUL terminator)                  Только первые 15 символов используются (16 - NUL признак конца)
     ::prctl(PR_SET_NAME, name, 0, 0, 0);
 #elif 0 && (defined(__FreeBSD__) || defined(__OpenBSD__))
-    // TODO: This is currently disabled because it needs to be verified to work
-    //       on FreeBSD or OpenBSD first. When verified the '0 &&' part can be
-    //       removed.
+    // TODO: This is currently disabled because it needs to be verified to work     В настоящее время отключена, так как она должна быть проверена на работу
+    //       on FreeBSD or OpenBSD first. When verified the '0 &&' part can be      FreeBSD или OpenBSD первой. когда будет проверена '0 &&' часть может быть
+    //       removed.                                                               удалена.
     pthread_set_name_np(pthread_self(), name);
 
 #elif defined(MAC_OSX) && defined(__MAC_OS_X_VERSION_MAX_ALLOWED)
@@ -1464,7 +1474,7 @@ void RenameThread(const char* name)
 #endif
 
 #else
-    // Prevent warnings for unused parameters...
+    // Prevent warnings for unused parameters...                                    препятствовать предупреждениям для неиспользованных параметров...
     (void)name;
 #endif
 }

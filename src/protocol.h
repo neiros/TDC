@@ -39,7 +39,7 @@ class CMessageHeader
              READWRITE(nChecksum);
             )
 
-    // TODO: make private (improves encapsulation)
+    // TODO: make private (improves encapsulation)          cделать приватным (улучшение инкапсуляции)
     public:
         enum {
             COMMAND_SIZE=12,
@@ -62,7 +62,7 @@ enum
     NODE_NETWORK = (1 << 0),
 };
 
-/** A CService with information about it as peer */
+/** A CService with information about it as peer           CService с информацией о нем, как о пире */
 class CAddress : public CService
 {
     public:
@@ -88,7 +88,7 @@ class CAddress : public CService
 
         void print() const;
 
-    // TODO: make private (improves encapsulation)
+    // TODO: make private (improves encapsulation)          cделать приватным (улучшение инкапсуляции)
     public:
         uint64 nServices;
 
@@ -99,7 +99,7 @@ class CAddress : public CService
         int64 nLastTry;
 };
 
-/** inv message data */
+/** inv message data                                        Inv данные сообщения */
 class CInv
 {
     public:
@@ -120,7 +120,7 @@ class CInv
         std::string ToString() const;
         void print() const;
 
-    // TODO: make private (improves encapsulation)
+    // TODO: make private (improves encapsulation)          cделать приватным (улучшение инкапсуляции)
     public:
         int type;
         uint256 hash;
@@ -130,8 +130,8 @@ enum
 {
     MSG_TX = 1,
     MSG_BLOCK,
-    // Nodes may always request a MSG_FILTERED_BLOCK in a getdata, however,
-    // MSG_FILTERED_BLOCK should not appear in any invs except as a part of getdata.
+    // Nodes may always request a MSG_FILTERED_BLOCK in a getdata, however,             Узлы могут всегда просить MSG_FILTERED_BLOCK в getdata, однако,
+    // MSG_FILTERED_BLOCK should not appear in any invs except as a part of getdata.    MSG_FILTERED_BLOCK не должен появиться ни в каком invs кроме как часть getdata
     MSG_FILTERED_BLOCK,
 };
 

@@ -19,10 +19,16 @@ CBloomFilter::CBloomFilter(unsigned int nElements, double nFPRate, unsigned int 
 // The ideal size for a bloom filter with a given number of elements and false positive rate is:
 // - nElements * log(fp rate) / ln(2)^2
 // We ignore filter parameters which will create a bloom filter larger than the protocol limits
+//      Идеальный размер для Блум фильтра с заданным количеством элементов и ложной положительной rate (ставке, курсу, значению):
+//      - nElements * log(fp rate) / ln(2)^2
+//      Мы игнорируем параметры фильтра, которые будут создавать Блум фильтр больше, чем пределы протокола
 vData(min((unsigned int)(-1  / LN2SQUARED * nElements * log(nFPRate)), MAX_BLOOM_FILTER_SIZE * 8) / 8),
 // The ideal number of hash functions is filter size * ln(2) / number of elements
 // Again, we ignore filter parameters which will create a bloom filter with more hash functions than the protocol limits
 // See http://en.wikipedia.org/wiki/Bloom_filter for an explanation of these formulas
+//      Идеальным числом хэш-функций является размер фильтра * ln(2) / количество элементов
+//      Опять же мы будем игнорировать параметры фильтрации, которые будут создавать Блум фильтр с болшими хеш-функциями, чем пределы протокола
+//      Смотреть http://en.wikipedia.org/wiki/Bloom_filter для объяснения этих формул
 nHashFuncs(min((unsigned int)(vData.size() * 8 / nElements * LN2), MAX_HASH_FUNCS)),
 nTweak(nTweakIn),
 nFlags(nFlagsIn)
@@ -32,6 +38,7 @@ nFlags(nFlagsIn)
 inline unsigned int CBloomFilter::Hash(unsigned int nHashNum, const std::vector<unsigned char>& vDataToHash) const
 {
     // 0xFBA4C795 chosen as it guarantees a reasonable bit difference between nHashNum values.
+    //            выбран, поскольку он гарантирует разумные бит разницу между nHashNum значениями.
     return MurmurHash3(nHashNum * 0xFBA4C795 + nTweak, vDataToHash) % (vData.size() * 8);
 }
 
@@ -42,7 +49,7 @@ void CBloomFilter::insert(const vector<unsigned char>& vKey)
     for (unsigned int i = 0; i < nHashFuncs; i++)
     {
         unsigned int nIndex = Hash(i, vKey);
-        // Sets bit nIndex of vData
+        // Sets(задаёт) bit nIndex of vData
         vData[nIndex >> 3] |= bit_mask[7 & nIndex];
     }
 }
@@ -68,7 +75,7 @@ bool CBloomFilter::contains(const vector<unsigned char>& vKey) const
     for (unsigned int i = 0; i < nHashFuncs; i++)
     {
         unsigned int nIndex = Hash(i, vKey);
-        // Checks bit nIndex of vData
+        // Checks(проверяет) bit nIndex of vData
         if (!(vData[nIndex >> 3] & bit_mask[7 & nIndex]))
             return false;
     }
@@ -97,8 +104,8 @@ bool CBloomFilter::IsWithinSizeConstraints() const
 bool CBloomFilter::IsRelevantAndUpdate(const CTransaction& tx, const uint256& hash)
 {
     bool fFound = false;
-    // Match if the filter contains the hash of tx
-    //  for finding tx when they appear in a block
+    // Match if the filter contains the hash of tx                      Соответствие, если фильтр содержит хэш-tx
+    //  for finding tx when they appear in a block                      для поиска tx когда они появляются в блоке
     if (contains(hash))
         fFound = true;
 
@@ -109,6 +116,10 @@ bool CBloomFilter::IsRelevantAndUpdate(const CTransaction& tx, const uint256& ha
         // If this matches, also add the specific output that was matched.
         // This means clients don't have to update the filter themselves when a new relevant tx 
         // is discovered in order to find spending transactions, which avoids round-tripping and race conditions.
+        //      Соответствие, если фильтр сдерживает какой-нибудь произвольный элемент данных сценария в каком-нибудь scriptPubKey в tx
+        //      Если это совпадает, также добавьте конкретный output, который этому соответствует.
+        //      Это означает, что клиенты не должны обновить фильтр у себя, когда новый актуальны TX обнаружены
+        //      чтобы найти расходных операций, что позволяет избежать кругооборота и состояние гонки.
         CScript::const_iterator pc = txout.scriptPubKey.begin();
         vector<unsigned char> data;
         while (pc < txout.scriptPubKey.end())
@@ -139,11 +150,12 @@ bool CBloomFilter::IsRelevantAndUpdate(const CTransaction& tx, const uint256& ha
 
     BOOST_FOREACH(const CTxIn& txin, tx.vin)
     {
-        // Match if the filter contains an outpoint tx spends
+        // Match if the filter contains an outpoint tx spends           Соответствие, если фильтр содержит outpoint tx траты
         if (contains(txin.prevout))
             return true;
 
         // Match if the filter contains any arbitrary script data element in any scriptSig in tx
+        //      Соответствие, если фильтр содержит произвольный сценарий элемента данных в любой scriptSig в tx
         CScript::const_iterator pc = txin.scriptSig.begin();
         vector<unsigned char> data;
         while (pc < txin.scriptSig.end())

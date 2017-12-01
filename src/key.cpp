@@ -9,10 +9,10 @@
 #include "key.h"
 
 
-// anonymous namespace with local implementation code (OpenSSL interaction)
+// anonymous namespace with local implementation code (OpenSSL interaction)     анонимное пространство имён с локальной реализацией кода (OpenSSL взаимодействие)
 namespace {
 
-// Generate a private key from just the secret parameter
+// Generate a private key from just the secret parameter                        Создать приватный ключ от только секретный параметр
 int EC_KEY_regenerate_key(EC_KEY *eckey, BIGNUM *priv_key)
 {
     int ok = 0;
@@ -49,9 +49,9 @@ err:
     return(ok);
 }
 
-// Perform ECDSA key recovery (see SEC1 4.1.6) for curves over (mod p)-fields
-// recid selects which key is recovered
-// if check is non-zero, additional checks are performed
+// Perform ECDSA key recovery (see SEC1 4.1.6) for curves over (mod p)-fields   Выполнение ECDSA восстановления ключа (см. SEC1 4.1.6) для кривых над (mod р)-полей
+// recid selects which key is recovered                                         recid выбирает, какой ключ извлекается
+// if check is non-zero, additional checks are performed                        если проверка не равно нулю, дополнительные проверки выполняются
 int ECDSA_SIG_recover_key_GFp(EC_KEY *eckey, ECDSA_SIG *ecsig, const unsigned char *msg, int msglen, int recid, int check)
 {
     if (!eckey) return 0;
@@ -123,7 +123,7 @@ err:
     return ret;
 }
 
-// RAII Wrapper around OpenSSL's EC_KEY
+// RAII Wrapper around OpenSSL's EC_KEY                                         RAII оболочка вокруг OpenSSL'льного EC_KEY
 class CECKey {
 private:
     EC_KEY *pkey;
@@ -168,8 +168,8 @@ public:
     bool SetPrivKey(const CPrivKey &privkey) {
         const unsigned char* pbegin = &privkey[0];
         if (d2i_ECPrivateKey(&pkey, &pbegin, privkey.size())) {
-            // d2i_ECPrivateKey returns true if parsing succeeds.
-            // This doesn't necessarily mean the key is valid.
+            // d2i_ECPrivateKey returns true if parsing succeeds.               d2i_ECPrivateKey возвращает true, если парсинг успешен
+            // This doesn't necessarily mean the key is valid.                  Это не обязательно означает, что ключ является действительным(валидным)
             if (EC_KEY_check_key(pkey))
                 return true;
         }
@@ -195,9 +195,9 @@ public:
 
     bool Sign(const uint256 &hash, std::vector<unsigned char>& vchSig) {
         unsigned int nSize = ECDSA_size(pkey);
-        vchSig.resize(nSize); // Make sure it is big enough
+        vchSig.resize(nSize); // Make sure it is big enough                     Убедитесь в том, что это достаточно большое
         assert(ECDSA_sign(0, (unsigned char*)&hash, sizeof(hash), &vchSig[0], &nSize, pkey));
-        vchSig.resize(nSize); // Shrink to fit actual size
+        vchSig.resize(nSize); // Shrink to fit actual size                      Уменьшить до размеров фактического размера
         return true;
     }
 
@@ -239,10 +239,10 @@ public:
         return fOk;
     }
 
-    // reconstruct public key from a compact signature
-    // This is only slightly more CPU intensive than just verifying it.
-    // If this function succeeds, the recovered public key is guaranteed to be valid
-    // (the signature is a valid signature of the given data for that key)
+    // reconstruct public key from a compact signature                                  реконструировать открытый ключ из компактной подписи
+    // This is only slightly more CPU intensive than just verifying it.                 Это лишь немного больше ресурсов процессора, чем просто их проверки.
+    // If this function succeeds, the recovered public key is guaranteed to be valid    Если эта функция завершается успешно, восстановленный открытый ключ гарантированно действителен
+    // (the signature is a valid signature of the given data for that key)              (Подпись является действительной подписью данных данных для этого ключа)
     bool Recover(const uint256 &hash, const unsigned char *p64, int rec)
     {
         if (rec<0 || rec>=3)
@@ -256,11 +256,11 @@ public:
     }
 };
 
-}; // end of anonymous namespace
+}; // end of anonymous namespace                                                        конец анонимному пространству имён
 
 bool CKey::Check(const unsigned char *vch) {
-    // Do not convert to OpenSSL's data structures for range-checking keys,
-    // it's easy enough to do directly.
+    // Do not convert to OpenSSL's data structures for range-checking keys,             Не следует преобразовывать в OpenSSL структур данных для проверки-диапазона ключей
+    // it's easy enough to do directly.                                                 это достаточно легко сделать прямо
     static const unsigned char vchMax[32] = {
         0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
         0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE,

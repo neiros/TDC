@@ -18,8 +18,8 @@ using namespace boost::assign;
 using namespace json_spirit;
 
 //
-// Utilities: convert hex-encoded Values
-// (throws error if not hex).
+// Utilities: convert hex-encoded Values                                            Утилиты: преобразование шестнадцатирично-кодированных Values
+// (throws error if not hex).                                                       (выдает ошибку, если не hex)
 //
 uint256 ParseHashV(const Value& v, string strName)
 {
@@ -194,7 +194,7 @@ Value listunspent(const Array& params, bool fHelp)
         {
             CBitcoinAddress address(input.get_str());
             if (!address.IsValid())
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid Bitcoin address: ")+input.get_str());
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid TTC address: ")+input.get_str());
             if (setAddress.count(address))
                 throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ")+input.get_str());
            setAddress.insert(address);
@@ -292,7 +292,7 @@ Value createrawtransaction(const Array& params, bool fHelp)
     {
         CBitcoinAddress address(s.name_);
         if (!address.IsValid())
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid Bitcoin address: ")+s.name_);
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid TTC address: ")+s.name_);
 
         if (setAddress.count(address))
             throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ")+s.name_);
@@ -371,27 +371,27 @@ Value signrawtransaction(const Array& params, bool fHelp)
     if (txVariants.empty())
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Missing transaction");
 
-    // mergedTx will end up with all the signatures; it
-    // starts as a clone of the rawtx:
+    // mergedTx will end up with all the signatures; it                             mergedTx в конечном итоге со всеми подписями;
+    // starts as a clone of the rawtx:                                              оно начинается как клон rawtx:
     CTransaction mergedTx(txVariants[0]);
     bool fComplete = true;
 
-    // Fetch previous transactions (inputs):
+    // Fetch previous transactions (inputs):                                        Извлечения предыдущих транзакций (входов):
     CCoinsView viewDummy;
     CCoinsViewCache view(viewDummy);
     {
         LOCK(mempool.cs);
         CCoinsViewCache &viewChain = *pcoinsTip;
         CCoinsViewMemPool viewMempool(viewChain, mempool);
-        view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
+        view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view    Временное переключение бэкэнд кэша db+mempool вида
 
         BOOST_FOREACH(const CTxIn& txin, mergedTx.vin) {
             const uint256& prevHash = txin.prevout.hash;
             CCoins coins;
-            view.GetCoins(prevHash, coins); // this is certainly allowed to fail
+            view.GetCoins(prevHash, coins); // this is certainly allowed to fail                это конечно позволяют терпеть неудачу
         }
 
-        view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
+        view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long        переключиться обратно, чтобы избежать блокировки mempool слишком долго
     }
 
     bool fGivenKeys = false;
@@ -413,7 +413,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
     else
         EnsureWalletIsUnlocked();
 
-    // Add previous txouts given in the RPC call:
+    // Add previous txouts given in the RPC call:                                   Добавить предыдущие txouts в RPC-вызов:
     if (params.size() > 1 && params[1].type() != null_type)
     {
         Array prevTxs = params[1].get_array();
@@ -443,16 +443,16 @@ Value signrawtransaction(const Array& params, bool fHelp)
                         scriptPubKey.ToString();
                     throw JSONRPCError(RPC_DESERIALIZATION_ERROR, err);
                 }
-                // what todo if txid is known, but the actual output isn't?
+                // what todo if txid is known, but the actual output isn't?             что TODO если TXID известно, но фактического OUTPUT`а нет?
             }
             if ((unsigned int)nOut >= coins.vout.size())
                 coins.vout.resize(nOut+1);
             coins.vout[nOut].scriptPubKey = scriptPubKey;
-            coins.vout[nOut].nValue = 0; // we don't know the actual output value
+            coins.vout[nOut].nValue = 0; // we don't know the actual output value       Мы не знаем фактического OUTPUT значения
             view.SetCoins(txid, coins);
 
-            // if redeemScript given and not using the local wallet (private keys
-            // given), add redeemScript to the tempKeystore so it can be signed:
+            // if redeemScript given and not using the local wallet (private keys       Если задан redeemScript и не используя местным бумажником (учитывая закрытых ключ)
+            // given), add redeemScript to the tempKeystore so it can be signed:        добавить redeemScript к tempKeystore, что бы он мог быть подписан:
             if (fGivenKeys && scriptPubKey.IsPayToScriptHash())
             {
                 RPCTypeCheck(prevOut, map_list_of("txid", str_type)("vout", int_type)("scriptPubKey", str_type)("redeemScript",str_type));
@@ -490,7 +490,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
 
     bool fHashSingle = ((nHashType & ~SIGHASH_ANYONECANPAY) == SIGHASH_SINGLE);
 
-    // Sign what we can:
+    // Sign what we can:                                                            Подписать что мы можем:
     for (unsigned int i = 0; i < mergedTx.vin.size(); i++)
     {
         CTxIn& txin = mergedTx.vin[i];
@@ -503,11 +503,11 @@ Value signrawtransaction(const Array& params, bool fHelp)
         const CScript& prevPubKey = coins.vout[txin.prevout.n].scriptPubKey;
 
         txin.scriptSig.clear();
-        // Only sign SIGHASH_SINGLE if there's a corresponding output:
+        // Only sign SIGHASH_SINGLE if there's a corresponding output:              Только подписать SIGHASH_SINGLE если есть соответствующий выход
         if (!fHashSingle || (i < mergedTx.vout.size()))
             SignSignature(keystore, prevPubKey, mergedTx, i, nHashType);
 
-        // ... and merge in other signatures:
+        // ... and merge in other signatures:                                       ... и объединение в другими подписями
         BOOST_FOREACH(const CTransaction& txv, txVariants)
         {
             txin.scriptSig = CombineSignatures(prevPubKey, mergedTx, i, txin.scriptSig, txv.vin[i].scriptSig);
@@ -532,12 +532,12 @@ Value sendrawtransaction(const Array& params, bool fHelp)
             "sendrawtransaction <hex string>\n"
             "Submits raw transaction (serialized, hex-encoded) to local node and network.");
 
-    // parse hex string from parameter
+    // parse hex string from parameter                                              парсинг шестнадцатеричной строки судя по параметру
     vector<unsigned char> txData(ParseHexV(params[0], "parameter"));
     CDataStream ssData(txData, SER_NETWORK, PROTOCOL_VERSION);
     CTransaction tx;
 
-    // deserialize binary data stream
+    // deserialize binary data stream                                               десериализация двоичного потока данных
     try {
         ssData >> tx;
     }
@@ -552,16 +552,16 @@ Value sendrawtransaction(const Array& params, bool fHelp)
     {
         fHave = view.GetCoins(hashTx, existingCoins);
         if (!fHave) {
-            // push to local node
+            // push to local node                                                   проталкивание в локальную ноду
             CValidationState state;
             if (!mempool.accept(state, tx, false, NULL))
-                throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX rejected"); // TODO: report validation state
+                throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX rejected"); // TODO: report validation state(сообщение валидационного состояния)
         }
     }
     if (fHave) {
         if (existingCoins.nHeight < 1000000000)
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "transaction already in block chain");
-        // Not in block, but already in the memory pool; will drop
+        // Not in block, but already in the memory pool; will drop                  Не в блоке, но уже в memory pool; упадёт через ретрансляцию этого
         // through to re-relay it.
     } else {
         SyncWithWallets(hashTx, tx, NULL, true);

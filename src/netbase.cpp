@@ -37,6 +37,7 @@ enum Network ParseNetwork(std::string net) {
 void SplitHostPort(std::string in, int &portOut, std::string &hostOut) {
     size_t colon = in.find_last_of(':');
     // if a : is found, and it either follows a [...], or no other : is in the string, treat it as port separator
+    //      Если :(двоеточие) найдено, и оно либо следующее [...], или нет других : в строке, рассматривать его как разделитель порта
     bool fHaveColon = colon != in.npos;
     bool fBracketed = fHaveColon && (in[0]=='[' && in[colon-1]==']'); // if there is a colon, and in[0]=='[', colon is not 0, so in[colon-1] is safe
     bool fMultiColon = fHaveColon && (in.find_last_of(':',colon-1) != in.npos);
@@ -347,6 +348,7 @@ bool static ConnectSocketDirectly(const CService &addrConnect, SOCKET& hSocketRe
     if (connect(hSocket, (struct sockaddr*)&sockaddr, len) == SOCKET_ERROR)
     {
         // WSAEINVAL is here because some legacy version of winsock uses it
+        //            здесь, потому что некоторые устаревшие версии winsock использует его (http://msdn.microsoft.com/en-us/library/windows/desktop/ms740668%28v=vs.85%29.aspx)
         if (WSAGetLastError() == WSAEINPROGRESS || WSAGetLastError() == WSAEWOULDBLOCK || WSAGetLastError() == WSAEINVAL)
         {
             struct timeval timeout;
@@ -399,9 +401,9 @@ bool static ConnectSocketDirectly(const CService &addrConnect, SOCKET& hSocketRe
         }
     }
 
-    // this isn't even strictly necessary
-    // CNode::ConnectNode immediately turns the socket back to non-blocking
-    // but we'll turn it back to blocking just in case
+    // this isn't even strictly necessary                                       это не является строго обязательным
+    // CNode::ConnectNode immediately turns the socket back to non-blocking     CNode::ConnectNode сразу же заворачивает сокет обратно без блокировки
+    // but we'll turn it back to blocking just in case                          но мы возвратим это к блокированию на всякий случай
 #ifdef WIN32
     fNonblock = 0;
     if (ioctlsocket(hSocket, FIONBIO, &fNonblock) == SOCKET_ERROR)
@@ -474,17 +476,17 @@ bool ConnectSocket(const CService &addrDest, SOCKET& hSocketRet, int nTimeout)
 {
     proxyType proxy;
 
-    // no proxy needed
+    // no proxy needed                                                      прокси не требуется
     if (!GetProxy(addrDest.GetNetwork(), proxy))
         return ConnectSocketDirectly(addrDest, hSocketRet, nTimeout);
 
     SOCKET hSocket = INVALID_SOCKET;
 
-    // first connect to proxy server
+    // first connect to proxy server                                        сначала подключиться к прокси-серверу
     if (!ConnectSocketDirectly(proxy.first, hSocket, nTimeout))
         return false;
 
-    // do socks negotiation
+    // do socks negotiation                                                 сделайте socks переговоры(опрос)
     switch (proxy.second) {
     case 4:
         if (!Socks4(addrDest, hSocket))
@@ -695,16 +697,16 @@ bool CNetAddr::IsMulticast() const
 
 bool CNetAddr::IsValid() const
 {
-    // Cleanup 3-byte shifted addresses caused by garbage in size field
-    // of addr messages from versions before 0.2.9 checksum.
-    // Two consecutive addr messages look like this:
+    // Cleanup 3-byte shifted addresses caused by garbage in size field             Очистка 3-байтного смещения адреса, вызванного мусором в поле размер
+    // of addr messages from versions before 0.2.9 checksum.                        ADDR сообщений от версиях до 0.2.9 контрольной суммы.
+    // Two consecutive addr messages look like this:                                Два последовательных ADDR сообщения выглядеть следующим образом
     // header20 vectorlen3 addr26 addr26 addr26 header20 vectorlen3 addr26 addr26 addr26...
-    // so if the first length field is garbled, it reads the second batch
-    // of addr misaligned by 3 bytes.
+    // so if the first length field is garbled, it reads the second batch           так что если длина первого поля искажена, он читает вторую партию
+    // of addr misaligned by 3 bytes.                                               из ADDR смещенную на 3 байта.
     if (memcmp(ip, pchIPv4+3, sizeof(pchIPv4)-3) == 0)
         return false;
 
-    // unspecified IPv6 address (::/128)
+    // unspecified(не указан, неопределенн) IPv6 address (::/128)
     unsigned char ipNone[16] = {};
     if (memcmp(ip, ipNone, 16) == 0)
         return false;
@@ -810,8 +812,8 @@ bool CNetAddr::GetIn6Addr(struct in6_addr* pipv6Addr) const
 }
 #endif
 
-// get canonical identifier of an address' group
-// no two connections will be attempted to addresses with the same group
+// get canonical identifier of an address' group                                получение канонического идентификатора адреса группы
+// no two connections will be attempted to addresses with the same group        никакие две связи не будут предприняты к адресам из той же самой группы
 std::vector<unsigned char> CNetAddr::GetGroup() const
 {
     std::vector<unsigned char> vchRet;
@@ -819,33 +821,33 @@ std::vector<unsigned char> CNetAddr::GetGroup() const
     int nStartByte = 0;
     int nBits = 16;
 
-    // all local addresses belong to the same group
+    // all local addresses belong to the same group                             все локальные адреса принадлежат к той же группе
     if (IsLocal())
     {
         nClass = 255;
         nBits = 0;
     }
 
-    // all unroutable addresses belong to the same group
+    // all unroutable addresses belong to the same group                        все немаршрутизируемые адреса принадлежат к той же группе
     if (!IsRoutable())
     {
         nClass = NET_UNROUTABLE;
         nBits = 0;
     }
-    // for IPv4 addresses, '1' + the 16 higher-order bits of the IP
-    // includes mapped IPv4, SIIT translated IPv4, and the well-known prefix
+    // for IPv4 addresses, '1' + the 16 higher-order bits of the IP             для IPv4-адресов, '1' + 16 бит более высокого порядка IP
+    // includes mapped IPv4, SIIT translated IPv4, and the well-known prefix    включает сопоставление IPv4, SIIT транслирование IPv4, и хорошо известный префикс
     else if (IsIPv4() || IsRFC6145() || IsRFC6052())
     {
         nClass = NET_IPV4;
         nStartByte = 12;
     }
-    // for 6to4 tunnelled addresses, use the encapsulated IPv4 address
+    // for 6to4 tunnelled addresses, use the encapsulated IPv4 address          для 6to4 туннелированных адресов, используется инкапсулированный IPv4-адрес
     else if (IsRFC3964())
     {
         nClass = NET_IPV4;
         nStartByte = 2;
     }
-    // for Teredo-tunnelled IPv6 addresses, use the encapsulated IPv4 address
+    // for Teredo-tunnelled IPv6 addresses, use the encapsulated IPv4 address   для Teredo-туннелированных IPv6 адресов, используется инкапсулированный IPv4-адрес
     else if (IsRFC4380())
     {
         vchRet.push_back(NET_IPV4);
@@ -859,10 +861,10 @@ std::vector<unsigned char> CNetAddr::GetGroup() const
         nStartByte = 6;
         nBits = 4;
     }
-    // for he.net, use /36 groups
+    // for he.net, use /36 groups                                               для he.net, используются /36 группы
     else if (GetByte(15) == 0x20 && GetByte(14) == 0x11 && GetByte(13) == 0x04 && GetByte(12) == 0x70)
         nBits = 36;
-    // for the rest of the IPv6 network, use /32 groups
+    // for the rest of the IPv6 network, use /32 groups                         для остальной части сети IPv6, используются /32 группы
     else
         nBits = 32;
 
@@ -892,8 +894,8 @@ void CNetAddr::print() const
     printf("CNetAddr(%s)\n", ToString().c_str());
 }
 
-// private extensions to enum Network, only returned by GetExtNetwork,
-// and only used in GetReachabilityFrom
+// private extensions to enum Network, only returned by GetExtNetwork,          приватные расширения для(к) перечисления Network, только возвращаются для GetExtNetwork
+// and only used in GetReachabilityFrom                                         и используются только в GetReachabilityFrom
 static const int NET_UNKNOWN = NET_MAX + 0;
 static const int NET_TEREDO  = NET_MAX + 1;
 int static GetExtNetwork(const CNetAddr *addr)
@@ -905,7 +907,7 @@ int static GetExtNetwork(const CNetAddr *addr)
     return addr->GetNetwork();
 }
 
-/** Calculates a metric for how reachable (*this) is from a given partner */
+/** Calculates a metric for how reachable (*this) is from a given partner      Вычисляет метрику о том, как добраться (*this) от данного партнера*/
 int CNetAddr::GetReachabilityFrom(const CNetAddr *paddrPartner) const
 {
     enum Reachability {
@@ -937,11 +939,11 @@ int CNetAddr::GetReachabilityFrom(const CNetAddr *paddrPartner) const
         case NET_TEREDO: return REACH_TEREDO;
         case NET_IPV4:   return REACH_IPV4;
         case NET_IPV6:   return fTunnel ? REACH_IPV6_WEAK : REACH_IPV6_STRONG; // only prefer giving our IPv6 address if it's not tunnelled
-        }
+        }                                                                      //   только предпочитает давать наш адрес IPv6 адрес, если это не тунеллированно
     case NET_TOR:
         switch(ourNet) {
         default:         return REACH_DEFAULT;
-        case NET_IPV4:   return REACH_IPV4; // Tor users can connect to IPv4 as well
+        case NET_IPV4:   return REACH_IPV4; // Tor users can connect to IPv4 as well       Tor пользователи могут подключаться к IPv4 также
         case NET_TOR:    return REACH_PRIVATE;
         }
     case NET_TEREDO:
@@ -959,7 +961,7 @@ int CNetAddr::GetReachabilityFrom(const CNetAddr *paddrPartner) const
         case NET_TEREDO:  return REACH_TEREDO;
         case NET_IPV6:    return REACH_IPV6_WEAK;
         case NET_IPV4:    return REACH_IPV4;
-        case NET_TOR:     return REACH_PRIVATE; // either from Tor, or don't care about our address
+        case NET_TOR:     return REACH_PRIVATE; // either from Tor, or don't care about our address     либо от(из) Tor, или не заботиться о нашем адресе
         }
     }
 }

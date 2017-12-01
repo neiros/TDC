@@ -14,6 +14,7 @@ extern int nConnectTimeout;
 
 #ifdef WIN32
 // In MSVC, this is defined as a macro, undefine it to prevent a compile and link error
+//      В MSVC это определяется как макрос, undefine это, чтобы предотвратить ошибку компиляции и линковки
 #undef SetPort
 #endif
 
@@ -30,11 +31,11 @@ enum Network
 extern int nConnectTimeout;
 extern bool fNameLookup;
 
-/** IP address (IPv6, or IPv4 using mapped IPv6 range (::FFFF:0:0/96)) */
+/** IP address (IPv6, or IPv4 using mapped(отображение) IPv6 range (::FFFF:0:0/96)) */
 class CNetAddr
 {
     protected:
-        unsigned char ip[16]; // in network byte order
+        unsigned char ip[16]; // in network byte order                          в сети порядок байтов
 
     public:
         CNetAddr();

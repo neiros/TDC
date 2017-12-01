@@ -37,19 +37,19 @@ int CAddrInfo::GetNewBucket(const std::vector<unsigned char> &nKey, const CNetAd
 
 bool CAddrInfo::IsTerrible(int64 nNow) const
 {
-    if (nLastTry && nLastTry >= nNow-60) // never remove things tried the last minute
+    if (nLastTry && nLastTry >= nNow-60) // never remove things tried the last minute       никогда не удаляйте проверяемые вещи в последнюю минут
         return false;
 
-    if (nTime > nNow + 10*60) // came in a flying DeLorean
+    if (nTime > nNow + 10*60) // came in a flying DeLorean                                  пришел в летающем DeLorean
         return true;
 
-    if (nTime==0 || nNow-nTime > ADDRMAN_HORIZON_DAYS*86400) // not seen in over a month
+    if (nTime==0 || nNow-nTime > ADDRMAN_HORIZON_DAYS*86400) // not seen in over a month    не видели в течение месяца
         return true;
 
-    if (nLastSuccess==0 && nAttempts>=ADDRMAN_RETRIES) // tried three times and never a success
+    if (nLastSuccess==0 && nAttempts>=ADDRMAN_RETRIES) // tried three times and never a success(пробуем три рази и не получается)
         return true;
 
-    if (nNow-nLastSuccess > ADDRMAN_MIN_FAIL_DAYS*86400 && nAttempts>=ADDRMAN_MAX_FAILURES) // 10 successive failures in the last week
+    if (nNow-nLastSuccess > ADDRMAN_MIN_FAIL_DAYS*86400 && nAttempts>=ADDRMAN_MAX_FAILURES) // 10 successive failures in the last week(10 последовательных неудач в течение последней недели)
         return true;
 
     return false;
@@ -67,11 +67,11 @@ double CAddrInfo::GetChance(int64 nNow) const
 
     fChance *= 600.0 / (600.0 + nSinceLastSeen);
 
-    // deprioritize very recent attempts away
+    // deprioritize very recent attempts away                                               неприоритетные самые последние далекие попытки
     if (nSinceLastTry < 60*10)
         fChance *= 0.01;
 
-    // deprioritize 50% after each failed attempt
+    // deprioritize 50% after each failed attempt                                           снижение приоритета на 50% после каждой неудачной попытки
     for (int n=0; n<nAttempts; n++)
         fChance /= 1.5;
 
@@ -127,8 +127,8 @@ int CAddrMan::SelectTried(int nKBucket)
 {
     std::vector<int> &vTried = vvTried[nKBucket];
 
-    // random shuffle the first few elements (using the entire list)
-    // find the least recently tried among them
+    // random shuffle the first few elements (using the entire list)        случайное перемешивание первых нескольких элементов (с использованием всего списка)
+    // find the least recently tried among them                             найти наименее недавно опробованных среди них
     int64 nOldest = -1;
     int nOldestPos = -1;
     for (unsigned int i = 0; i < ADDRMAN_TRIED_ENTRIES_INSPECT_ON_EVICT && i < vTried.size(); i++)
@@ -152,7 +152,7 @@ int CAddrMan::ShrinkNew(int nUBucket)
     assert(nUBucket >= 0 && (unsigned int)nUBucket < vvNew.size());
     std::set<int> &vNew = vvNew[nUBucket];
 
-    // first look for deletable items
+    // first look for deletable items                                       сначала просмот для удаляемых пунктов
     for (std::set<int>::iterator it = vNew.begin(); it != vNew.end(); it++)
     {
         assert(mapInfo.count(*it));
@@ -172,7 +172,7 @@ int CAddrMan::ShrinkNew(int nUBucket)
         }
     }
 
-    // otherwise, select four randomly, and pick the oldest of those to replace
+    // otherwise, select four randomly, and pick the oldest of those to replace (в противном случае выберите четыре случайным образом, и отберите самые старый из тех, для замены)
     int n[4] = {GetRandInt(vNew.size()), GetRandInt(vNew.size()), GetRandInt(vNew.size()), GetRandInt(vNew.size())};
     int nI = 0;
     int nOldest = -1;
@@ -205,7 +205,7 @@ void CAddrMan::MakeTried(CAddrInfo& info, int nId, int nOrigin)
 {
     assert(vvNew[nOrigin].count(nId) == 1);
 
-    // remove the entry from all new buckets
+    // remove the entry from all new buckets                                        удаление записей из всех новых бакетов
     for (std::vector<std::set<int> >::iterator it = vvNew.begin(); it != vvNew.end(); it++)
     {
         if ((*it).erase(nId))
@@ -215,11 +215,11 @@ void CAddrMan::MakeTried(CAddrInfo& info, int nId, int nOrigin)
 
     assert(info.nRefCount == 0);
 
-    // what tried bucket to move the entry to
+    // what tried bucket to move the entry to                                       что пытались бакет для перемещения записи
     int nKBucket = info.GetTriedBucket(nKey);
     std::vector<int> &vTried = vvTried[nKBucket];
 
-    // first check whether there is place to just add it
+    // first check whether there is place to just add it                            сначала проверьте, есть ли место, чтобы просто добавить его
     if (vTried.size() < ADDRMAN_TRIED_BUCKET_SIZE)
     {
         vTried.push_back(nId);
@@ -228,33 +228,33 @@ void CAddrMan::MakeTried(CAddrInfo& info, int nId, int nOrigin)
         return;
     }
 
-    // otherwise, find an item to evict
+    // otherwise, find an item to evict                                             в противном случае, найти пункт, чтобы выселить
     int nPos = SelectTried(nKBucket);
 
-    // find which new bucket it belongs to
+    // find which new bucket it belongs to                                          найти, к какому новому бакету он принадлежит
     assert(mapInfo.count(vTried[nPos]) == 1);
     int nUBucket = mapInfo[vTried[nPos]].GetNewBucket(nKey);
     std::set<int> &vNew = vvNew[nUBucket];
 
-    // remove the to-be-replaced tried entry from the tried set
+    // remove the to-be-replaced tried entry from the tried set                     удаление быть-замененой проверенную запись из проверяемого набора
     CAddrInfo& infoOld = mapInfo[vTried[nPos]];
     infoOld.fInTried = false;
     infoOld.nRefCount = 1;
-    // do not update nTried, as we are going to move something else there immediately
+    // do not update nTried, as we are going to move something else there immediately   не модернизирорать nTried, поскольку мы собираемся перемещать что-то еще туда немедленно
 
-    // check whether there is place in that one,
+    // check whether there is place in that one,                                    проверьте, есть ли место для одного
     if (vNew.size() < ADDRMAN_NEW_BUCKET_SIZE)
     {
-        // if so, move it back there
+        // if so, move it back there                                                если это так, переместить его туда
         vNew.insert(vTried[nPos]);
     } else {
-        // otherwise, move it to the new bucket nId came from (there is certainly place there)
+        // otherwise, move it to the new bucket nId came from (there is certainly place there) иначе, переместить его в новый бакет nId (безусловно есть там)
         vvNew[nOrigin].insert(vTried[nPos]);
     }
     nNew++;
 
     vTried[nPos] = nId;
-    // we just overwrote an entry in vTried; no need to update nTried
+    // we just overwrote an entry in vTried; no need to update nTried               мы просто переписываем запись в vTried, не нужно обновлять nTried
     info.fInTried = true;
     return;
 }
@@ -266,27 +266,27 @@ void CAddrMan::Good_(const CService &addr, int64 nTime)
     int nId;
     CAddrInfo *pinfo = Find(addr, &nId);
 
-    // if not found, bail out
+    // if not found, bail out                                                       если не найдено, bail out(аварийное завершение)
     if (!pinfo)
         return;
 
     CAddrInfo &info = *pinfo;
 
-    // check whether we are talking about the exact same CService (including same port)
+    // check whether we are talking about the exact same CService (including same port)    убедитесь, что мы говорим о том же CService (в том числе тот же порт)
     if (info != addr)
         return;
 
-    // update info
+    // update info                                                                  обновление информации
     info.nLastSuccess = nTime;
     info.nLastTry = nTime;
     info.nTime = nTime;
     info.nAttempts = 0;
 
-    // if it is already in the tried set, don't do anything else
+    // if it is already in the tried set, don't do anything else                    исли это уже в пыталась установить, не делать что-либо еще
     if (info.fInTried)
         return;
 
-    // find a bucket it is in now
+    // find a bucket it is in now                                                   найдите бакет, в котором это находится теперь
     int nRnd = GetRandInt(vvNew.size());
     int nUBucket = -1;
     for (unsigned int n = 0; n < vvNew.size(); n++)
@@ -300,8 +300,8 @@ void CAddrMan::Good_(const CService &addr, int64 nTime)
         }
     }
 
-    // if no bucket is found, something bad happened;
-    // TODO: maybe re-add the node, but for now, just bail out
+    // if no bucket is found, something bad happened;                               если бакет не найден, что-то плохое случилось;
+    // TODO: maybe re-add the node, but for now, just bail out                      может быть повторно добавить узел, но сейчас только bail out(аварийное завершение)
     if (nUBucket == -1) return;
 
     printf("Moving %s to tried\n", addr.ToString().c_str());
@@ -321,28 +321,28 @@ bool CAddrMan::Add_(const CAddress &addr, const CNetAddr& source, int64 nTimePen
 
     if (pinfo)
     {
-        // periodically update nTime
+        // periodically update nTime                                                периодически обновлять Ntime
         bool fCurrentlyOnline = (GetAdjustedTime() - addr.nTime < 24 * 60 * 60);
         int64 nUpdateInterval = (fCurrentlyOnline ? 60 * 60 : 24 * 60 * 60);
         if (addr.nTime && (!pinfo->nTime || pinfo->nTime < addr.nTime - nUpdateInterval - nTimePenalty))
             pinfo->nTime = max((int64)0, addr.nTime - nTimePenalty);
 
-        // add services
+        // add services                                                             добаление сервисов
         pinfo->nServices |= addr.nServices;
 
-        // do not update if no new information is present
+        // do not update if no new information is present                           не обновлять, если никакой новой информации не присутствует
         if (!addr.nTime || (pinfo->nTime && addr.nTime <= pinfo->nTime))
             return false;
 
-        // do not update if the entry was already in the "tried" table
+        // do not update if the entry was already in the "tried" table              не обновлять, если запись уже была в таблицы "проверенных"
         if (pinfo->fInTried)
             return false;
 
-        // do not update if the max reference count is reached
+        // do not update if the max reference count is reached                      не обновлять, если достигнут максимум счетчика ссылок
         if (pinfo->nRefCount == ADDRMAN_NEW_BUCKETS_PER_ADDRESS)
             return false;
 
-        // stochastic test: previous nRefCount == N: 2^N times harder to increase it
+        // stochastic test: previous nRefCount == N: 2^N times harder to increase it(2^N раз сложнее его увеличить)
         int nFactor = 1;
         for (int n=0; n<pinfo->nRefCount; n++)
             nFactor *= 2;
@@ -372,17 +372,17 @@ void CAddrMan::Attempt_(const CService &addr, int64 nTime)
 {
     CAddrInfo *pinfo = Find(addr);
 
-    // if not found, bail out
+    // if not found, bail out                                                       если не найдено, bail out(аварийное завершение)
     if (!pinfo)
         return;
 
     CAddrInfo &info = *pinfo;
 
-    // check whether we are talking about the exact same CService (including same port)
+    // check whether we are talking about the exact same CService (including same port)    убедитесь, что мы говорим о том же CService (в том числе тот же порт)
     if (info != addr)
         return;
 
-    // update info
+    // update info                                                                  обновление информации
     info.nLastTry = nTime;
     info.nAttempts++;
 }
@@ -396,7 +396,7 @@ CAddress CAddrMan::Select_(int nUnkBias)
     double nCorNew = sqrt(nNew) * nUnkBias;
     if ((nCorTried + nCorNew)*GetRandInt(1<<30)/(1<<30) < nCorTried)
     {
-        // use a tried node
+        // use a tried node                                                         использовать испытанный узел
         double fChanceFactor = 1.0;
         while(1)
         {
@@ -411,7 +411,7 @@ CAddress CAddrMan::Select_(int nUnkBias)
             fChanceFactor *= 1.2;
         }
     } else {
-        // use a new node
+        // use a new node                                                           использовать новый узел
         double fChanceFactor = 1.0;
         while(1)
         {
@@ -498,6 +498,7 @@ void CAddrMan::GetAddr_(std::vector<CAddress> &vAddr)
         nNodes = ADDRMAN_GETADDR_MAX;
 
     // perform a random shuffle over the first nNodes elements of vRandom (selecting from all)
+    //      выполнить случайная перестановку первых nNodes элементов из vRandom (выбор из всех)
     for (int n = 0; n<nNodes; n++)
     {
         int nRndPos = GetRandInt(vRandom.size() - n) + n;
@@ -511,17 +512,17 @@ void CAddrMan::Connected_(const CService &addr, int64 nTime)
 {
     CAddrInfo *pinfo = Find(addr);
 
-    // if not found, bail out
+    // if not found, bail out                                                       если не найдено, bail out(аварийное завершение)
     if (!pinfo)
         return;
 
     CAddrInfo &info = *pinfo;
 
-    // check whether we are talking about the exact same CService (including same port)
+    // check whether we are talking about the exact same CService (including same port)    убедитесь, что мы говорим о том же CService (в том числе тот же порт)
     if (info != addr)
         return;
 
-    // update info
+    // update info                                                                  обновление информации
     int64 nUpdateInterval = 20 * 60;
     if (nTime - info.nTime > nUpdateInterval)
         info.nTime = nTime;

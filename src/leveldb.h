@@ -19,7 +19,7 @@ public:
 
 void HandleError(const leveldb::Status &status) throw(leveldb_error);
 
-// Batch of changes queued to be written to a CLevelDB
+// Batch of changes queued to be written to a CLevelDB                              серия изменений в очереди, которые должны быть записаны в CLevelDB
 class CLevelDBBatch
 {
     friend class CLevelDB;
@@ -55,25 +55,25 @@ public:
 class CLevelDB
 {
 private:
-    // custom environment this database is using (may be NULL in case of default environment)
+    // custom environment this database is using (may be NULL in case of default environment)  пользовательская среда этой используемой базы данных (может иметь значение NULL в случае среды по умолчанию)
     leveldb::Env *penv;
 
-    // database options used
+    // database options used                                                        параметры использования базы данных
     leveldb::Options options;
 
-    // options used when reading from the database
+    // options used when reading from the database                                  параметры, используемые при чтении из базы данных
     leveldb::ReadOptions readoptions;
 
-    // options used when iterating over values of the database
+    // options used when iterating over values of the database                      параметры, используемые при итерации значений базы данных
     leveldb::ReadOptions iteroptions;
 
-    // options used when writing to the database
+    // options used when writing to the database                                    параметры, используемые при записи в базу данных
     leveldb::WriteOptions writeoptions;
 
-    // options used when sync writing to the database
+    // options used when sync writing to the database                               параметры, использованные при синхронизации записи в базу
     leveldb::WriteOptions syncoptions;
 
-    // the database itself
+    // the database itself                                                          сама база данных
     leveldb::DB *pdb;
 
 public:
@@ -134,7 +134,7 @@ public:
 
     bool WriteBatch(CLevelDBBatch &batch, bool fSync = false) throw(leveldb_error);
 
-    // not available for LevelDB; provide for compatibility with BDB
+    // not available for LevelDB; provide for compatibility with BDB                не доступны для LevelDB; обеспечена совместимость с BDB
     bool Flush() {
         return true;
     }
@@ -144,7 +144,7 @@ public:
         return WriteBatch(batch, true);
     }
 
-    // not exactly clean encapsulation, but it's easiest for now
+    // not exactly clean encapsulation, but it's easiest for now                    не совсем чистые инкапсуляции, но это является самым легким пока
     leveldb::Iterator *NewIterator() {
         return pdb->NewIterator(iteroptions);
     }

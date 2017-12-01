@@ -14,27 +14,27 @@
 
 class CNode;
 
-/** Alerts are for notifying old versions if they become too obsolete and
- * need to upgrade.  The message is displayed in the status bar.
- * Alert messages are broadcast as a vector of signed data.  Unserializing may
- * not read the entire buffer if the alert is for a newer version, but older
- * versions can still relay the original data.
+/** Alerts are for notifying old versions if they become too obsolete and           Оповещения уведомления старых версий, если они становятся слишком старыми
+ * need to upgrade.  The message is displayed in the status bar.                    и требуют обновления. Это сообщение отображается в строке состояния.
+ * Alert messages are broadcast as a vector of signed data.  Unserializing may      Предупреждающие сообщения передаются как вектор подписанных данных.
+ * not read the entire buffer if the alert is for a newer version, but older        Десериализация не может прочитать весь буфер, если предупреждение является более
+ * versions can still relay the original data.                                      новой версией, но старые версии все еще могут передавать исходные данные.
  */
 class CUnsignedAlert
 {
 public:
     int nVersion;
-    int64 nRelayUntil;      // when newer nodes stop relaying to newer nodes
+    int64 nRelayUntil;      // when newer nodes stop relaying to newer nodes        когда новые узлы прекращают ретрансляцию на новые узлы
     int64 nExpiration;
     int nID;
     int nCancel;
     std::set<int> setCancel;
-    int nMinVer;            // lowest version inclusive
-    int nMaxVer;            // highest version inclusive
-    std::set<std::string> setSubVer;  // empty matches all
+    int nMinVer;            // lowest version inclusive                             минимальная версия включительно
+    int nMaxVer;            // highest version inclusive                            максимальная версия включительно
+    std::set<std::string> setSubVer;  // empty matches all                          пустое соответствует всем
     int nPriority;
 
-    // Actions
+    // Actions(действие)
     std::string strComment;
     std::string strStatusBar;
     std::string strReserved;
@@ -64,7 +64,7 @@ public:
     void print() const;
 };
 
-/** An alert is a combination of a serialized CUnsignedAlert and a signature. */
+/** An alert is a combination of a serialized CUnsignedAlert and a signature.   Предупреждение - это комбинация сериализованных CUnsignedAlert и подписи. */
 class CAlert : public CUnsignedAlert
 {
 public:
@@ -95,6 +95,7 @@ public:
 
     /*
      * Get copy of (active) alert object by hash. Returns a null alert if it is not found.
+     *                  Получить копию (активного) оповещения объекта около хэша. Возвращается нулевой alert, если он не найден.
      */
     static CAlert getAlertByHash(const uint256 &hash);
 };

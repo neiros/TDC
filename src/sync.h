@@ -14,7 +14,7 @@
 
 ////////////////////////////////////////////////
 //                                            //
-// THE SIMPLE DEFINITON, EXCLUDING DEBUG CODE //
+// THE SIMPLE DEFINITON, EXCLUDING DEBUG CODE //  Простое определение, за исключением КОД ОТЛАДКИ
 //                                            //
 ////////////////////////////////////////////////
 
@@ -49,12 +49,12 @@ LEAVE_CRITICAL_SECTION(mutex); // no RAII
 
 ///////////////////////////////
 //                           //
-// THE ACTUAL IMPLEMENTATION //
+// THE ACTUAL IMPLEMENTATION // Фактическая реализация
 //                           //
 ///////////////////////////////
 
-// Template mixin that adds -Wthread-safety locking annotations to a
-// subset of the mutex API.
+// Template mixin that adds -Wthread-safety locking annotations to a        Смешанный шаблон, который добавляет -Wпотоковая-безопасность блокировку аннотации
+// subset of the mutex API.                                                 на подмножество мьютекса API
 template <typename PARENT>
 class LOCKABLE AnnotatedMixin : public PARENT
 {
@@ -75,11 +75,11 @@ public:
     }
 };
 
-/** Wrapped boost mutex: supports recursive locking, but no waiting  */
-// TODO: We should move away from using the recursive lock by default.
+/** Wrapped boost mutex: supports recursive locking, but no waiting     Обернутый boost мьютекс: поддерживает рекурсивные блокировка, но нет времени ожидания */
+// TODO: We should move away from using the recursive lock by default.  Мы должны отойти от использования рекурсивной блокировки по умолчанию
 typedef AnnotatedMixin<boost::recursive_mutex> CCriticalSection;
 
-/** Wrapped boost mutex: supports waiting but not recursive locking */
+/** Wrapped boost mutex: supports waiting but not recursive locking     Обернутый boost мьютекс: поддерживает ожидания, но нет рекурсивной блокировки */
 typedef AnnotatedMixin<boost::mutex> CWaitableCriticalSection;
 
 #ifdef DEBUG_LOCKORDER
@@ -94,7 +94,7 @@ void static inline LeaveCritical() {}
 void PrintLockContention(const char* pszName, const char* pszFile, int nLine);
 #endif
 
-/** Wrapper around boost::unique_lock<Mutex> */
+/** Wrapper around(Оболочка вокруг) boost::unique_lock<Mutex> */
 template<typename Mutex>
 class CMutexLock
 {
@@ -198,7 +198,7 @@ public:
     }
 };
 
-/** RAII-style semaphore lock */
+/** RAII-style semaphore lock                                           RAII-стиль семафорной блокировки */
 class CSemaphoreGrant
 {
 private:

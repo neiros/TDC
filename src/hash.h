@@ -12,6 +12,7 @@
 #include <openssl/ripemd.h>
 #include <vector>
 
+
 template<typename T1>
 inline uint256 Hash(const T1 pbegin, const T1 pend)
 {
@@ -45,7 +46,7 @@ public:
         return (*this);
     }
 
-    // invalidates the object
+    // invalidates the object                               делает недействительным объект
     uint256 GetHash() {
         uint256 hash1;
         SHA256_Final((unsigned char*)&hash1, &ctx);
@@ -56,7 +57,7 @@ public:
 
     template<typename T>
     CHashWriter& operator<<(const T& obj) {
-        // Serialize to this stream
+        // Serialize to this stream                         сериализовать в этом потоке
         ::Serialize(*this, obj, nType, nVersion);
         return (*this);
     }

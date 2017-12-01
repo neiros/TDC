@@ -7,7 +7,7 @@
 #include <map>
 #include <deque>
 
-/** STL-like map container that only keeps the N elements with the highest value. */
+/** STL-like map container that only keeps the N elements with the highest value.   STL-подобный map контейнер, который только содержит N элементов с максимальным значением */
 template <typename K, typename V> class limitedmap
 {
 public:
@@ -59,13 +59,14 @@ public:
                 map.erase(itTarget);
                 return;
             }
-        // Shouldn't ever get here
+        // Shouldn't ever get here                                                  Не следует когда-либо получать здесь
         assert(0); //TODO remove me
         map.erase(itTarget);
     }
     void update(const_iterator itIn, const mapped_type& v)
     {
         //TODO: When we switch to C++11, use map.erase(itIn, itIn) to get the non-const iterator
+        //                      Когда мы переходим к C++11, используйте map.erase(itIn, itIn), чтобы получить неконстантный итератор
         iterator itTarget = map.find(itIn->first);
         if (itTarget == map.end())
             return;
@@ -78,7 +79,7 @@ public:
                 rmap.insert(make_pair(v, itTarget));
                 return;
             }
-        // Shouldn't ever get here
+        // Shouldn't ever get here                                                  Не следует когда-либо получать здесь
         assert(0); //TODO remove me
         itTarget->second = v;
         rmap.insert(make_pair(v, itTarget));

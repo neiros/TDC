@@ -13,7 +13,7 @@ void ScriptPubKeyToJSON(const CScript& scriptPubKey, Object& out);
 
 double GetDifficulty(const CBlockIndex* blockindex)
 {
-    // Floating point number that is a multiple of the minimum difficulty,
+    // Floating point number that is a multiple of the minimum difficulty,          Число с плавающей запятой, которое является кратным числом минимальной трудности
     // minimum difficulty = 1.0.
     if (blockindex == NULL)
     {
@@ -229,7 +229,7 @@ Value gettxout(const Array& params, bool fHelp)
         CCoinsViewMemPool view(*pcoinsTip, mempool);
         if (!view.GetCoins(hash, coins))
             return Value::null;
-        mempool.pruneSpent(hash, coins); // TODO: this should be done by the CCoinsViewMemPool
+        mempool.pruneSpent(hash, coins); // TODO: this should be done(это должно быть сделано) by the CCoinsViewMemPool
     } else {
         if (!pcoinsTip->GetCoins(hash, coins))
             return Value::null;

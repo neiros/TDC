@@ -56,7 +56,7 @@ QDateTime ClientModel::getLastBlockDate() const
     if (pindexBest)
         return QDateTime::fromTime_t(pindexBest->GetBlockTime());
     else if(!isTestNet())
-        return QDateTime::fromTime_t(1231006505); // Genesis block's time
+        return QDateTime::fromTime_t(1231006505); // Genesis block's time                       Время genesis(первоначального) блока
     else
         return QDateTime::fromTime_t(1296688602); // Genesis block's time (testnet)
 }
@@ -70,10 +70,13 @@ void ClientModel::updateTimer()
 {
     // Some quantities (such as number of blocks) change so fast that we don't want to be notified for each change.
     // Periodically check and update with a timer.
+    //      Некоторые количества (например, количество блоков) изменаются так быстро, что мы не хотим получать уведомления для каждого изменения.
+    //      Периодически проверять и обновлять с помощью таймера.
     int newNumBlocks = getNumBlocks();
     int newNumBlocksOfPeers = getNumBlocksOfPeers();
 
     // check for changed number of blocks we have, number of blocks peers claim to have, reindexing state and importing state
+    //      проверить изменения количества блоков которые мы имеем, количество блоков имеющихся у пиров, переиндексации состояния и импортирование состояния
     if (cachedNumBlocks != newNumBlocks || cachedNumBlocksOfPeers != newNumBlocksOfPeers ||
         cachedReindexing != fReindex || cachedImporting != fImporting)
     {
@@ -83,6 +86,7 @@ void ClientModel::updateTimer()
         cachedImporting = fImporting;
 
         // ensure we return the maximum of newNumBlocksOfPeers and newNumBlocks to not create weird displays in the GUI
+        //      Чтобы убедиться, что мы вернуть максимум newNumBlocksOfPeers и newNumBlocks чтобы не создавать странное отображение в GUI
         emit numBlocksChanged(newNumBlocks, std::max(newNumBlocksOfPeers, newNumBlocks));
     }
 }
@@ -94,7 +98,7 @@ void ClientModel::updateNumConnections(int numConnections)
 
 void ClientModel::updateAlert(const QString &hash, int status)
 {
-    // Show error message notification for new alert
+    // Show error message notification for new alert                                        Показать уведомление сообщения об ошибке для новых алертов(тревог)
     if(status == CT_NEW)
     {
         uint256 hash_256;
@@ -171,16 +175,16 @@ QString ClientModel::formatClientStartupTime() const
     return QDateTime::fromTime_t(nClientStartupTime).toString();
 }
 
-// Handlers for core signals
+// Handlers for core signals                                                                    Обработчик для основных сигналов
 static void NotifyBlocksChanged(ClientModel *clientmodel)
 {
-    // This notification is too frequent. Don't trigger a signal.
-    // Don't remove it, though, as it might be useful later.
+    // This notification is too frequent. Don't trigger a signal.                               Это уведомление слишком часто. Не вызывайте сигнал.
+    // Don't remove it, though, as it might be useful later.                                    Не удаляйте это, тем не менее, поскольку это моЖЕТ бы быть полезно позже.
 }
 
 static void NotifyNumConnectionsChanged(ClientModel *clientmodel, int newNumConnections)
 {
-    // Too noisy: OutputDebugStringF("NotifyNumConnectionsChanged %i\n", newNumConnections);
+    // Too noisy(Слишком шумный): OutputDebugStringF("NotifyNumConnectionsChanged %i\n", newNumConnections);
     QMetaObject::invokeMethod(clientmodel, "updateNumConnections", Qt::QueuedConnection,
                               Q_ARG(int, newNumConnections));
 }
@@ -195,7 +199,7 @@ static void NotifyAlertChanged(ClientModel *clientmodel, const uint256 &hash, Ch
 
 void ClientModel::subscribeToCoreSignals()
 {
-    // Connect signals to client
+    // Connect signals to client                                                                Соединение сигналов с клиентом
     uiInterface.NotifyBlocksChanged.connect(boost::bind(NotifyBlocksChanged, this));
     uiInterface.NotifyNumConnectionsChanged.connect(boost::bind(NotifyNumConnectionsChanged, this, _1));
     uiInterface.NotifyAlertChanged.connect(boost::bind(NotifyAlertChanged, this, _1, _2));
@@ -203,7 +207,7 @@ void ClientModel::subscribeToCoreSignals()
 
 void ClientModel::unsubscribeFromCoreSignals()
 {
-    // Disconnect signals from client
+    // Disconnect signals from client                                                           Разединение сигналов с клиентом
     uiInterface.NotifyBlocksChanged.disconnect(boost::bind(NotifyBlocksChanged, this));
     uiInterface.NotifyNumConnectionsChanged.disconnect(boost::bind(NotifyNumConnectionsChanged, this, _1));
     uiInterface.NotifyAlertChanged.disconnect(boost::bind(NotifyAlertChanged, this, _1, _2));

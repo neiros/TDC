@@ -35,7 +35,7 @@ CBigNum CastToBigNum(const valtype& vch)
 {
     if (vch.size() > nMaxNumSize)
         throw runtime_error("CastToBigNum() : overflow");
-    // Get rid of extra leading zeros
+    // Get rid of extra leading zeros                                               Чтобы избавиться от дополнительных нулей
     return CBigNum(CBigNum(vch).getvch());
 }
 
@@ -45,7 +45,7 @@ bool CastToBool(const valtype& vch)
     {
         if (vch[i] != 0)
         {
-            // Can be negative zero
+            // Can be negative zero                                             Может быть отрицательный ноль
             if (i == vch.size()-1 && vch[i] == 0x80)
                 return false;
             return true;
@@ -57,8 +57,8 @@ bool CastToBool(const valtype& vch)
 
 
 //
-// Script is a stack machine (like Forth) that evaluates a predicate
-// returning a bool indicating valid or not.  There are no loops.
+// Script is a stack machine (like Forth) that evaluates a predicate            Script представляет собой стека машину (как Форт), которая оценивает предикат,
+// returning a bool indicating valid or not.  There are no loops.               возвращающий bool(логическое значение) указателя действительным или нет. Нет никаких loops петлей/спиралей/переборов
 //
 #define stacktop(i)  (stack.at(stack.size()+(i)))
 #define altstacktop(i)  (altstack.at(altstack.size()+(i)))
@@ -88,7 +88,7 @@ const char* GetOpName(opcodetype opcode)
 {
     switch (opcode)
     {
-    // push value
+    // push value                                                               проталкивание значений
     case OP_0                      : return "0";
     case OP_PUSHDATA1              : return "OP_PUSHDATA1";
     case OP_PUSHDATA2              : return "OP_PUSHDATA2";
@@ -112,7 +112,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_15                     : return "15";
     case OP_16                     : return "16";
 
-    // control
+    // control                                                                  управление
     case OP_NOP                    : return "OP_NOP";
     case OP_VER                    : return "OP_VER";
     case OP_IF                     : return "OP_IF";
@@ -124,7 +124,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_VERIFY                 : return "OP_VERIFY";
     case OP_RETURN                 : return "OP_RETURN";
 
-    // stack ops
+    // stack ops                                                                стек ops
     case OP_TOALTSTACK             : return "OP_TOALTSTACK";
     case OP_FROMALTSTACK           : return "OP_FROMALTSTACK";
     case OP_2DROP                  : return "OP_2DROP";
@@ -145,14 +145,14 @@ const char* GetOpName(opcodetype opcode)
     case OP_SWAP                   : return "OP_SWAP";
     case OP_TUCK                   : return "OP_TUCK";
 
-    // splice ops
+    // splice ops                                                               сращивание/соединение ops
     case OP_CAT                    : return "OP_CAT";
     case OP_SUBSTR                 : return "OP_SUBSTR";
     case OP_LEFT                   : return "OP_LEFT";
     case OP_RIGHT                  : return "OP_RIGHT";
     case OP_SIZE                   : return "OP_SIZE";
 
-    // bit logic
+    // bit logic                                                                бит логика
     case OP_INVERT                 : return "OP_INVERT";
     case OP_AND                    : return "OP_AND";
     case OP_OR                     : return "OP_OR";
@@ -162,7 +162,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_RESERVED1              : return "OP_RESERVED1";
     case OP_RESERVED2              : return "OP_RESERVED2";
 
-    // numeric
+    // numeric                                                                  цифровое
     case OP_1ADD                   : return "OP_1ADD";
     case OP_1SUB                   : return "OP_1SUB";
     case OP_2MUL                   : return "OP_2MUL";
@@ -191,7 +191,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_MAX                    : return "OP_MAX";
     case OP_WITHIN                 : return "OP_WITHIN";
 
-    // crypto
+    // crypto                                                                   криптографическое
     case OP_RIPEMD160              : return "OP_RIPEMD160";
     case OP_SHA1                   : return "OP_SHA1";
     case OP_SHA256                 : return "OP_SHA256";
@@ -203,7 +203,7 @@ const char* GetOpName(opcodetype opcode)
     case OP_CHECKMULTISIG          : return "OP_CHECKMULTISIG";
     case OP_CHECKMULTISIGVERIFY    : return "OP_CHECKMULTISIGVERIFY";
 
-    // expanson
+    // expans(i)on                                                              расширение
     case OP_NOP1                   : return "OP_NOP1";
     case OP_NOP2                   : return "OP_NOP2";
     case OP_NOP3                   : return "OP_NOP3";
@@ -217,7 +217,7 @@ const char* GetOpName(opcodetype opcode)
 
 
 
-    // template matching params
+    // template matching params                                                 шаблон соответствия ПАРАМЕТРОВ
     case OP_PUBKEYHASH             : return "OP_PUBKEYHASH";
     case OP_PUBKEY                 : return "OP_PUBKEY";
 
@@ -248,6 +248,10 @@ bool IsCanonicalSignature(const valtype &vchSig) {
     // Where R and S are not negative (their first byte has its highest bit not set), and not
     // excessively padded (do not start with a 0 byte, unless an otherwise negative number follows,
     // in which case a single 0 byte is necessary and even required).
+    //                  Существует каноническое подпись: <30> <total len> <02> <len R> <R> <02> <len S> <S> <hashtype>
+    //                  Где R и S не отрицательны (их первый байт в своем самом высоком бите не установлен),
+    //                  и не слишком мягкие/пухлые (не начинаются с 0 байт, если только следует иное отрицательное число,
+    //                  в этом случае необходим один 0 байт и даже требуется)
     if (vchSig.size() < 9)
         return error("Non-canonical signature: too short");
     if (vchSig.size() > 73)
@@ -311,7 +315,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
             bool fExec = !count(vfExec.begin(), vfExec.end(), false);
 
             //
-            // Read instruction
+            // Read instruction                                                     Чтение инструкции
             //
             if (!script.GetOp(pc, opcode, vchPushValue))
                 return false;
@@ -335,7 +339,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                 opcode == OP_MOD ||
                 opcode == OP_LSHIFT ||
                 opcode == OP_RSHIFT)
-                return false; // Disabled opcodes.
+                return false; // Disabled opcodes.                                 неработоспособный opкоды
 
             if (fExec && 0 <= opcode && opcode <= OP_PUSHDATA4)
                 stack.push_back(vchPushValue);
@@ -343,7 +347,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
             switch (opcode)
             {
                 //
-                // Push value
+                // Push value                                                       проталкивание значений
                 //
                 case OP_1NEGATE:
                 case OP_1:
@@ -371,7 +375,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
 
 
                 //
-                // Control
+                // Control                                                          управление
                 //
                 case OP_NOP:
                 case OP_NOP1: case OP_NOP2: case OP_NOP3: case OP_NOP4: case OP_NOP5:
@@ -435,7 +439,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
 
 
                 //
-                // Stack ops
+                // Stack ops                                                        стек ops
                 //
                 case OP_TOALTSTACK:
                 {
@@ -645,7 +649,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
 
 
                 //
-                // Bitwise logic
+                // Bitwise logic                                                    Побитовая логика
                 //
                 case OP_EQUAL:
                 case OP_EQUALVERIFY:
@@ -657,9 +661,9 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                     valtype& vch1 = stacktop(-2);
                     valtype& vch2 = stacktop(-1);
                     bool fEqual = (vch1 == vch2);
-                    // OP_NOTEQUAL is disabled because it would be too easy to say
-                    // something like n != 1 and have some wiseguy pass in 1 with extra
-                    // zero bytes after it (numerically, 0x01 == 0x0001 == 0x000001)
+                    // OP_NOTEQUAL is disabled because it would be too easy to say          OP_NOTEQUAL отключена, поскольку это было бы слишком просто что бы
+                    // something like n != 1 and have some wiseguy pass in 1 with extra     сказать что-то вроде n != 1 и иметь некоторые Wiseguy проходы в 1 с
+                    // zero bytes after it (numerically, 0x01 == 0x0001 == 0x000001)        дополнительными нулями после него (численно, 0x01 == 0x0001 == 0x000001)
                     //if (opcode == OP_NOTEQUAL)
                     //    fEqual = !fEqual;
                     popstack(stack);
@@ -677,7 +681,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
 
 
                 //
-                // Numeric
+                // Numeric                                                          цифровое
                 //
                 case OP_1ADD:
                 case OP_1SUB:
@@ -780,7 +784,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
 
 
                 //
-                // Crypto
+                // Crypto                                                           криптографическое
                 //
                 case OP_RIPEMD160:
                 case OP_SHA1:
@@ -816,7 +820,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
 
                 case OP_CODESEPARATOR:
                 {
-                    // Hash starts after the code separator
+                    // Hash starts after the code separator                         Хэш начинается после разделителя кода
                     pbegincodehash = pc;
                 }
                 break;
@@ -835,10 +839,11 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                     //PrintHex(vchSig.begin(), vchSig.end(), "sig: %s\n");
                     //PrintHex(vchPubKey.begin(), vchPubKey.end(), "pubkey: %s\n");
 
-                    // Subset of script starting at the most recent codeseparator
+                    // Subset of script starting at the most recent codeseparator   Подмножество сценария, начиная с самого последнего codeseparator`а
                     CScript scriptCode(pbegincodehash, pend);
 
                     // Drop the signature, since there's no way for a signature to sign itself
+                    //                  Удалить подпись, поскольку нет способа для подписывания самой подписи
                     scriptCode.FindAndDelete(CScript(vchSig));
 
                     bool fSuccess = (!fStrictEncodings || (IsCanonicalSignature(vchSig) && IsCanonicalPubKey(vchPubKey)));
@@ -886,10 +891,11 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                     if ((int)stack.size() < i)
                         return false;
 
-                    // Subset of script starting at the most recent codeseparator
+                    // Subset of script starting at the most recent codeseparator   Подмножество сценария, начиная с самого последнего codeseparator`а
                     CScript scriptCode(pbegincodehash, pend);
 
-                    // Drop the signatures, since there's no way for a signature to sign itself
+                    // Drop the signature, since there's no way for a signature to sign itself
+                    //                  Удалить подписи, поскольку нет способа для подписывания самой подписи
                     for (int k = 0; k < nSigsCount; k++)
                     {
                         valtype& vchSig = stacktop(-isig-k);
@@ -902,7 +908,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                         valtype& vchSig    = stacktop(-isig);
                         valtype& vchPubKey = stacktop(-ikey);
 
-                        // Check signature
+                        // Check signature                                          Проверить подпись
                         bool fOk = (!fStrictEncodings || (IsCanonicalSignature(vchSig) && IsCanonicalPubKey(vchPubKey)));
                         if (fOk)
                             fOk = CheckSig(vchSig, vchPubKey, scriptCode, txTo, nIn, nHashType, flags);
@@ -914,8 +920,8 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                         ikey++;
                         nKeysCount--;
 
-                        // If there are more signatures left than keys left,
-                        // then too many signatures have failed
+                        // If there are more signatures left than keys left,        Если есть больше оставшихся подписей чем оставшихся ключей,
+                        // then too many signatures have failed                     то слишком много подписей не удались(не получились)
                         if (nSigsCount > nKeysCount)
                             fSuccess = false;
                     }
@@ -938,7 +944,7 @@ bool EvalScript(vector<vector<unsigned char> >& stack, const CScript& script, co
                     return false;
             }
 
-            // Size limits
+            // Size limits                                                          лимиты размера
             if (stack.size() + altstack.size() > 1000)
                 return false;
         }
@@ -972,29 +978,29 @@ uint256 SignatureHash(CScript scriptCode, const CTransaction& txTo, unsigned int
     }
     CTransaction txTmp(txTo);
 
-    // In case concatenating two scripts ends up with two codeseparators,
-    // or an extra one at the end, this prevents all those possible incompatibilities.
+    // In case concatenating two scripts ends up with two codeseparators,               В случае объединения двух сценариев заканчивается с двумя codeseparators,
+    // or an extra one at the end, this prevents all those possible incompatibilities.  или один дополнительный в конце, это предотвращает все эти возможные несовместимости.
     scriptCode.FindAndDelete(CScript(OP_CODESEPARATOR));
 
-    // Blank out other inputs' signatures
+    // Blank out other inputs' signatures                                           Пустое из других входов подписей
     for (unsigned int i = 0; i < txTmp.vin.size(); i++)
         txTmp.vin[i].scriptSig = CScript();
     txTmp.vin[nIn].scriptSig = scriptCode;
 
-    // Blank out some of the outputs
+    // Blank out some of the outputs                                                Пустое из некоторых других выходов
     if ((nHashType & 0x1f) == SIGHASH_NONE)
     {
-        // Wildcard payee
+        // Wildcard payee                                                           метод описания поискового запроса(Wildcard) получателя
         txTmp.vout.clear();
 
-        // Let the others update at will
+        // Let the others update at will                                            Позволить другим модернизировать по желанию
         for (unsigned int i = 0; i < txTmp.vin.size(); i++)
             if (i != nIn)
                 txTmp.vin[i].nSequence = 0;
     }
     else if ((nHashType & 0x1f) == SIGHASH_SINGLE)
     {
-        // Only lock-in the txout payee at same index as txin
+        // Only lock-in the txout payee at same index as txin                       Только замораживание txout получатель платежа в том же самом индексе как txin
         unsigned int nOut = nIn;
         if (nOut >= txTmp.vout.size())
         {
@@ -1005,34 +1011,34 @@ uint256 SignatureHash(CScript scriptCode, const CTransaction& txTo, unsigned int
         for (unsigned int i = 0; i < nOut; i++)
             txTmp.vout[i].SetNull();
 
-        // Let the others update at will
+        // Let the others update at will                                            Позволить другим модернизировать по желанию
         for (unsigned int i = 0; i < txTmp.vin.size(); i++)
             if (i != nIn)
                 txTmp.vin[i].nSequence = 0;
     }
 
-    // Blank out other inputs completely, not recommended for open transactions
+    // Blank out other inputs completely, not recommended for open transactions     Пустое из других входов полностью, не рекомендуется для открытых операций
     if (nHashType & SIGHASH_ANYONECANPAY)
     {
         txTmp.vin[0] = txTmp.vin[nIn];
         txTmp.vin.resize(1);
     }
 
-    // Serialize and hash
+    // Serialize and hash                                                           Сериализация и хэш
     CHashWriter ss(SER_GETHASH, 0);
     ss << txTmp << nHashType;
     return ss.GetHash();
 }
 
 
-// Valid signature cache, to avoid doing expensive ECDSA signature checking
-// twice for every transaction (once when accepted into memory pool, and
-// again when accepted into the block chain)
+// Valid signature cache, to avoid doing expensive ECDSA signature checking         Действительная подпись кэша, чтобы не делать дорогую проверку ECDSA подписи
+// twice for every transaction (once when accepted into memory pool, and            дважды для каждой транзакции (один раз, когда приняты в пул памяти и снова
+// again when accepted into the block chain)                                        когда приняты в цепь боков)
 
 class CSignatureCache
 {
 private:
-     // sigdata_type is (signature hash, signature, public key):
+     // sigdata_type is (signature hash, signature, public key):                    (хэш подписи, подпись, открытый ключ)
     typedef boost::tuple<uint256, std::vector<unsigned char>, CPubKey> sigdata_type;
     std::set< sigdata_type> setValid;
     boost::shared_mutex cs_sigcache;
@@ -1052,10 +1058,10 @@ public:
 
     void Set(const uint256 &hash, const std::vector<unsigned char>& vchSig, const CPubKey& pubKey)
     {
-        // DoS prevention: limit cache size to less than 10MB
-        // (~200 bytes per cache entry times 50,000 entries)
-        // Since there are a maximum of 20,000 signature operations per block
-        // 50,000 is a reasonable default.
+        // DoS prevention: limit cache size to less than 10MB                       DoS предотвращение: ограничить размер кэша до менее чем 10 МБ
+        // (~200 bytes per cache entry times 50,000 entries)                        (~200 байт на запись кэша из 50,000 записей)
+        // Since there are a maximum of 20,000 signature operations per block       Поскольку есть более 20,000 операций подписи на каждый блок
+        // 50,000 is a reasonable default.                                          50,000 является разумным значением по умолчанию
         int64 nMaxCacheSize = GetArg("-maxsigcachesize", 50000);
         if (nMaxCacheSize <= 0) return;
 
@@ -1063,10 +1069,10 @@ public:
 
         while (static_cast<int64>(setValid.size()) > nMaxCacheSize)
         {
-            // Evict a random entry. Random because that helps
-            // foil would-be DoS attackers who might try to pre-generate
-            // and re-use a set of valid signatures just-slightly-greater
-            // than our cache size.
+            // Evict a random entry. Random because that helps                      Исключить случайную запись. Случайная, потому что это помогает мешать
+            // foil would-be DoS attackers who might try to pre-generate            потенциальным DoS нападающим, которые могут попытаться заранее создать
+            // and re-use a set of valid signatures just-slightly-greater           и повторно использовать набор действительных подписей только чуть больше,
+            // than our cache size.                                                 чем наш размер кэша
             uint256 randomHash = GetRandHash();
             std::vector<unsigned char> unused;
             std::set<sigdata_type>::iterator it =
@@ -1090,7 +1096,7 @@ bool CheckSig(vector<unsigned char> vchSig, const vector<unsigned char> &vchPubK
     if (!pubkey.IsValid())
         return false;
 
-    // Hash type is one byte tacked on to the end of the signature
+    // Hash type is one byte tacked on to the end of the signature                  Хэш-тип составляет один байт прикреплённый к концу подписи
     if (vchSig.empty())
         return false;
     if (nHashType == 0)
@@ -1123,25 +1129,28 @@ bool CheckSig(vector<unsigned char> vchSig, const vector<unsigned char> &vchPubK
 
 //
 // Return public keys or hashes from scriptPubKey, for 'standard' transaction types.
-//
+//                          Возвращение публичных ключей или хэшей из scriptPubKey, для «стандартных» типов операций
 bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsigned char> >& vSolutionsRet)
 {
-    // Templates
+    // Templates                                                                Шаблоны
     static map<txnouttype, CScript> mTemplates;
     if (mTemplates.empty())
     {
-        // Standard tx, sender provides pubkey, receiver adds signature
+        // Standard tx, sender provides pubkey, receiver adds signature         Стандартный tx, отправитель обеспечивает pubkey, получатель добавляет подпись
         mTemplates.insert(make_pair(TX_PUBKEY, CScript() << OP_PUBKEY << OP_CHECKSIG));
 
         // Bitcoin address tx, sender provides hash of pubkey, receiver provides signature and pubkey
+        //                  Bitcoin адрес tx, отправитель предоставляет хэш pubkey, получатель предоставляет подпись и pubkey
         mTemplates.insert(make_pair(TX_PUBKEYHASH, CScript() << OP_DUP << OP_HASH160 << OP_PUBKEYHASH << OP_EQUALVERIFY << OP_CHECKSIG));
 
-        // Sender provides N pubkeys, receivers provides M signatures
+        // Sender provides N pubkeys, receivers provides M signatures           Отправитель предоставляет N Pubkeys, приемники предоставляет M подписей
         mTemplates.insert(make_pair(TX_MULTISIG, CScript() << OP_SMALLINTEGER << OP_PUBKEYS << OP_SMALLINTEGER << OP_CHECKMULTISIG));
     }
 
     // Shortcut for pay-to-script-hash, which are more constrained than the other types:
     // it is always OP_HASH160 20 [20 byte hash] OP_EQUAL
+    //                      Ярлык для pay-to-script-hash, который более ограничен, чем другие типы
+    //                      Это всегда OP_HASH160 20 [20 byte hash] OP_EQUAL
     if (scriptPubKey.IsPayToScriptHash())
     {
         typeRet = TX_SCRIPTHASH;
@@ -1150,7 +1159,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
         return true;
     }
 
-    // Scan templates
+    // Scan templates                                                           Сканирование шаблонов
     const CScript& script1 = scriptPubKey;
     BOOST_FOREACH(const PAIRTYPE(txnouttype, CScript)& tplate, mTemplates)
     {
@@ -1160,18 +1169,18 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
         opcodetype opcode1, opcode2;
         vector<unsigned char> vch1, vch2;
 
-        // Compare
+        // Compare                                                              сопоставление
         CScript::const_iterator pc1 = script1.begin();
         CScript::const_iterator pc2 = script2.begin();
         while (true)
         {
             if (pc1 == script1.end() && pc2 == script2.end())
             {
-                // Found a match
+                // Found a match                                                Найти соответствие
                 typeRet = tplate.first;
                 if (typeRet == TX_MULTISIG)
                 {
-                    // Additional checks for TX_MULTISIG:
+                    // Additional checks for TX_MULTISIG:                       Дополнительные проверки для TX_MULTISIG:
                     unsigned char m = vSolutionsRet.front()[0];
                     unsigned char n = vSolutionsRet.back()[0];
                     if (m < 1 || n < 1 || m > n || vSolutionsRet.size()-2 != n)
@@ -1184,7 +1193,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
             if (!script2.GetOp(pc2, opcode2, vch2))
                 break;
 
-            // Template matching opcodes:
+            // Template matching opcodes:                                       Шаблон соответствия opкодам:
             if (opcode2 == OP_PUBKEYS)
             {
                 while (vch1.size() >= 33 && vch1.size() <= 120)
@@ -1195,8 +1204,8 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
                 }
                 if (!script2.GetOp(pc2, opcode2, vch2))
                     break;
-                // Normal situation is to fall through
-                // to other if/else statements
+                // Normal situation is to fall through                          Нормальная ситуация должна провалиться
+                // to other if/else statements                                  к другому if/else высказыванию
             }
 
             if (opcode2 == OP_PUBKEY)
@@ -1212,7 +1221,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
                 vSolutionsRet.push_back(vch1);
             }
             else if (opcode2 == OP_SMALLINTEGER)
-            {   // Single-byte small integer pushed onto vSolutions
+            {   // Single-byte small integer pushed onto vSolutions             Одно-байтовое небольшое целое помещается в vSolutions
                 if (opcode1 == OP_0 ||
                     (opcode1 >= OP_1 && opcode1 <= OP_16))
                 {
@@ -1224,7 +1233,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
             }
             else if (opcode1 != opcode2 || vch1 != vch2)
             {
-                // Others must match exactly
+                // Others must match exactly                                    Другие должны совпадать в точности
                 break;
             }
         }
@@ -1270,6 +1279,10 @@ bool SignN(const vector<valtype>& multisigdata, const CKeyStore& keystore, uint2
 // Signatures are returned in scriptSigRet (or returns false if scriptPubKey can't be signed),
 // unless whichTypeRet is TX_SCRIPTHASH, in which case scriptSigRet is the redemption script.
 // Returns false if scriptPubKey could not be completely satisfied.
+//                  Подписать scriptPubKey с приватными ключами, хранящимися в keystore, хэша данной сделки и тип хеширования.
+//                  Подписи возвращаются в scriptSigRet (или возвращает значение false, если не может быть подписано scriptPubKey),
+//                  если whichTypeRet является TX_SCRIPTHASH, в этом случае scriptSigRet является освобождением сценария.
+//                  Возвращает false, если scriptPubKey не может быть полностью удовлетворено.
 //
 bool Solver(const CKeyStore& keystore, const CScript& scriptPubKey, uint256 hash, int nHashType,
                   CScript& scriptSigRet, txnouttype& whichTypeRet)
@@ -1303,7 +1316,7 @@ bool Solver(const CKeyStore& keystore, const CScript& scriptPubKey, uint256 hash
         return keystore.GetCScript(uint160(vSolutions[0]), scriptSigRet);
 
     case TX_MULTISIG:
-        scriptSigRet << OP_0; // workaround CHECKMULTISIG bug
+        scriptSigRet << OP_0; // workaround CHECKMULTISIG bug                   решение CHECKMULTISIG ошибки
         return (SignN(vSolutions, keystore, hash, nHashType, scriptSigRet));
     }
     return false;
@@ -1324,7 +1337,7 @@ int ScriptSigArgsExpected(txnouttype t, const std::vector<std::vector<unsigned c
             return -1;
         return vSolutions[0][0] + 1;
     case TX_SCRIPTHASH:
-        return 1; // doesn't include args needed by the script
+        return 1; // doesn't include args needed by the script                  не включает в себя аргументы, необходимые для сценария
     }
     return -1;
 }
@@ -1340,7 +1353,7 @@ bool IsStandard(const CScript& scriptPubKey)
     {
         unsigned char m = vSolutions.front()[0];
         unsigned char n = vSolutions.back()[0];
-        // Support up to x-of-3 multisig txns as standard
+        // Support up to x-of-3 multisig txns as standard                       Поддержка до x-of-33 multisig txns как стандарт
         if (n < 1 || n > 3)
             return false;
         if (m < 1 || m > n)
@@ -1407,10 +1420,10 @@ bool IsMine(const CKeyStore &keystore, const CScript& scriptPubKey)
     }
     case TX_MULTISIG:
     {
-        // Only consider transactions "mine" if we own ALL the
-        // keys involved. multi-signature transactions that are
-        // partially owned (somebody else has a key that can spend
-        // them) enable spend-out-from-under-you attacks, especially
+        // Only consider transactions "mine" if we own ALL the                  Только учтитываем транзакции "mine(добычи)", если мы имеем ВСЕ связанные ключи.
+        // keys involved. multi-signature transactions that are                 мульти-подписанные сделки, которые частично являются собственностью (кто-то
+        // partially owned (somebody else has a key that can spend              другой имеет ключ, который может потратить их) разрешить тратить-из-под-ваших
+        // them) enable spend-out-from-under-you attacks, especially            нападений, особенно в shared-Wallet ситуациях.
         // in shared-wallet situations.
         vector<valtype> keys(vSolutions.begin()+1, vSolutions.begin()+vSolutions.size()-1);
         return HaveKeys(keys, keystore) == keys.size();
@@ -1441,7 +1454,7 @@ bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet)
         addressRet = CScriptID(uint160(vSolutions[0]));
         return true;
     }
-    // Multisig txns have more than one address...
+    // Multisig txns have more than one address...                              Multisig txns имеющие более чем один адрес...
     return false;
 }
 
@@ -1526,15 +1539,15 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
     if (CastToBool(stack.back()) == false)
         return false;
 
-    // Additional validation for spend-to-script-hash transactions:
+    // Additional validation for spend-to-script-hash transactions:             Дополнительные проверки для тратить-скрипт-hash транзакций:
     if ((flags & SCRIPT_VERIFY_P2SH) && scriptPubKey.IsPayToScriptHash())
     {
-        if (!scriptSig.IsPushOnly()) // scriptSig must be literals-only
-            return false;            // or validation fails
+        if (!scriptSig.IsPushOnly()) // scriptSig must be literals-only         scriptSig должен быть только-константным
+            return false;            // or validation fails                     или не прохошедшим проверку
 
-        // stackCopy cannot be empty here, because if it was the
-        // P2SH  HASH <> EQUAL  scriptPubKey would be evaluated with
-        // an empty stack and the EvalScript above would return false.
+        // stackCopy cannot be empty here, because if it was the                stackCopy не может быть пустым здесь, потому что, если это было
+        // P2SH  HASH <> EQUAL  scriptPubKey would be evaluated with            P2SH  HASH <> EQUAL  scriptPubKey будет оцениваться на пустом стеке
+        // an empty stack and the EvalScript above would return false.          и EvalScript выше возвратил бы false.
         assert(!stackCopy.empty());
 
         const valtype& pubKeySerialized = stackCopy.back();
@@ -1557,8 +1570,8 @@ bool SignSignature(const CKeyStore &keystore, const CScript& fromPubKey, CTransa
     assert(nIn < txTo.vin.size());
     CTxIn& txin = txTo.vin[nIn];
 
-    // Leave out the signature from the hash, since a signature can't sign itself.
-    // The checksig op will also drop the signatures from its hash.
+    // Leave out the signature from the hash, since a signature can't sign itself.  Оставьте подпись из хэша, поскольку подпись не может подписать сама себя.
+    // The checksig op will also drop the signatures from its hash.                 checksig op также отбрасывает подписи от хеша.
     uint256 hash = SignatureHash(fromPubKey, txTo, nIn, nHashType);
 
     txnouttype whichType;
@@ -1567,23 +1580,23 @@ bool SignSignature(const CKeyStore &keystore, const CScript& fromPubKey, CTransa
 
     if (whichType == TX_SCRIPTHASH)
     {
-        // Solver returns the subscript that need to be evaluated;
-        // the final scriptSig is the signatures from that
-        // and then the serialized subscript:
+        // Solver returns the subscript that need to be evaluated;                  Решение возвращает subscript который должны быть оценен;
+        // the final scriptSig is the signatures from that                          Окончательный scriptSig это подписи,
+        // and then the serialized subscript:                                       и затем сериализация subscript:
         CScript subscript = txin.scriptSig;
 
-        // Recompute txn hash using subscript in place of scriptPubKey:
+        // Recompute txn hash using subscript in place of scriptPubKey:             Пересчитать txn хэш с помощью subscript вместо scriptPubKey:
         uint256 hash2 = SignatureHash(subscript, txTo, nIn, nHashType);
 
         txnouttype subType;
         bool fSolved =
             Solver(keystore, subscript, hash2, nHashType, txin.scriptSig, subType) && subType != TX_SCRIPTHASH;
-        // Append serialized subscript whether or not it is completely signed:
+        // Append serialized subscript whether or not it is completely signed:      Добавить сериализованный subscript ли он не полностью подписан:
         txin.scriptSig << static_cast<valtype>(subscript);
         if (!fSolved) return false;
     }
 
-    // Test solution
+    // Test solution                                                                Тестирование решения
     return VerifyScript(txin.scriptSig, fromPubKey, txTo, nIn, SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC, 0);
 }
 
@@ -1609,7 +1622,7 @@ static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, u
                                const vector<valtype>& vSolutions,
                                vector<valtype>& sigs1, vector<valtype>& sigs2)
 {
-    // Combine all the signatures we've got:
+    // Combine all the signatures we've got:                                Объединить все подписи, что у нас есть:
     set<valtype> allsigs;
     BOOST_FOREACH(const valtype& v, sigs1)
     {
@@ -1622,7 +1635,7 @@ static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, u
             allsigs.insert(v);
     }
 
-    // Build a map of pubkey -> signature by matching sigs to pubkeys:
+    // Build a map of pubkey -> signature by matching sigs to pubkeys:      Построить карту pubkey->подписи, сопоставляя sigs с pubkeys:
     assert(vSolutions.size() > 1);
     unsigned int nSigsRequired = vSolutions.front()[0];
     unsigned int nPubKeys = vSolutions.size()-2;
@@ -1633,7 +1646,7 @@ static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, u
         {
             const valtype& pubkey = vSolutions[i+1];
             if (sigs.count(pubkey))
-                continue; // Already got a sig for this pubkey
+                continue; // Already got a sig for this pubkey              Уже получена sig для этого pubkey
 
             if (CheckSig(sig, pubkey, scriptPubKey, txTo, nIn, 0, 0))
             {
@@ -1642,9 +1655,9 @@ static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, u
             }
         }
     }
-    // Now build a merged CScript:
+    // Now build a merged CScript:                                          Теперь построить объединенный CScript:
     unsigned int nSigsHave = 0;
-    CScript result; result << OP_0; // pop-one-too-many workaround
+    CScript result; result << OP_0; // pop-one-too-many(поп-один-слишком-много) workaround(решение/работа)
     for (unsigned int i = 0; i < nPubKeys && nSigsHave < nSigsRequired; i++)
     {
         if (sigs.count(vSolutions[i+1]))
@@ -1653,7 +1666,7 @@ static CScript CombineMultisig(CScript scriptPubKey, const CTransaction& txTo, u
             ++nSigsHave;
         }
     }
-    // Fill any missing with OP_0:
+    // Fill any missing with OP_0:                                          Заполнить любые отсутствующие OP_0:
     for (unsigned int i = nSigsHave; i < nSigsRequired; i++)
         result << OP_0;
 
@@ -1667,13 +1680,13 @@ static CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo,
     switch (txType)
     {
     case TX_NONSTANDARD:
-        // Don't know anything about this, assume bigger one is correct:
+        // Don't know anything about this, assume bigger one is correct:    Ничего не знаю об этом, предположим, что больший правилен:
         if (sigs1.size() >= sigs2.size())
             return PushAll(sigs1);
         return PushAll(sigs2);
     case TX_PUBKEY:
     case TX_PUBKEYHASH:
-        // Signatures are bigger than placeholders or empty scripts:
+        // Signatures are bigger than placeholders or empty scripts:        Подписи больше чем placeholders или пустые сценарии:
         if (sigs1.empty() || sigs1[0].empty())
             return PushAll(sigs2);
         return PushAll(sigs1);
@@ -1684,7 +1697,7 @@ static CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo,
             return PushAll(sigs1);
         else
         {
-            // Recur to combine:
+            // Recur to combine:                                            Возвратится чтобы объеденить:
             valtype spk = sigs1.back();
             CScript pubKey2(spk.begin(), spk.end());
 
@@ -1748,9 +1761,9 @@ unsigned int CScript::GetSigOpCount(const CScript& scriptSig) const
     if (!IsPayToScriptHash())
         return GetSigOpCount(true);
 
-    // This is a pay-to-script-hash scriptPubKey;
-    // get the last item that the scriptSig
-    // pushes onto the stack:
+    // This is a pay-to-script-hash scriptPubKey;                           Это плата_за_скрипт_хеш scriptPubKey;
+    // get the last item that the scriptSig                                 получает последний элемент, который scriptSig
+    // pushes onto the stack:                                               помещает в стек
     const_iterator pc = scriptSig.begin();
     vector<unsigned char> data;
     while (pc < scriptSig.end())
@@ -1762,21 +1775,21 @@ unsigned int CScript::GetSigOpCount(const CScript& scriptSig) const
             return 0;
     }
 
-    /// ... and return its opcount:
+    /// ... and return its opcount:                                         и возвращает этот opcount
     CScript subscript(data.begin(), data.end());
     return subscript.GetSigOpCount(true);
 }
 
 bool CScript::IsPayToScriptHash() const
 {
-    // Extra-fast test for pay-to-script-hash CScripts:
+    // Extra-fast test for pay-to-script-hash CScripts:                     Экстра-быстрый тест для pay-to-script-hash CScripts:
     return (this->size() == 23 &&
             this->at(0) == OP_HASH160 &&
             this->at(1) == 0x14 &&
             this->at(22) == OP_EQUAL);
 }
 
-class CScriptVisitor : public boost::static_visitor<bool>
+class CScriptVisitor : public boost::static_visitor<bool>                   // http://www.boost.org/doc/libs/1_49_0/doc/html/boost/static_visitor.html
 {
 private:
     CScript *script;
@@ -1801,9 +1814,9 @@ public:
     }
 };
 
-void CScript::SetDestination(const CTxDestination& dest)
+void CScript::SetDestination(const CTxDestination& dest)                    // ПунктНазначения
 {
-    boost::apply_visitor(CScriptVisitor(this), dest);
+    boost::apply_visitor(CScriptVisitor(this), dest);                       // http://www.boost.org/doc/libs/1_35_0/doc/html/boost/apply_visitor_id918957.html
 }
 
 void CScript::SetMultisig(int nRequired, const std::vector<CPubKey>& keys)
@@ -1848,7 +1861,7 @@ bool CScriptCompressor::IsToPubKey(CPubKey &pubkey) const
                             && script[1] == 0x04) {
         pubkey.Set(&script[1], &script[66]);
         return pubkey.IsFullyValid(); // if not fully valid, a case that would not be compressible
-    }
+    }                                 //                    если не в полной мере действителен, в этом случае не должен быть сжимаем
     return false;
 }
 

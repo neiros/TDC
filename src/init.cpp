@@ -35,9 +35,9 @@ CWallet* pwalletMain;
 CClientUIInterface uiInterface;
 
 #ifdef WIN32
-// Win32 LevelDB doesn't use filedescriptors, and the ones used for
-// accessing block files, don't count towards to fd_set size limit
-// anyway.
+// Win32 LevelDB doesn't use filedescriptors, and the ones used for     // LevelDB не использует файловых дескрипторов, и те, которые используются для
+// accessing block files, don't count towards to fd_set size limit      // Блок доступа к файлам, не засчитываются в ограничение на размер fd_set
+// anyway.                                                              // в любом случае
 #define MIN_CORE_FILEDESCRIPTORS 0
 #else
 #define MIN_CORE_FILEDESCRIPTORS 150
@@ -53,7 +53,7 @@ enum BindFlags {
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// Shutdown
+// Shutdown (Выключение)
 //
 
 //
@@ -79,7 +79,31 @@ enum BindFlags {
 // Shutdown for Qt is very similar, only it uses a QTimer to detect
 // fRequestShutdown getting set, and then does the normal Qt
 // shutdown thing.
+
+
+// Управление потоками и включения / выключения:
 //
+// Сети потоки, обрабатывающие все являемся частью группы потоков
+// созданные AppInit () или Qt Main () функцию.
+//
+// Чистый выход происходит, когда StartShutdown () или SIGTERM
+//  , обработчик сигнала устанавливает fRequestShutdown, который вызывает
+// DetectShutdownThread (), которая прерывает основной группе нити.
+//  DetectShutdownThread (), то выходит, что вызывает AppInit (), чтобы
+//  продолжать (это. присоединяется отключение потока).
+//  Shutdown () затем
+//  вызываться для очистки соединений с базой данных, и остановить других
+//  потоков, которые должны быть остановлена ​​только после того, как основной сети обработки
+//  темы вышли.
+//
+//  Заметим, что если обкатки демон родительский процесс возвращается из AppInit2
+//  Перед добавлением любых потоков со ThreadGroup, так что. join_all () возвращает
+//  немедленно и родителей выходит из Main ().
+//
+//  Выключение для Qt очень похож, только он использует для обнаружения QTimer
+//  fRequestShutdown получение набора, а затем делает нормальные Qt
+//  выключения фактом.
+
 
 volatile bool fRequestShutdown = false;
 
@@ -100,12 +124,12 @@ void Shutdown()
     TRY_LOCK(cs_Shutdown, lockShutdown);
     if (!lockShutdown) return;
 
-    RenameThread("bitcoin-shutoff");
+    RenameThread("TTC-shutoff");
     nTransactionsUpdated++;
     StopRPCThreads();
     ShutdownRPCMining();
     bitdb.Flush(false);
-    GenerateBitcoins(false, NULL);
+    GenerateCoins(false, NULL);
     StopNode();
     {
         LOCK(cs_main);
@@ -127,6 +151,7 @@ void Shutdown()
 
 //
 // Signal handlers are very limited in what they are allowed to do, so:
+// Обработчиков сигналов очень ограничены в том, что они могут сделать, так:
 //
 void HandleSIGTERM(int)
 {
@@ -163,11 +188,12 @@ bool static Bind(const CService &addr, unsigned int flags) {
 }
 
 // Core-specific options shared between UI and daemon
+// Основные параметры, специфичные для распределяются между UI и демона
 std::string HelpMessage()
 {
     string strUsage = _("Options:") + "\n";
     strUsage += "  -?                     " + _("This help message") + "\n";
-    strUsage += "  -conf=<file>           " + _("Specify configuration file (default: bitcoin.conf)") + "\n";
+    strUsage += "  -conf=<file>           " + _("Specify configuration file (default: TTC.conf)") + "\n";
     strUsage += "  -pid=<file>            " + _("Specify pid file (default: bitcoind.pid)") + "\n";
     strUsage += "  -gen                   " + _("Generate coins (default: 0)") + "\n";
     strUsage += "  -datadir=<dir>         " + _("Specify data directory") + "\n";
@@ -178,7 +204,7 @@ std::string HelpMessage()
     strUsage += "  -socks=<n>             " + _("Select the version of socks proxy to use (4-5, default: 5)") + "\n";
     strUsage += "  -tor=<ip:port>         " + _("Use proxy to reach tor hidden services (default: same as -proxy)") + "\n";
     strUsage += "  -dns                   " + _("Allow DNS lookups for -addnode, -seednode and -connect") + "\n";
-    strUsage += "  -port=<port>           " + _("Listen for connections on <port> (default: 8333 or testnet: 18333)") + "\n";
+    strUsage += "  -port=<port>           " + _("Listen for connections on <port> (default: 17511 or testnet: 57511)") + "\n";
     strUsage += "  -maxconnections=<n>    " + _("Maintain at most <n> connections to peers (default: 125)") + "\n";
     strUsage += "  -addnode=<ip>          " + _("Add a node to connect to and attempt to keep the connection open") + "\n";
     strUsage += "  -connect=<ip>          " + _("Connect only to the specified node(s)") + "\n";
@@ -202,6 +228,7 @@ std::string HelpMessage()
 #endif
 #endif
     strUsage += "  -paytxfee=<amt>        " + _("Fee per KB to add to transactions you send") + "\n";
+    strUsage += "  -minertxfee=<amt>      " + _("Mining fee to add to transactions you send") + "\n";     ////////// новое //////////
     if (fHaveGUI)
         strUsage += "  -server                " + _("Accept command line and JSON-RPC commands") + "\n";
 #if !defined(WIN32)
@@ -269,7 +296,7 @@ struct CImportingNow
 
 void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
 {
-    RenameThread("bitcoin-loadblk");
+    RenameThread("TTC-loadblk");
 
     // -reindex
     if (fReindex) {
@@ -288,10 +315,11 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
         fReindex = false;
         printf("Reindexing finished\n");
         // To avoid ending up in a situation without genesis block, re-try initializing (no-op if reindexing worked):
+        // Чтобы не оказаться в ситуации, без генезиса блок, повторная попытка инициализации (холостая команда, если переиндексации работала):
         InitBlockIndex();
     }
 
-    // hardcoded $DATADIR/bootstrap.dat
+    // hardcoded(жесткокодированный) $DATADIR/bootstrap.dat (bootstrap - начальная загрузка)
     filesystem::path pathBootstrap = GetDataDir() / "bootstrap.dat";
     if (filesystem::exists(pathBootstrap)) {
         FILE *file = fopen(pathBootstrap.string().c_str(), "rb");
@@ -315,28 +343,31 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
     }
 }
 
-/** Initialize bitcoin.
+/** Initialize(инициализировать) bitcoin.
  *  @pre Parameters should be parsed and config file should be read.
+ *  @pre Параметры должны быть проанализированы и конфигурационный файл следует читать
  */
 bool AppInit2(boost::thread_group& threadGroup)
 {
     // ********************************************************* Step 1: setup
 #ifdef _MSC_VER
-    // Turn off Microsoft heap dump noise
+    // Turn off (отключение) Microsoft heap dump noise
     _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
     _CrtSetReportFile(_CRT_WARN, CreateFileA("NUL", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0));
 #endif
 #if _MSC_VER >= 1400
-    // Disable confusing "helpful" text message on abort, Ctrl-C
+    // Disable confusing "helpful" text message on abort, Ctrl-C (Отключение запутанных "полезные" текстовых сообщений прерываний)
     _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
 #endif
 #ifdef WIN32
-    // Enable Data Execution Prevention (DEP)
-    // Minimum supported OS versions: WinXP SP3, WinVista >= SP1, Win Server 2008
-    // A failure is non-critical and needs no further attention!
+    // Enable(Включить) Data Execution Prevention (DEP)
+    // Minimum supported OS versions(минимально поддерживаемые версии ОС): WinXP SP3, WinVista >= SP1, Win Server 2008
+    // A failure is non-critical and needs no further attention! (Отказ не является критическим и не нуждается в дальнейшем внимании!)
 #ifndef PROCESS_DEP_ENABLE
 // We define this here, because GCCs winbase.h limits this to _WIN32_WINNT >= 0x0601 (Windows 7),
+    // Мы определяем это здесь, потому что GCCs winbase.h устанавливает предел на _WIN32_WINNT >= 0x0601 (Windows 7),
 // which is not correct. Can be removed, when GCCs winbase.h is fixed!
+    // что не корректно. Может быть удалены, когда GCCs winbase.h фиксированн!
 #define PROCESS_DEP_ENABLE 0x00000001
 #endif
     typedef BOOL (WINAPI *PSETPROCDEPPOL)(DWORD);
@@ -351,8 +382,8 @@ bool AppInit2(boost::thread_group& threadGroup)
         return InitError(strprintf("Error: Winsock library failed to start (WSAStartup returned error %d)", ret));
     }
 #endif
-#ifndef WIN32
-    umask(077);
+#ifndef WIN32       // если не в WIN
+    umask(077);     // user file creation mode mask — маска режима создания пользовательских файлов
 
     // Clean shutdown on SIGTERM
     struct sigaction sa;
@@ -370,7 +401,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     sigaction(SIGHUP, &sa_hup, NULL);
 #endif
 
-    // ********************************************************* Step 2: parameter interactions
+    // ********************************************************* Step 2: parameter interactions  (параметры взаимодействия)
 
     Checkpoints::fEnabled = GetBoolArg("-checkpoints", true);
     if (!SelectParamsFromCommandLine()) {
@@ -378,39 +409,40 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
 
     if (mapArgs.count("-bind")) {
-        // when specifying an explicit binding address, you want to listen on it
-        // even when -connect or -proxy is specified
+        // when specifying an explicit binding address, you want to listen on it            при указании явное связывание адресов, вы хотите слушать на нем даже
+        // even when -connect or -proxy is specified                                        тогда, когда -connect или -proxy указано
         SoftSetBoolArg("-listen", true);
     }
 
     if (mapArgs.count("-connect") && mapMultiArgs["-connect"].size() > 0) {
-        // when only connecting to trusted nodes, do not seed via DNS, or listen by default
+        // when only connecting to trusted nodes, do not seed via DNS,                      только при подключении доверенных узлов, не базовые через DNS,
+        // or listen by default                                                             или послушать по умолчанию
         SoftSetBoolArg("-dnsseed", false);
         SoftSetBoolArg("-listen", false);
     }
 
     if (mapArgs.count("-proxy")) {
-        // to protect privacy, do not listen by default if a proxy server is specified
+        // to protect privacy, do not listen by default if a proxy server is specified      чтобы защитить частную жизнь, не слушайте по умолчанию, если прокси-сервер указан
         SoftSetBoolArg("-listen", false);
     }
 
     if (!GetBoolArg("-listen", true)) {
-        // do not map ports or try to retrieve public IP when not listening (pointless)
+        // do not map ports or try to retrieve public IP when not listening (pointless)     не отображаются порты или пытаться получить общественное IP когда не слушаю (бессмысленно)
         SoftSetBoolArg("-upnp", false);
         SoftSetBoolArg("-discover", false);
     }
 
     if (mapArgs.count("-externalip")) {
-        // if an explicit public IP is specified, do not try to find others
+        // if an explicit public IP is specified, do not try to find others                 Если явно публичный IP указан, не пытаются найти другие
         SoftSetBoolArg("-discover", false);
     }
 
     if (GetBoolArg("-salvagewallet", false)) {
-        // Rewrite just private keys: rescan to find transactions
+        // Rewrite just private keys: rescan to find transactions                           Перепишите просто закрытые ключи: повторное сканирование, чтобы найти сделок
         SoftSetBoolArg("-rescan", true);
     }
 
-    // Make sure enough file descriptors are available
+    // Make sure enough file descriptors are available  (Убедитесь в том, достаточно дескрипторов файлов доступно)
     int nBind = std::max((int)mapArgs.count("-bind"), 1);
     nMaxConnections = GetArg("-maxconnections", 125);
     nMaxConnections = std::max(std::min(nMaxConnections, (int)(FD_SETSIZE - nBind - MIN_CORE_FILEDESCRIPTORS)), 0);
@@ -420,12 +452,12 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (nFD - MIN_CORE_FILEDESCRIPTORS < nMaxConnections)
         nMaxConnections = nFD - MIN_CORE_FILEDESCRIPTORS;
 
-    // ********************************************************* Step 3: parameter-to-internal-flags
+    // ********************************************************* Step 3: parameter-to-internal-flags (Параметр внутренних флагов)
 
     fDebug = GetBoolArg("-debug", false);
     fBenchmark = GetBoolArg("-benchmark", false);
 
-    // -par=0 means autodetect, but nScriptCheckThreads==0 means no concurrency
+    // -par=0 means autodetect, but nScriptCheckThreads==0 means no concurrency  (-par=0 означает, автоопределение, но nScriptCheckThreads==0 означает отсутствие параллелизма)
     nScriptCheckThreads = GetArg("-par", 0);
     if (nScriptCheckThreads <= 0)
         nScriptCheckThreads += boost::thread::hardware_concurrency();
@@ -445,7 +477,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     else
         fServer = GetBoolArg("-server", false);
 
-    /* force fServer when running without GUI */
+    /* force fServer when running without GUI (заставить fServer при запуске без GUI)*/
     if (!fHaveGUI)
         fServer = true;
     fPrintToConsole = GetBoolArg("-printtoconsole", false);
@@ -459,18 +491,18 @@ bool AppInit2(boost::thread_group& threadGroup)
             nConnectTimeout = nNewTimeout;
     }
 
-    // Continue to put "/P2SH/" in the coinbase to monitor
+    // Continue to put "/P2SH/" in the coinbase to monitor              Продолжайте наносить "/P2SH/" в coinbase для мониторинга
     // BIP16 support.
-    // This can be removed eventually...
+    // This can be removed eventually...                                Это может быть удалена в конечном счете
     const char* pszP2SH = "/P2SH/";
     COINBASE_FLAGS << std::vector<unsigned char>(pszP2SH, pszP2SH+strlen(pszP2SH));
 
-    // Fee-per-kilobyte amount considered the same as "free"
-    // If you are mining, be careful setting this:
-    // if you set it to zero then
-    // a transaction spammer can cheaply fill blocks using
-    // 1-satoshi-fee transactions. It should be set above the real
-    // cost to you of processing a transaction.
+    // Fee-per-kilobyte amount considered the same as "free"            Плата-за-килобайт сумме, которая считается так же, как "свободный"
+    // If you are mining, be careful setting this:                      Если вы добыче, будьте осторожны, установка этого:
+    // if you set it to zero then                                       если вы установите его нулю,
+    // a transaction spammer can cheaply fill blocks using              то сделка спамер может дешево заполнить блоки, используя
+    // 1-satoshi-fee transactions. It should be set above the real      1-satoshi-fee transactions. Он должен быть установлен выше реальных
+    // cost to you of processing a transaction.                         затрат для Вас обработки транзакции.
     if (mapArgs.count("-mintxfee"))
     {
         int64 n = 0;
@@ -496,28 +528,36 @@ bool AppInit2(boost::thread_group& threadGroup)
             InitWarning(_("Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction."));
     }
 
+    if (mapArgs.count("-minertxfee"))                                           ////////// новое //////////
+    {
+        if (!ParseMoney(mapArgs["-minertxfee"], nMinerTransFee))                ////////// новое //////////
+            return InitError(strprintf(_("Invalid amount for -minertxfee=<amount>: '%s'"), mapArgs["-minertxfee"].c_str()));
+        if (nMinerTransFee > CENT)                                              ////////// новое //////////
+            InitWarning(_("Warning: -minertxfee is set very high!.."));         ////////// новое //////////
+    }
+
     strWalletFile = GetArg("-wallet", "wallet.dat");
 
-    // ********************************************************* Step 4: application initialization: dir lock, daemonize, pidfile, debug log
+    // ********************************************************* Step 4: application(приложение) initialization: dir lock, daemonize, pidfile, debug log
 
     std::string strDataDir = GetDataDir().string();
 
-    // Wallet file must be a plain filename without a directory
+    // Wallet file must be a plain filename without a directory (Бумажник файл должен быть простым именем файла без каталога)
     if (strWalletFile != boost::filesystem::basename(strWalletFile) + boost::filesystem::extension(strWalletFile))
         return InitError(strprintf(_("Wallet %s resides outside data directory %s\n"), strWalletFile.c_str(), strDataDir.c_str()));
 
-    // Make sure only a single Bitcoin process is using the data directory.
+    // Make sure only a single Bitcoin process is using the data directory. (Убедитесь, что только один процесс Bitcoin использует данные каталога.)
     boost::filesystem::path pathLockFile = GetDataDir() / ".lock";
-    FILE* file = fopen(pathLockFile.string().c_str(), "a"); // empty lock file; created if it doesn't exist.
+    FILE* file = fopen(pathLockFile.string().c_str(), "a"); // empty lock file; created if it doesn't exist.  (пустой файл замок; создан, если он не существует.)
     if (file) fclose(file);
     static boost::interprocess::file_lock lock(pathLockFile.string().c_str());
     if (!lock.try_lock())
-        return InitError(strprintf(_("Cannot obtain a lock on data directory %s. Bitcoin is probably already running."), strDataDir.c_str()));
+        return InitError(strprintf(_("Cannot obtain a lock on data directory %s. TTC is probably already running."), strDataDir.c_str()));
 
     if (GetBoolArg("-shrinkdebugfile", !fDebug))
         ShrinkDebugFile();
     printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-    printf("Bitcoin version %s (%s)\n", FormatFullVersion().c_str(), CLIENT_DATE.c_str());
+    printf("TTC version %s (%s)\n", FormatFullVersion().c_str(), CLIENT_DATE.c_str());
     printf("Using OpenSSL version %s\n", SSLeay_version(SSLEAY_VERSION));
     if (!fLogTimestamps)
         printf("Startup time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()).c_str());
@@ -527,7 +567,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     std::ostringstream strErrors;
 
     if (fDaemon)
-        fprintf(stdout, "Bitcoin server starting\n");
+        fprintf(stdout, "TTC server starting\n");
 
     if (nScriptCheckThreads) {
         printf("Using %u threads for script verification\n", nScriptCheckThreads);
@@ -537,13 +577,13 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     int64 nStart;
 
-    // ********************************************************* Step 5: verify wallet database integrity
+    // ********************************************************* Step 5: verify wallet database integrity  (проверить целостность базы данных бумажника)
 
     uiInterface.InitMessage(_("Verifying wallet..."));
 
     if (!bitdb.Open(GetDataDir()))
     {
-        // try moving the database env out of the way
+        // try moving the database env out of the way  (попробуйте переместить базу данных env из пути)
         boost::filesystem::path pathDatabase = GetDataDir() / "database";
         boost::filesystem::path pathDatabaseBak = GetDataDir() / strprintf("database.%"PRI64d".bak", GetTime());
         try {
@@ -551,11 +591,13 @@ bool AppInit2(boost::thread_group& threadGroup)
             printf("Moved old %s to %s. Retrying.\n", pathDatabase.string().c_str(), pathDatabaseBak.string().c_str());
         } catch(boost::filesystem::filesystem_error &error) {
              // failure is ok (well, not really, but it's not worse than what we started with)
+             // отказ в порядке (ну, не совсем, но это не хуже, чем то, что мы начали с)
         }
 
-        // try again
+        // try again (попробуйте еще раз)
         if (!bitdb.Open(GetDataDir())) {
             // if it still fails, it probably means we can't even create the database env
+            // Если он по-прежнему не удается, он, вероятно, означает, что мы даже не можем создать базу данных environment
             string msg = strprintf(_("Error initializing wallet database environment %s!"), strDataDir.c_str());
             return InitError(msg);
         }
@@ -563,7 +605,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     if (GetBoolArg("-salvagewallet", false))
     {
-        // Recover readable keypairs:
+        // Recover readable keypairs:  (Восстановление читаемой пары ключей:)
         if (!CWalletDB::Recover(bitdb, strWalletFile, true))
             return false;
     }
@@ -583,7 +625,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             return InitError(_("wallet.dat corrupt, salvage failed"));
     }
 
-    // ********************************************************* Step 6: network initialization
+    // ********************************************************* Step 6: network initialization  (инициализации сети)
 
     RegisterNodeSignals(GetNodeSignals());
 
@@ -631,7 +673,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         fProxy = true;
     }
 
-    // -tor can override normal proxy, -notor disables tor entirely
+    // -tor can override normal proxy, -notor disables tor entirely  (-tор можно переопределить обычный прокси, -notor полностью отключает tor)
     if (!(mapArgs.count("-tor") && mapArgs["-tor"] == "0") && (fProxy || mapArgs.count("-tor"))) {
         CService addrOnion;
         if (!mapArgs.count("-tor"))
@@ -644,7 +686,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         SetReachable(NET_TOR);
     }
 
-    // see Step 2: parameter interactions for more information about these
+    // see Step 2: parameter interactions for more information about these  (см. Шаг 2: параметр взаимодействия для получения дополнительной информации об этих)
     fNoListen = !GetBoolArg("-listen", true);
     fDiscover = GetBoolArg("-discover", true);
     fNameLookup = GetBoolArg("-dns", true);
@@ -683,7 +725,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     BOOST_FOREACH(string strDest, mapMultiArgs["-seednode"])
         AddOneShot(strDest);
 
-    // ********************************************************* Step 7: load block chain
+    // ********************************************************* Step 7: load block chain  (загрузка блока цепи)
 
     fReindex = GetBoolArg("-reindex", false);
 
@@ -702,8 +744,8 @@ bool AppInit2(boost::thread_group& threadGroup)
                 printf("Hardlinked %s -> %s\n", source.string().c_str(), dest.string().c_str());
                 linked = true;
             } catch (filesystem::filesystem_error & e) {
-                // Note: hardlink creation failing is not a disaster, it just means
-                // blocks will get re-downloaded from peers.
+                // Note: hardlink creation failing is not a disaster, it just means     Примечание: создание жесткой ссылки потерпеть неудачу, не катастрофа, это просто означает,
+                // blocks will get re-downloaded from peers.                            блоки получит перезагружена с пиров.
                 printf("Error hardlinking blk%04u.dat : %s\n", i, e.what());
                 break;
             }
@@ -714,17 +756,17 @@ bool AppInit2(boost::thread_group& threadGroup)
         }
     }
 
-    // cache size calculations
+    // cache size calculations  (Расчеты размера кэша)
     size_t nTotalCache = GetArg("-dbcache", 25) << 20;
     if (nTotalCache < (1 << 22))
-        nTotalCache = (1 << 22); // total cache cannot be less than 4 MiB
+        nTotalCache = (1 << 22); // total cache cannot be less than 4 MiB                       общей кэш-памяти не может быть менее 4 Мб
     size_t nBlockTreeDBCache = nTotalCache / 8;
     if (nBlockTreeDBCache > (1 << 21) && !GetBoolArg("-txindex", false))
-        nBlockTreeDBCache = (1 << 21); // block tree db cache shouldn't be larger than 2 MiB
+        nBlockTreeDBCache = (1 << 21); // block tree db cache shouldn't be larger than 2 MiB    Блок дерева db кэша не должно быть больше, чем 2 МБ
     nTotalCache -= nBlockTreeDBCache;
-    size_t nCoinDBCache = nTotalCache / 2; // use half of the remaining cache for coindb cache
+    size_t nCoinDBCache = nTotalCache / 2; // use half of the remaining cache for coindb cache  использовать половину оставшегося кэша для кэша coindb
     nTotalCache -= nCoinDBCache;
-    nCoinCacheSize = nTotalCache / 300; // coins in memory require around 300 bytes
+    nCoinCacheSize = nTotalCache / 300; // coins in memory require around 300 bytes             Монеты в памяти потребуется около 300 байт
 
     bool fLoaded = false;
     while (!fLoaded) {
@@ -753,18 +795,18 @@ bool AppInit2(boost::thread_group& threadGroup)
                     break;
                 }
 
-                // If the loaded chain has a wrong genesis, bail out immediately
-                // (we're likely using a testnet datadir, or the other way around).
+                // If the loaded chain has a wrong genesis, bail out immediately        Если загруженный цепь имеет неправильный генезис, выручить немедленно
+                // (we're likely using a testnet datadir, or the other way around).     (мы вероятнее всего, используется testnet DATADIR или наоборот)
                 if (!mapBlockIndex.empty() && pindexGenesisBlock == NULL)
                     return InitError(_("Incorrect or no genesis block found. Wrong datadir for network?"));
 
-                // Initialize the block index (no-op if non-empty database was already loaded)
+                // Initialize the block index (no-op if non-empty database was already loaded)   Инициализации блока индекса (холостая команда, если не пустая база данных была уже загружена)
                 if (!InitBlockIndex()) {
                     strLoadError = _("Error initializing block database");
                     break;
                 }
 
-                // Check for changed -txindex state
+                // Check for changed -txindex state   (Проверка измененных -txindex состоянии)
                 if (fTxIndex != GetBoolArg("-txindex", false)) {
                     strLoadError = _("You need to rebuild the database using -reindex to change -txindex");
                     break;
@@ -785,7 +827,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         } while(false);
 
         if (!fLoaded) {
-            // first suggest a reindex
+            // first suggest a reindex   (первый предложил проиндексировать)
             if (!fReset) {
                 bool fRet = uiInterface.ThreadSafeMessageBox(
                     strLoadError + ".\n\n" + _("Do you want to rebuild the block database now?"),
@@ -803,9 +845,9 @@ bool AppInit2(boost::thread_group& threadGroup)
         }
     }
 
-    // as LoadBlockIndex can take several minutes, it's possible the user
-    // requested to kill bitcoin-qt during the last operation. If so, exit.
-    // As the program has not fully started yet, Shutdown() is possibly overkill.
+    // as LoadBlockIndex can take several minutes, it's possible the user           как LoadBlockIndex может занять несколько минут, то, возможно запрошенные пользователем,
+    // requested to kill bitcoin-qt during the last operation. If so, exit.         чтобы убить Bitcoin-Qt во время последней операции. Если да, то выйти.
+    // As the program has not fully started yet, Shutdown() is possibly overkill.   Поскольку программа не в полной мере началась, Shutdown(), возможно, перебор.
     if (fRequestShutdown)
     {
         printf("Shutdown requested. Exiting.\n");
@@ -842,7 +884,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         return false;
     }
 
-    // ********************************************************* Step 8: load wallet
+    // ********************************************************* Step 8: load wallet  (загрузка бумажника)
 
     uiInterface.InitMessage(_("Loading wallet..."));
 
@@ -861,10 +903,10 @@ bool AppInit2(boost::thread_group& threadGroup)
             InitWarning(msg);
         }
         else if (nLoadWalletRet == DB_TOO_NEW)
-            strErrors << _("Error loading wallet.dat: Wallet requires newer version of Bitcoin") << "\n";
+            strErrors << _("Error loading wallet.dat: Wallet requires newer version of TTC") << "\n";
         else if (nLoadWalletRet == DB_NEED_REWRITE)
         {
-            strErrors << _("Wallet needed to be rewritten: restart Bitcoin to complete") << "\n";
+            strErrors << _("Wallet needed to be rewritten: restart TTC to complete") << "\n";
             printf("%s", strErrors.str().c_str());
             return InitError(strErrors.str());
         }
@@ -875,11 +917,11 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (GetBoolArg("-upgradewallet", fFirstRun))
     {
         int nMaxVersion = GetArg("-upgradewallet", 0);
-        if (nMaxVersion == 0) // the -upgradewallet without argument case
+        if (nMaxVersion == 0) // the -upgradewallet without argument case (без аргументов кейс)
         {
             printf("Performing wallet upgrade to %i\n", FEATURE_LATEST);
             nMaxVersion = CLIENT_VERSION;
-            pwalletMain->SetMinVersion(FEATURE_LATEST); // permanently upgrade the wallet immediately
+            pwalletMain->SetMinVersion(FEATURE_LATEST); // permanently upgrade the wallet immediately (постоянное обновление бумажник немедленно)
         }
         else
             printf("Allowing wallet upgrade up to %i\n", nMaxVersion);
@@ -890,7 +932,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     if (fFirstRun)
     {
-        // Create new keyUser and set as default key
+        // Create new keyUser and set as default key  (Создать новую keyUser и установить в качестве ключа по умолчанию)
         RandAddSeedPerfmon();
 
         CPubKey newDefaultKey;
@@ -931,9 +973,10 @@ bool AppInit2(boost::thread_group& threadGroup)
         nWalletDBUpdated++;
     }
 
-    // ********************************************************* Step 9: import blocks
+    // ********************************************************* Step 9: import blocks  (импорт блоков)
 
     // scan for better chains in the block chain database, that are not yet connected in the active best chain
+    // сканирования для лучших сетей в базе цепной блок, которые еще не связаны в активном лучшие цепи
     CValidationState state;
     if (!ConnectBestBlock(state))
         strErrors << "Failed to connect best block";
@@ -981,21 +1024,22 @@ bool AppInit2(boost::thread_group& threadGroup)
     StartNode(threadGroup);
 
     // InitRPCMining is needed here so getwork/getblocktemplate in the GUI debug console works properly.
+    // InitRPCMining здесь необходима так getwork/getblocktemplate в консоли отладки GUI работает правильно.
     InitRPCMining();
     if (fServer)
         StartRPCThreads();
 
-    // Generate coins in the background
-    GenerateBitcoins(GetBoolArg("-gen", false), pwalletMain);
+    // Generate coins in the background  (Генерация монеты в фоновом режиме)
+    GenerateCoins(GetBoolArg("-gen", false), pwalletMain);
 
     // ********************************************************* Step 12: finished
 
     uiInterface.InitMessage(_("Done loading"));
 
-     // Add wallet transactions that aren't already in a block to mapTransactions
+     // Add wallet transactions that aren't already in a block to mapTransactions  (Добавить бумажник сделок, которые уже не в блоке mapTransactions)
     pwalletMain->ReacceptWalletTransactions();
 
-    // Run a thread to flush wallet periodically
+    // Run a thread to flush wallet periodically    (Запустить поток, чтобы сбрасывать бумажнике периодически)
     threadGroup.create_thread(boost::bind(&ThreadFlushWalletDB, boost::ref(pwalletMain->strWalletFile)));
 
     return !fRequestShutdown;

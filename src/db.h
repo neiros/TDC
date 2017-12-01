@@ -49,10 +49,10 @@ public:
     bool IsMock() { return fMockDb; }
 
     /*
-     * Verify that database file strFile is OK. If it is not,
-     * call the callback to try to recover.
-     * This must be called BEFORE strFile is opened.
-     * Returns true if strFile is OK.
+     * Verify that database file strFile is OK. If it is not,           Убедитесь, что strFile файл базы данных в порядке. Если это не так,
+     * call the callback to try to recover.                             вызов функции обратного вызова, чтобы попытаться восстановить.
+     * This must be called BEFORE strFile is opened.                    Это должна быть вызвано перед открытием strFile.
+     * Returns true if strFile is OK.                                   Возвращает истину, если strFile в порядке.
      */
     enum VerifyResult { VERIFY_OK, RECOVER_OK, RECOVER_FAIL };
     VerifyResult Verify(std::string strFile, bool (*recoverFunc)(CDBEnv& dbenv, std::string strFile));
@@ -60,8 +60,11 @@ public:
      * Salvage data from a file that Verify says is bad.
      * fAggressive sets the DB_AGGRESSIVE flag (see berkeley DB->verify() method documentation).
      * Appends binary key/value pairs to vResult, returns true if successful.
-     * NOTE: reads the entire database into memory, so cannot be used
-     * for huge databases.
+     * NOTE: reads the entire database into memory, so cannot be used for huge databases.
+     *                  Спасти данные из файла, о котором Проверка говорит плохо.
+     *                  FAggressive устанавливает DB_AGGRESSIVE флаг (см. Berkeley DB->verify() метод документации).
+     *                  Добавляет двоичную пару ключ/значение, чтобы vResult возвращал истину если успешно.
+     *                  ПРИМЕЧАНИЕ: считывает всю базу данных в память, поэтому не может быть использована для огромных баз данных.
      */
     typedef std::pair<std::vector<unsigned char>, std::vector<unsigned char> > KeyValPair;
     bool Salvage(std::string strFile, bool fAggressive, std::vector<KeyValPair>& vResult);
@@ -87,7 +90,7 @@ public:
 extern CDBEnv bitdb;
 
 
-/** RAII class that provides access to a Berkeley database */
+/** RAII class that provides access to a Berkeley database              RAII класс, который обеспечивает доступ к базе данных Berkeley*/
 class CDB
 {
 protected:
@@ -126,7 +129,7 @@ protected:
         if (datValue.get_data() == NULL)
             return false;
 
-        // Unserialize value
+        // Unserialize value                                            разсериализация значения
         try {
             CDataStream ssValue((char*)datValue.get_data(), (char*)datValue.get_data() + datValue.get_size(), SER_DISK, CLIENT_VERSION);
             ssValue >> value;
@@ -135,7 +138,7 @@ protected:
             return false;
         }
 
-        // Clear and free memory
+        // Clear and free memory                                        очистка и освобождение памяти
         memset(datValue.get_data(), 0, datValue.get_size());
         free(datValue.get_data());
         return (ret == 0);
@@ -164,7 +167,7 @@ protected:
         // Write
         int ret = pdb->put(activeTxn, &datKey, &datValue, (fOverwrite ? 0 : DB_NOOVERWRITE));
 
-        // Clear memory in case it was a private key
+        // Clear memory in case it was a private key                    Очистить память в случае, если это был закрытый ключ
         memset(datKey.get_data(), 0, datKey.get_size());
         memset(datValue.get_data(), 0, datValue.get_size());
         return (ret == 0);
@@ -184,7 +187,7 @@ protected:
         ssKey << key;
         Dbt datKey(&ssKey[0], ssKey.size());
 
-        // Erase
+        // Erase                                                        стирать
         int ret = pdb->del(activeTxn, &datKey, 0);
 
         // Clear memory
@@ -204,7 +207,7 @@ protected:
         ssKey << key;
         Dbt datKey(&ssKey[0], ssKey.size());
 
-        // Exists
+        // Exists                                                       быть, существовать
         int ret = pdb->exists(activeTxn, &datKey, 0);
 
         // Clear memory
@@ -225,7 +228,7 @@ protected:
 
     int ReadAtCursor(Dbc* pcursor, CDataStream& ssKey, CDataStream& ssValue, unsigned int fFlags=DB_NEXT)
     {
-        // Read at cursor
+        // Read at cursor                                               чтение по указателю
         Dbt datKey;
         if (fFlags == DB_SET || fFlags == DB_SET_RANGE || fFlags == DB_GET_BOTH || fFlags == DB_GET_BOTH_RANGE)
         {
@@ -246,7 +249,7 @@ protected:
         else if (datKey.get_data() == NULL || datValue.get_data() == NULL)
             return 99999;
 
-        // Convert to streams
+        // Convert to streams                                           преобразовать в потоки
         ssKey.SetType(SER_DISK);
         ssKey.clear();
         ssKey.write((char*)datKey.get_data(), datKey.get_size());
@@ -313,7 +316,7 @@ public:
 
 
 
-/** Access to the (IP) address database (peers.dat) */
+/** Access to the (IP) address database (peers.dat)                     Доступ к (IP) адресам базы данных (peers.dat)*/
 class CAddrDB
 {
 private:

@@ -11,7 +11,7 @@
 
 class CScript;
 
-/** A virtual base class for key stores */
+/** A virtual base class for key stores         Виртуальный базовый класс для хранилища ключей  */
 class CKeyStore
 {
 protected:
@@ -20,26 +20,26 @@ protected:
 public:
     virtual ~CKeyStore() {}
 
-    // Add a key to the store.
-    virtual bool AddKeyPubKey(const CKey &key, const CPubKey &pubkey) =0;
+    // Add a key to the store.   (Добавить ключ в хранилище.)
+    virtual bool AddKeyPubKey(const CKey &key, const CPubKey &pubkey) =0;                   // Чистая виртуальная функция
     virtual bool AddKey(const CKey &key);
 
-    // Check whether a key corresponding to a given address is present in the store.
-    virtual bool HaveKey(const CKeyID &address) const =0;
-    virtual bool GetKey(const CKeyID &address, CKey& keyOut) const =0;
-    virtual void GetKeys(std::set<CKeyID> &setAddress) const =0;
+    // Check whether a key corresponding to a given address is present in the store.    (Проверить, присутствует ли ключ, соответствующий данному адресу в хранилище.)
+    virtual bool HaveKey(const CKeyID &address) const =0;                                   // Чистая виртуальная функция
+    virtual bool GetKey(const CKeyID &address, CKey& keyOut) const =0;                      // Чистая виртуальная функция
+    virtual void GetKeys(std::set<CKeyID> &setAddress) const =0;                            // Чистая виртуальная функция
     virtual bool GetPubKey(const CKeyID &address, CPubKey& vchPubKeyOut) const;
 
-    // Support for BIP 0013 : see https://en.bitcoin.it/wiki/BIP_0013
-    virtual bool AddCScript(const CScript& redeemScript) =0;
-    virtual bool HaveCScript(const CScriptID &hash) const =0;
-    virtual bool GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const =0;
+    // Support for BIP 0013 : see https://en.bitcoin.it/wiki/BIP_0013                   (новый вид адресов)
+    virtual bool AddCScript(const CScript& redeemScript) =0;                                // Чистая виртуальная функция
+    virtual bool HaveCScript(const CScriptID &hash) const =0;                               // Чистая виртуальная функция
+    virtual bool GetCScript(const CScriptID &hash, CScript& redeemScriptOut) const =0;      // Чистая виртуальная функция
 };
 
 typedef std::map<CKeyID, CKey> KeyMap;
 typedef std::map<CScriptID, CScript > ScriptMap;
 
-/** Basic key store, that keeps keys in an address->secret map */
+/** Basic key store, that keeps keys in an address->secret map      Базовое хранилище ключей, которое держит ключи как address->secret map */
 class CBasicKeyStore : public CKeyStore
 {
 protected:
@@ -90,8 +90,8 @@ public:
 
 typedef std::map<CKeyID, std::pair<CPubKey, std::vector<unsigned char> > > CryptedKeyMap;
 
-/** Keystore which keeps the private keys encrypted.
- * It derives from the basic key store, which is used if no encryption is active.
+/** Keystore which keeps the private keys encrypted.                                Хранилище ключей, которое держит приватные ключи зашифрованными.
+ * It derives from the basic key store, which is used if no encryption is active.   Оно является производным от базового хранилища ключей, которое используется, если шифрование не является активным.
  */
 class CCryptoKeyStore : public CBasicKeyStore
 {
@@ -100,14 +100,14 @@ private:
 
     CKeyingMaterial vMasterKey;
 
-    // if fUseCrypto is true, mapKeys must be empty
+    // if fUseCrypto is true, mapKeys must be empty(пустой)
     // if fUseCrypto is false, vMasterKey must be empty
     bool fUseCrypto;
 
 protected:
     bool SetCrypted();
 
-    // will encrypt previously unencrypted keys
+    // will encrypt previously unencrypted keys                                     Будет шифровать ранее незашифрованный ключи
     bool EncryptKeys(CKeyingMaterial& vMasterKeyIn);
 
     bool Unlock(const CKeyingMaterial& vMasterKeyIn);

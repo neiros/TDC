@@ -8,7 +8,7 @@
 #include "main.h"
 #include "leveldb.h"
 
-/** CCoinsView backed by the LevelDB coin database (chainstate/) */
+/** CCoinsView backed by the LevelDB coin database (chainstate/)                    CCoinsView опирается на базу данных монет LevelDB */
 class CCoinsViewDB : public CCoinsView
 {
 protected:
@@ -25,7 +25,7 @@ public:
     bool GetStats(CCoinsStats &stats);
 };
 
-/** Access to the block database (blocks/index/) */
+/** Access to the block database (blocks/index/)                                    Доступ к базе данных блоков (blocks/index/) */
 class CBlockTreeDB : public CLevelDB
 {
 public:

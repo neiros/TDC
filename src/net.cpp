@@ -16,10 +16,10 @@
 #endif
 
 #ifdef USE_UPNP
-#include <miniupnpc/miniwget.h>
-#include <miniupnpc/miniupnpc.h>
-#include <miniupnpc/upnpcommands.h>
-#include <miniupnpc/upnperrors.h>
+#include <miniwget.h>
+#include <miniupnpc.h>
+#include <upnpcommands.h>
+#include <upnperrors.h>
 #endif
 
 // Dump addresses to peers.dat every 15 minutes (900s)
@@ -72,7 +72,7 @@ CCriticalSection cs_vAddedNodes;
 
 static CSemaphore *semOutbound = NULL;
 
-// Signals for message handling
+// Signals for message handling                                                 Сигналы для обработки сообщений
 static CNodeSignals g_signals;
 CNodeSignals& GetNodeSignals() { return g_signals; }
 
@@ -87,7 +87,7 @@ unsigned short GetListenPort()
     return (unsigned short)(GetArg("-port", Params().GetDefaultPort()));
 }
 
-// find 'best' local address for a particular peer
+// find 'best' local address for a particular peer                              Найти "best" локальный адрес для конкретной пира
 bool GetLocal(CService& addr, const CNetAddr *paddrPeer)
 {
     if (fNoListen)
@@ -112,7 +112,7 @@ bool GetLocal(CService& addr, const CNetAddr *paddrPeer)
     return nBestScore >= 0;
 }
 
-// get best local address for a particular peer as a CAddress
+// get best local address for a particular peer as a CAddress                   получить лучший локальный адрес для конкретного пира как CAddress
 CAddress GetLocalAddress(const CNetAddr *paddrPeer)
 {
     CAddress ret(CService("0.0.0.0",0),0);
@@ -176,8 +176,8 @@ bool RecvLine(SOCKET hSocket, string& strLine)
     }
 }
 
-// used when scores of local addresses may have changed
-// pushes better local address to peers
+// used when scores of local addresses may have changed                         Используется, когда множество локальных адресов может быть изменены
+// pushes better local address to peers                                         толкает лучший локальный адрес пирам
 void static AdvertizeLocal()
 {
     LOCK(cs_vNodes);
@@ -203,7 +203,7 @@ void SetReachable(enum Network net, bool fFlag)
         vfReachable[NET_IPV4] = true;
 }
 
-// learn a new local address
+// learn a new local address                                                    изучает новый локальный адрес
 bool AddLocal(const CService& addr, int nScore)
 {
     if (!addr.IsRoutable())
@@ -238,7 +238,7 @@ bool AddLocal(const CNetAddr &addr, int nScore)
     return AddLocal(CService(addr, GetListenPort()), nScore);
 }
 
-/** Make a particular network entirely off-limits (no automatic connects to it) */
+/** Make a particular network entirely off-limits (no automatic connects to it) Сделать конкретную сеть полностью закрытой (не автоматическое подключение к этому) */
 void SetLimited(enum Network net, bool fLimited)
 {
     if (net == NET_UNROUTABLE)
@@ -258,7 +258,7 @@ bool IsLimited(const CNetAddr &addr)
     return IsLimited(addr.GetNetwork());
 }
 
-/** vote for a local address */
+/** vote for a local address                                                    проголосовать за локальный адрес */
 bool SeenLocal(const CService& addr)
 {
     {
@@ -273,14 +273,14 @@ bool SeenLocal(const CService& addr)
     return true;
 }
 
-/** check whether a given address is potentially local */
+/** check whether a given address is potentially local                          проверить, является ли данный адрес потенциально местным(локальным) */
 bool IsLocal(const CService& addr)
 {
     LOCK(cs_mapLocalHost);
     return mapLocalHost.count(addr) > 0;
 }
 
-/** check whether a given address is in a network we can probably connect to */
+/** check whether a given address is in a network we can probably connect to    проверить данный адрес в сети, мы можем ли вероятно подключиться */
 bool IsReachable(const CNetAddr& addr)
 {
     LOCK(cs_mapLocalHost);
@@ -299,7 +299,7 @@ bool GetMyExternalIP2(const CService& addrConnect, const char* pszGet, const cha
     string strLine;
     while (RecvLine(hSocket, strLine))
     {
-        if (strLine.empty()) // HTTP response is separated from headers by blank line
+        if (strLine.empty()) // HTTP response is separated from headers by blank line   HTTP ответ отделен от заголовков пустой строкой
         {
             while (true)
             {
@@ -343,9 +343,9 @@ bool GetMyExternalIP(CNetAddr& ipRet)
     for (int nLookup = 0; nLookup <= 1; nLookup++)
     for (int nHost = 1; nHost <= 2; nHost++)
     {
-        // We should be phasing out our use of sites like these. If we need
-        // replacements, we should ask for volunteers to put this simple
-        // php file on their web server that prints the client IP:
+        // We should be phasing out our use of sites like these. If we need         Мы должны поэтапно использовать наши такие сайты, как эти.
+        // replacements, we should ask for volunteers to put this simple            Если нам нужны замены, мы должны попросить добровольцев поставить этот
+        // php file on their web server that prints the client IP:                  простой PHP-файл на их веб-сервере, который печатает клиентский IP:
         //  <?php echo $_SERVER["REMOTE_ADDR"]; ?>
         if (nHost == 1)
         {
@@ -383,7 +383,7 @@ bool GetMyExternalIP(CNetAddr& ipRet)
                      "Connection: close\r\n"
                      "\r\n";
 
-            pszKeyword = NULL; // Returns just IP address
+            pszKeyword = NULL; // Returns just IP address                               Возвращает только IP-адрес
         }
 
         if (GetMyExternalIP2(addrConnect, pszGet, pszKeyword, ipRet))
@@ -475,7 +475,7 @@ CNode* ConnectNode(CAddress addrConnect, const char *pszDest)
         /// debug print
         printf("connected %s\n", pszDest ? pszDest : addrConnect.ToString().c_str());
 
-        // Set to non-blocking
+        // Set to non-blocking                                                      Установить на неблокирование
 #ifdef WIN32
         u_long nOne = 1;
         if (ioctlsocket(hSocket, FIONBIO, &nOne) == SOCKET_ERROR)
@@ -513,12 +513,12 @@ void CNode::CloseSocketDisconnect()
         hSocket = INVALID_SOCKET;
     }
 
-    // in case this fails, we'll empty the recv buffer when the CNode is deleted
+    // in case this fails, we'll empty the recv buffer when the CNode is deleted    в случае, если это не удается, мы очистим recv буфер когда CNode будет удалён
     TRY_LOCK(cs_vRecvMsg, lockRecv);
     if (lockRecv)
         vRecvMsg.clear();
 
-    // if this was the sync node, we'll need a new one
+    // if this was the sync node, we'll need a new one                              Если это был узел синхронизации, нам понадобится один новый
     if (this == pnodeSync)
         pnodeSync = NULL;
 }
@@ -579,7 +579,7 @@ bool CNode::Misbehaving(int howmuch)
     nMisbehavior += howmuch;
     if (nMisbehavior >= GetArg("-banscore", 100))
     {
-        int64 banTime = GetTime()+GetArg("-bantime", 60*60*24);  // Default 24-hour ban
+        int64 banTime = GetTime()+GetArg("-bantime", 60*60*24);  // Default 24-hour ban     По умолчанию 24-часовой запрет
         printf("Misbehaving: %s (%d -> %d) DISCONNECTING\n", addr.ToString().c_str(), nMisbehavior-howmuch, nMisbehavior);
         {
             LOCK(cs_setBanned);
@@ -613,19 +613,19 @@ void CNode::copyStats(CNodeStats &stats)
 }
 #undef X
 
-// requires LOCK(cs_vRecvMsg)
+// requires(требуется) LOCK(cs_vRecvMsg)
 bool CNode::ReceiveMsgBytes(const char *pch, unsigned int nBytes)
 {
     while (nBytes > 0) {
 
-        // get current incomplete message, or create a new one
+        // get current incomplete message, or create a new one                      получить текущее неполное сообщение, или создать новое
         if (vRecvMsg.empty() ||
             vRecvMsg.back().complete())
             vRecvMsg.push_back(CNetMessage(SER_NETWORK, nRecvVersion));
 
         CNetMessage& msg = vRecvMsg.back();
 
-        // absorb network data
+        // absorb network data                                                      поглощение сетевых данных
         int handled;
         if (!msg.in_data)
             handled = msg.readHeader(pch, nBytes);
@@ -644,18 +644,18 @@ bool CNode::ReceiveMsgBytes(const char *pch, unsigned int nBytes)
 
 int CNetMessage::readHeader(const char *pch, unsigned int nBytes)
 {
-    // copy data to temporary parsing buffer
+    // copy data to temporary parsing buffer                                        копирование данных в буфер временного анализа
     unsigned int nRemaining = 24 - nHdrPos;
     unsigned int nCopy = std::min(nRemaining, nBytes);
 
     memcpy(&hdrbuf[nHdrPos], pch, nCopy);
     nHdrPos += nCopy;
 
-    // if header incomplete, exit
+    // if header incomplete, exit                                                   если заголовок неполный, выход
     if (nHdrPos < 24)
         return nCopy;
 
-    // deserialize to CMessageHeader
+    // deserialize to(для) CMessageHeader
     try {
         hdrbuf >> hdr;
     }
@@ -663,11 +663,11 @@ int CNetMessage::readHeader(const char *pch, unsigned int nBytes)
         return -1;
     }
 
-    // reject messages larger than MAX_SIZE
+    // reject messages larger than MAX_SIZE                                         Отклонить сообщения больше, чем MAX_SIZE
     if (hdr.nMessageSize > MAX_SIZE)
             return -1;
 
-    // switch state to reading message data
+    // switch state to reading message data                                         состояние переключателя для чтения данных сообщения
     in_data = true;
     vRecv.resize(hdr.nMessageSize);
 
@@ -693,7 +693,7 @@ int CNetMessage::readData(const char *pch, unsigned int nBytes)
 
 
 
-// requires LOCK(cs_vSend)
+// requires(требуется) LOCK(cs_vSend)
 void SocketSendData(CNode *pnode)
 {
     std::deque<CSerializeData>::iterator it = pnode->vSendMsg.begin();
@@ -711,7 +711,7 @@ void SocketSendData(CNode *pnode)
                 pnode->nSendSize -= data.size();
                 it++;
             } else {
-                // could not send full message; stop sending more
+                // could not send full message; stop sending more                   Не удалось отправить сообщение полностью; остановить отправку
                 break;
             }
         } else {
@@ -724,7 +724,7 @@ void SocketSendData(CNode *pnode)
                     pnode->CloseSocketDisconnect();
                 }
             }
-            // couldn't send anything at all
+            // couldn't send anything at all                                        не смогло отправить что-нибудь на всех
             break;
         }
     }
@@ -744,39 +744,39 @@ void ThreadSocketHandler()
     while (true)
     {
         //
-        // Disconnect nodes
+        // Disconnect nodes                                                         Отключаем узлы
         //
         {
             LOCK(cs_vNodes);
-            // Disconnect unused nodes
+            // Disconnect unused nodes                                              Отключите неиспользуемые узлы
             vector<CNode*> vNodesCopy = vNodes;
             BOOST_FOREACH(CNode* pnode, vNodesCopy)
             {
                 if (pnode->fDisconnect ||
                     (pnode->GetRefCount() <= 0 && pnode->vRecvMsg.empty() && pnode->nSendSize == 0 && pnode->ssSend.empty()))
                 {
-                    // remove from vNodes
+                    // remove from vNodes                                           удаляем из vNodes
                     vNodes.erase(remove(vNodes.begin(), vNodes.end(), pnode), vNodes.end());
 
-                    // release outbound grant (if any)
+                    // release outbound grant (if any)                              выпускаем исходящий грант,субсидию,дар (если таковые имеются)
                     pnode->grantOutbound.Release();
 
-                    // close socket and cleanup
+                    // close socket and cleanup                                     закрыть сокет и очистить
                     pnode->CloseSocketDisconnect();
                     pnode->Cleanup();
 
-                    // hold in disconnected pool until all refs are released
+                    // hold in disconnected pool until all refs are released        держать в отключенном бассейне, пока все refs освобождаются
                     if (pnode->fNetworkNode || pnode->fInbound)
                         pnode->Release();
                     vNodesDisconnected.push_back(pnode);
                 }
             }
 
-            // Delete disconnected nodes
+            // Delete disconnected nodes                                            Удаляем отключенные узлы
             list<CNode*> vNodesDisconnectedCopy = vNodesDisconnected;
             BOOST_FOREACH(CNode* pnode, vNodesDisconnectedCopy)
             {
-                // wait until threads are done using it
+                // wait until threads are done using it                             ждать, пока потоки не закончат его использование
                 if (pnode->GetRefCount() <= 0)
                 {
                     bool fDelete = false;
@@ -809,11 +809,11 @@ void ThreadSocketHandler()
 
 
         //
-        // Find which sockets have data to receive
+        // Find which sockets have data to receive                                  Найти, какие сокеты имеют данные для получения
         //
         struct timeval timeout;
         timeout.tv_sec  = 0;
-        timeout.tv_usec = 50000; // frequency to poll pnode->vSend
+        timeout.tv_usec = 50000; // frequency to poll pnode->vSend                  Частота опроса pnode->vSend
 
         fd_set fdsetRecv;
         fd_set fdsetSend;
@@ -839,21 +839,21 @@ void ThreadSocketHandler()
                 hSocketMax = max(hSocketMax, pnode->hSocket);
                 have_fds = true;
 
-                // Implement the following logic:
-                // * If there is data to send, select() for sending data. As this only
-                //   happens when optimistic write failed, we choose to first drain the
-                //   write buffer in this case before receiving more. This avoids
-                //   needlessly queueing received data, if the remote peer is not themselves
-                //   receiving data. This means properly utilizing TCP flow control signalling.
-                // * Otherwise, if there is no (complete) message in the receive buffer,
-                //   or there is space left in the buffer, select() for receiving data.
-                // * (if neither of the above applies, there is certainly one message
-                //   in the receiver buffer ready to be processed).
-                // Together, that means that at least one of the following is always possible,
-                // so we don't deadlock:
-                // * We send some data.
-                // * We wait for data to be received (and disconnect after timeout).
-                // * We process a message in the buffer (message handler thread).
+                // Implement the following logic:                                             Реализация следующей логики:
+                // * If there is data to send, select() for sending data. As this only        * Если есть данные для отправки, select() для отправки данных. Как это происходит
+                //   happens when optimistic write failed, we choose to first drain the         когда оптимистическая записи неполучается, мы выбираем сначала освобождение
+                //   write buffer in this case before receiving more. This avoids               буфера записи в этом случае, прежде чем получать далее. Это позволяет избежать
+                //   needlessly queueing received data, if the remote peer is not themselves    ненужных очередей полученные данные, если удаленный узел сами не получает данные.
+                //   receiving data. This means properly utilizing TCP flow control signalling. Это означает правильное использование управление потоком TCP сигнализации
+                // * Otherwise, if there is no (complete) message in the receive buffer,      * Противном случае, если нет (полного) сообщения в буфере приема,
+                //   or there is space left in the buffer, select() for receiving data.         или если есть место в буфер, select() для получения данных.
+                // * (if neither of the above applies, there is certainly one message         * (если ни одно из вышеупомянутого не применяется, есть конечно одно сообщение
+                //   in the receiver buffer ready to be processed).                              в буфере чтения готового быть обработанным)
+                // Together, that means that at least one of the following is always possible,Вместе, это означает, что по крайней мере одно из следующих всегда возможно,
+                // so we don't deadlock:                                                      таким образом мы не заходим в тупик:
+                // * We send some data.                                                       * Мы отправляем некоторые данные.
+                // * We wait for data to be received (and disconnect after timeout).          * Мы ждем данные, которые будут получены (и отключчаемся после тайм-аута).
+                // * We process a message in the buffer (message handler thread).             * Мы обрабатываем сообщение в буфере (поток обработки сообщения)
                 {
                     TRY_LOCK(pnode->cs_vSend, lockSend);
                     if (lockSend && !pnode->vSendMsg.empty()) {
@@ -891,7 +891,7 @@ void ThreadSocketHandler()
 
 
         //
-        // Accept new connections
+        // Accept new connections                                                   Принять новые подключения
         //
         BOOST_FOREACH(SOCKET hListenSocket, vhListenSocket)
         if (hListenSocket != INVALID_SOCKET && FD_ISSET(hListenSocket, &fdsetRecv))
@@ -950,7 +950,7 @@ void ThreadSocketHandler()
 
 
         //
-        // Service each socket
+        // Service each socket                                                      Обслуживание каждого сокета
         //
         vector<CNode*> vNodesCopy;
         {
@@ -964,7 +964,7 @@ void ThreadSocketHandler()
             boost::this_thread::interruption_point();
 
             //
-            // Receive
+            // Receive(получение)
             //
             if (pnode->hSocket == INVALID_SOCKET)
                 continue;
@@ -974,7 +974,7 @@ void ThreadSocketHandler()
                 if (lockRecv)
                 {
                     {
-                        // typical socket buffer is 8K-64K
+                        // typical socket buffer is 8K-64K                          стандартный буфер сокета 8K-64K
                         char pchBuf[0x10000];
                         int nBytes = recv(pnode->hSocket, pchBuf, sizeof(pchBuf), MSG_DONTWAIT);
                         if (nBytes > 0)
@@ -986,7 +986,7 @@ void ThreadSocketHandler()
                         }
                         else if (nBytes == 0)
                         {
-                            // socket closed gracefully
+                            // socket closed gracefully                             сокет закрыт корректно(изящно)
                             if (!pnode->fDisconnect)
                                 printf("socket closed\n");
                             pnode->CloseSocketDisconnect();
@@ -1007,7 +1007,7 @@ void ThreadSocketHandler()
             }
 
             //
-            // Send
+            // Send(отпрвка)
             //
             if (pnode->hSocket == INVALID_SOCKET)
                 continue;
@@ -1019,7 +1019,7 @@ void ThreadSocketHandler()
             }
 
             //
-            // Inactivity checking
+            // Inactivity checking                                                  Проверка бездействия
             //
             if (pnode->vSendMsg.empty())
                 pnode->nLastSendEmpty = GetTime();
@@ -1102,7 +1102,7 @@ void ThreadMapPort()
             }
         }
 
-        string strDesc = "Bitcoin " + FormatFullVersion();
+        string strDesc = "TTC " + FormatFullVersion();
 
         try {
             while (true) {
@@ -1165,7 +1165,7 @@ void MapPort(bool fUseUPnP)
 #else
 void MapPort(bool)
 {
-    // Intentionally left blank.
+    // Intentionally left blank.                                                    Преднамеренно оставлена пустой
 }
 #endif
 
@@ -1247,7 +1247,7 @@ void static ProcessOneShot()
 
 void ThreadOpenConnections()
 {
-    // Connect to specific addresses
+    // Connect to specific addresses                                                Подключиться к определенным адресам
     if (mapArgs.count("-connect") && mapMultiArgs["-connect"].size() > 0)
     {
         for (int64 nLoop = 0;; nLoop++)
@@ -1266,7 +1266,7 @@ void ThreadOpenConnections()
         }
     }
 
-    // Initiate network connections
+    // Initiate network connections                                                 Инициировать сетевые подключения
     int64 nStart = GetTime();
     while (true)
     {
@@ -1277,7 +1277,7 @@ void ThreadOpenConnections()
         CSemaphoreGrant grant(*semOutbound);
         boost::this_thread::interruption_point();
 
-        // Add seed nodes if DNS seeds are all down (an infrastructure attack?).
+        // Add seed nodes if DNS seeds are all down (an infrastructure attack?).    Добавление сидом узла, если DNS сидов все лежат (инфраструктурное нападение?)
         if (addrman.size() == 0 && (GetTime() - nStart > 60)) {
             static bool done = false;
             if (!done) {
@@ -1288,12 +1288,13 @@ void ThreadOpenConnections()
         }
 
         //
-        // Choose an address to connect to based on most recently seen
+        // Choose an address to connect to based on most recently seen              Выберите адрес для подключения базируясь на недавно виденном
         //
         CAddress addrConnect;
 
-        // Only connect out to one peer per network group (/16 for IPv4).
+        // Only connect out to one peer per network group (/16 for IPv4).           Подключиться только к одному пиру в сетевой группе (/ 16 для IPv4)
         // Do this here so we don't have to critsect vNodes inside mapAddresses critsect.
+        //                                                                          Сделать это здесь, с тем чтобы мы не имели critsect vNodes внутри mapAddresses critsect.
         int nOutbound = 0;
         set<vector<unsigned char> > setConnected;
         {
@@ -1312,15 +1313,19 @@ void ThreadOpenConnections()
         while (true)
         {
             // use an nUnkBias between 10 (no outgoing connections) and 90 (8 outgoing connections)
+            //                                                                      Используйте nUnkBias между 10 (нет исходящих соединений) и 90 (8 исходящих соединений)
             CAddress addr = addrman.Select(10 + min(nOutbound,8)*10);
 
-            // if we selected an invalid address, restart
+            // if we selected an invalid address, restart                           Если мы выбрали неверный адрес, перезапуск
             if (!addr.IsValid() || setConnected.count(addr.GetGroup()) || IsLocal(addr))
                 break;
 
             // If we didn't find an appropriate destination after trying 100 addresses fetched from addrman,
             // stop this loop, and let the outer loop run again (which sleeps, adds seed nodes, recalculates
             // already-connected network ranges, ...) before trying new addrman addresses.
+            //                      Если мы не нашли соответствующего назначения после опробования 100 адресов, извлеченные из addrman
+            //                      остановить этот цикл и пусткай внешний цикл снова запустится (которые спят, добавляение сидов узлов,
+            //                      пересчитывает уже подключенные сетевые диапазоны, ...) прежде чем пробовать новые адреса addrman.
             nTries++;
             if (nTries > 100)
                 break;
@@ -1328,11 +1333,12 @@ void ThreadOpenConnections()
             if (IsLimited(addr))
                 continue;
 
-            // only consider very recently tried nodes after 30 failed attempts
+            // only consider very recently tried nodes after 30 failed attempts     рассматривать только совсем недавно опробованных узлу после 30 неудачных попыток
             if (nANow - addr.nLastTry < 600 && nTries < 30)
                 continue;
 
             // do not allow non-default ports, unless after 50 invalid addresses selected already
+            //                      не позволяем порты не по умолчанию, если после того, как 50 недействительных адресов уже выбрали
             if (addr.GetPort() != Params().GetDefaultPort() && nTries < 50)
                 continue;
 
@@ -1366,7 +1372,7 @@ void ThreadOpenAddedConnections()
                 OpenNetworkConnection(addr, &grant, strAddNode.c_str());
                 MilliSleep(500);
             }
-            MilliSleep(120000); // Retry every 2 minutes
+            MilliSleep(120000); // Retry every 2 minutes                            повтор каждые 2 минуты
         }
     }
 
@@ -1395,6 +1401,8 @@ void ThreadOpenAddedConnections()
         }
         // Attempt to connect to each IP for each addnode entry until at least one is successful per addnode entry
         // (keeping in mind that addnode entries can have many IPs if fNameLookup)
+        //                          Попытка подключения для каждого IP-адреса из каждой записи addnode, до тех пор, пока не появится по крайней мере одиного успешного из addnode входа
+        //                          (имейте в виду, что addnode записи могут иметь множество IPs, если fNameLookup)
         {
             LOCK(cs_vNodes);
             BOOST_FOREACH(CNode* pnode, vNodes)
@@ -1413,15 +1421,15 @@ void ThreadOpenAddedConnections()
             OpenNetworkConnection(CAddress(vserv[i % vserv.size()]), &grant);
             MilliSleep(500);
         }
-        MilliSleep(120000); // Retry every 2 minutes
+        MilliSleep(120000); // Retry every 2 minutes                                повтор каждые 2 минуты
     }
 }
 
-// if successful, this moves the passed grant to the constructed node
+// if successful, this moves the passed grant to the constructed node               в случае успеха, это перемещает прошло(получило) грант на конструирование узла
 bool OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant *grantOutbound, const char *strDest, bool fOneShot)
 {
     //
-    // Initiate outbound network connection
+    // Initiate outbound network connection                                         инициирование исходящего сетевого подключения
     //
     boost::this_thread::interruption_point();
     if (!strDest)
@@ -1447,8 +1455,8 @@ bool OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant *grantOu
 }
 
 
-// for now, use a very simple selection metric: the node from which we received
-// most recently
+// for now, use a very simple selection metric: the node from which we received     на данный момент, использовать очень простой выбор метрики:
+// most recently                                                                    узел из которого мы получили совсем недавно
 double static NodeSyncScore(const CNode *pnode) {
     return -pnode->nLastRecv;
 }
@@ -1457,14 +1465,14 @@ void static StartSync(const vector<CNode*> &vNodes) {
     CNode *pnodeNewSync = NULL;
     double dBestScore = 0;
 
-    // Iterate over all nodes
+    // Iterate over all nodes                                                       перебор всех узлов
     BOOST_FOREACH(CNode* pnode, vNodes) {
-        // check preconditions for allowing a sync
+        // check preconditions for allowing a sync                                  проверить предпосылки для возможности синхронизации
         if (!pnode->fClient && !pnode->fOneShot &&
             !pnode->fDisconnect && pnode->fSuccessfullyConnected &&
             (pnode->nStartingHeight > (nBestHeight - 144)) &&
             (pnode->nVersion < NOBLKS_VERSION_START || pnode->nVersion >= NOBLKS_VERSION_END)) {
-            // if ok, compare node's score with the best so far
+            // if ok, compare node's score with the best so far                     если ОК, сравнить оценку узла с лучшими до сих пор
             double dScore = NodeSyncScore(pnode);
             if (pnodeNewSync == NULL || dScore > dBestScore) {
                 pnodeNewSync = pnode;
@@ -1472,7 +1480,7 @@ void static StartSync(const vector<CNode*> &vNodes) {
             }
         }
     }
-    // if a new sync candidate was found, start sync!
+    // if a new sync candidate was found, start sync!                               если новый кандидат синхронизации был найден, начать синхронизацию!
     if (pnodeNewSync) {
         pnodeNewSync->fStartSync = true;
         pnodeSync = pnodeNewSync;
@@ -1500,7 +1508,7 @@ void ThreadMessageHandler()
         if (!fHaveSyncNode)
             StartSync(vNodesCopy);
 
-        // Poll the connected nodes for messages
+        // Poll the connected nodes for messages                                    Опрос подключенных узлов для сообщений
         CNode* pnodeTrickle = NULL;
         if (!vNodesCopy.empty())
             pnodeTrickle = vNodesCopy[GetRand(vNodesCopy.size())];
@@ -1509,7 +1517,7 @@ void ThreadMessageHandler()
             if (pnode->fDisconnect)
                 continue;
 
-            // Receive messages
+            // Receive messages                                                     Получение сообщений
             {
                 TRY_LOCK(pnode->cs_vRecvMsg, lockRecv);
                 if (lockRecv)
@@ -1518,7 +1526,7 @@ void ThreadMessageHandler()
             }
             boost::this_thread::interruption_point();
 
-            // Send messages
+            // Send messages                                                        Отправка сообщений
             {
                 TRY_LOCK(pnode->cs_vSend, lockSend);
                 if (lockSend)
@@ -1547,7 +1555,7 @@ bool BindListenPort(const CService &addrBind, string& strError)
     strError = "";
     int nOne = 1;
 
-    // Create socket for listening for incoming connections
+    // Create socket for listening for incoming connections                         Создать сокет для прослушивания входящих соединений
 #ifdef USE_IPV6
     struct sockaddr_storage sockaddr;
 #else
@@ -1570,19 +1578,19 @@ bool BindListenPort(const CService &addrBind, string& strError)
     }
 
 #ifdef SO_NOSIGPIPE
-    // Different way of disabling SIGPIPE on BSD
+    // Different way of disabling SIGPIPE on BSD                                    Другой способ отключить SIGPIPE на BSD
     setsockopt(hListenSocket, SOL_SOCKET, SO_NOSIGPIPE, (void*)&nOne, sizeof(int));
 #endif
 
 #ifndef WIN32
-    // Allow binding if the port is still in TIME_WAIT state after
-    // the program was closed and restarted.  Not an issue on windows.
+    // Allow binding if the port is still in TIME_WAIT state after                  Разрешить привязку, если порт до сих пор в состоянии TIME_WAIT,
+    // the program was closed and restarted.  Not an issue on windows.              прежде чем как программа была закрыта и перезагрузжена. Не проблема на windows
     setsockopt(hListenSocket, SOL_SOCKET, SO_REUSEADDR, (void*)&nOne, sizeof(int));
 #endif
 
 
 #ifdef WIN32
-    // Set to non-blocking, incoming connections will also inherit this
+    // Set to non-blocking, incoming connections will also inherit this             Установка в неблокирование, входящие соединения будут также наследовать это
     if (ioctlsocket(hListenSocket, FIONBIO, (u_long*)&nOne) == SOCKET_ERROR)
 #else
     if (fcntl(hListenSocket, F_SETFL, O_NONBLOCK) == SOCKET_ERROR)
@@ -1594,8 +1602,8 @@ bool BindListenPort(const CService &addrBind, string& strError)
     }
 
 #ifdef USE_IPV6
-    // some systems don't have IPV6_V6ONLY but are always v6only; others do have the option
-    // and enable it by default or not. Try to enable it, if possible.
+    // some systems don't have IPV6_V6ONLY but are always v6only; others do have the option     Некоторые системы не имеют IPV6_V6ONLY но всегда v6only; другие имеют
+    // and enable it by default or not. Try to enable it, if possible.              возможность активировать его по умолчанию или нет. Попробуйте включить это, если возможно
     if (addrBind.IsIPv6()) {
 #ifdef IPV6_V6ONLY
 #ifdef WIN32
@@ -1607,7 +1615,7 @@ bool BindListenPort(const CService &addrBind, string& strError)
 #ifdef WIN32
         int nProtLevel = 10 /* PROTECTION_LEVEL_UNRESTRICTED */;
         int nParameterId = 23 /* IPV6_PROTECTION_LEVEl */;
-        // this call is allowed to fail
+        // this call is allowed to fail                                             Этот вызов может быть ошибочным
         setsockopt(hListenSocket, IPPROTO_IPV6, nParameterId, (const char*)&nProtLevel, sizeof(int));
 #endif
     }
@@ -1617,7 +1625,7 @@ bool BindListenPort(const CService &addrBind, string& strError)
     {
         int nErr = WSAGetLastError();
         if (nErr == WSAEADDRINUSE)
-            strError = strprintf(_("Unable to bind to %s on this computer. Bitcoin is probably already running."), addrBind.ToString().c_str());
+            strError = strprintf(_("Unable to bind to %s on this computer. TTC is probably already running."), addrBind.ToString().c_str());
         else
             strError = strprintf(_("Unable to bind to %s on this computer (bind returned error %d, %s)"), addrBind.ToString().c_str(), nErr, strerror(nErr));
         printf("%s\n", strError.c_str());
@@ -1625,7 +1633,7 @@ bool BindListenPort(const CService &addrBind, string& strError)
     }
     printf("Bound to %s\n", addrBind.ToString().c_str());
 
-    // Listen for incoming connections
+    // Listen for incoming connections                                              Прослушивание для входящих соединений
     if (listen(hListenSocket, SOMAXCONN) == SOCKET_ERROR)
     {
         strError = strprintf("Error: Listening for incoming connections failed (listen returned error %d)", WSAGetLastError());
@@ -1647,7 +1655,7 @@ void static Discover()
         return;
 
 #ifdef WIN32
-    // Get local host IP
+    // Get local host IP                                                            Получение локального хоста IP
     char pszHostName[1000] = "";
     if (gethostname(pszHostName, sizeof(pszHostName)) != SOCKET_ERROR)
     {
@@ -1661,7 +1669,7 @@ void static Discover()
         }
     }
 #else
-    // Get local host ip
+    // Get local host IP                                                            Получение локального хоста IP
     struct ifaddrs* myaddrs;
     if (getifaddrs(&myaddrs) == 0)
     {
@@ -1692,7 +1700,7 @@ void static Discover()
     }
 #endif
 
-    // Don't use external IPv4 discovery, when -onlynet="IPv6"
+    // Don't use external IPv4 discovery, when -onlynet="IPv6"                      Не используйте внешних IPv4 открытий, когда -onlynet="IPv6"
     if (!IsLimited(NET_IPV4))
         boost::thread(boost::bind(&TraceThread<void (*)()>, "ext-ip", &ThreadGetMyExternalIP));
 }
@@ -1700,7 +1708,7 @@ void static Discover()
 void StartNode(boost::thread_group& threadGroup)
 {
     if (semOutbound == NULL) {
-        // initialize semaphore
+        // initialize semaphore                                                     инициализировать семафор
         int nMaxOutbound = min(MAX_OUTBOUND_CONNECTIONS, nMaxConnections);
         semOutbound = new CSemaphore(nMaxOutbound);
     }
@@ -1711,7 +1719,7 @@ void StartNode(boost::thread_group& threadGroup)
     Discover();
 
     //
-    // Start threads
+    // Start threads                                                                Старт потоков
     //
 
     if (!GetBoolArg("-dnsseed", true))
@@ -1724,19 +1732,19 @@ void StartNode(boost::thread_group& threadGroup)
     MapPort(GetBoolArg("-upnp", USE_UPNP));
 #endif
 
-    // Send and receive from sockets, accept connections
+    // Send and receive from sockets, accept connections                            Отправлять и получать от сокета, принять соединения
     threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "net", &ThreadSocketHandler));
 
-    // Initiate outbound connections from -addnode
+    // Initiate outbound connections from -addnode                                  инициирования исходящих соединений из -addnode
     threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "addcon", &ThreadOpenAddedConnections));
 
-    // Initiate outbound connections
+    // Initiate outbound connections                                                инициирования исходящих соединений
     threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "opencon", &ThreadOpenConnections));
 
-    // Process messages
+    // Process messages                                                             обработка сообщений
     threadGroup.create_thread(boost::bind(&TraceThread<void (*)()>, "msghand", &ThreadMessageHandler));
 
-    // Dump network addresses
+    // Dump network addresses                                                       Дамп(содержимое) сетеых адресов
     threadGroup.create_thread(boost::bind(&LoopForever<void (*)()>, "dumpaddr", &DumpAddresses, DUMP_ADDRESSES_INTERVAL * 1000));
 }
 
@@ -1761,7 +1769,7 @@ public:
     }
     ~CNetCleanup()
     {
-        // Close sockets
+        // Close sockets                                                            Закрытие сокетов
         BOOST_FOREACH(CNode* pnode, vNodes)
             if (pnode->hSocket != INVALID_SOCKET)
                 closesocket(pnode->hSocket);
@@ -1770,7 +1778,7 @@ public:
                 if (closesocket(hListenSocket) == SOCKET_ERROR)
                     printf("closesocket(hListenSocket) failed with error %d\n", WSAGetLastError());
 
-        // clean up some globals (to help leak detection)
+        // clean up some globals (to help leak detection)                           очистить некоторые глобальные (чтобы помочь обнаружить утечку)
         BOOST_FOREACH(CNode *pnode, vNodes)
             delete pnode;
         BOOST_FOREACH(CNode *pnode, vNodesDisconnected)
@@ -1783,7 +1791,7 @@ public:
         pnodeLocalHost = NULL;
 
 #ifdef WIN32
-        // Shutdown Windows Sockets
+        // Shutdown Windows Sockets                                                 Завершение работы сокетов Windows
         WSACleanup();
 #endif
     }
@@ -1809,14 +1817,14 @@ void RelayTransaction(const CTransaction& tx, const uint256& hash, const CDataSt
     CInv inv(MSG_TX, hash);
     {
         LOCK(cs_mapRelay);
-        // Expire old relay messages
+        // Expire old relay messages                                                Срок действия ретрансляции старых сообщений
         while (!vRelayExpiration.empty() && vRelayExpiration.front().first < GetTime())
         {
             mapRelay.erase(vRelayExpiration.front().second);
             vRelayExpiration.pop_front();
         }
 
-        // Save original serialized message so newer versions are preserved
+        // Save original serialized message so newer versions are preserved         записать оригинал сериализованного сообщения как новую версию сохранения
         mapRelay.insert(std::make_pair(inv, ss));
         vRelayExpiration.push_back(std::make_pair(GetTime() + 15 * 60, inv));
     }

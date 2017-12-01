@@ -6,12 +6,12 @@
 #define BITCOIN_THREADSAFETY_H
 
 #ifdef __clang__
-// TL;DR Add GUARDED_BY(mutex) to member variables. The others are
-// rarely necessary. Ex: int nFoo GUARDED_BY(cs_foo);
+// TL;DR Add GUARDED_BY(mutex) to member variables. The others are                      ДобавлениеGUARDED_BY(mutex) для переменных-членов. Другие
+// rarely necessary. Ex: int nFoo GUARDED_BY(cs_foo);                                   редко необходимы.
 //
 // See http://clang.llvm.org/docs/LanguageExtensions.html#threadsafety
-// for documentation.  The clang compiler can do advanced static analysis
-// of locking when given the -Wthread-safety option.
+// for documentation.  The clang compiler can do advanced static analysis               Clang компилятор может сделать продвинутый статического анализа блокировки,
+// of locking when given the -Wthread-safety option.                                    когда задан -Wthread-safety параметр
 #define LOCKABLE                        __attribute__ ((lockable))
 #define SCOPED_LOCKABLE                 __attribute__ ((scoped_lockable))
 #define GUARDED_BY(x)                   __attribute__ ((guarded_by(x)))

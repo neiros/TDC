@@ -145,6 +145,7 @@ QT_TRANSLATE_NOOP("bitcoin-core", "Invalid -tor address: '%s'"),
 QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -minrelaytxfee=<amount>: '%s'"),
 QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -mintxfee=<amount>: '%s'"),
 QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -paytxfee=<amount>: '%s'"),
+QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -minertxfee=<amount>: '%s'"),     ////////// новое //////////
 QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount"),
 QT_TRANSLATE_NOOP("bitcoin-core", "List commands"),
 QT_TRANSLATE_NOOP("bitcoin-core", "Listen for connections on <port> (default: 8333 or testnet: 18333)"),

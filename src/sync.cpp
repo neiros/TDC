@@ -17,14 +17,14 @@ void PrintLockContention(const char* pszName, const char* pszFile, int nLine)
 
 #ifdef DEBUG_LOCKORDER
 //
-// Early deadlock detection.
-// Problem being solved:
+// Early deadlock detection.                                                            Раннее обнаружение тупика.
+// Problem being solved:                                                                Решаемой задачи
 //    Thread 1 locks  A, then B, then C
 //    Thread 2 locks  D, then C, then A
-//     --> may result in deadlock between the two threads, depending on when they run.
-// Solution implemented here:
-// Keep track of pairs of locks: (A before B), (A before C), etc.
-// Complain if any thread tries to lock in a different order.
+//     --> may result in deadlock between the two threads, depending on when they run.  может привести в тупик между двумя потоками, в зависимости от того, когда они бегут.
+// Solution implemented here:                                                           Решение реализовано здесь:
+// Keep track of pairs of locks: (A before B), (A before C), etc.                       Следите за пару замков: (A до B), (A до C) и т.д.
+// Complain if any thread tries to lock in a different order.                           Пожаловаться если поток пытается заблокировать в другом порядке
 //
 
 struct CLockLocation

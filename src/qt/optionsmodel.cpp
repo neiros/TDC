@@ -46,7 +46,8 @@ void OptionsModel::Init()
     bDisplayAddresses = settings.value("bDisplayAddresses", false).toBool();
     fMinimizeToTray = settings.value("fMinimizeToTray", false).toBool();
     fMinimizeOnClose = settings.value("fMinimizeOnClose", false).toBool();
-    nTransactionFee = settings.value("nTransactionFee").toLongLong();
+    nTransactionFee = settings.value("nTransactionFee", nTransactionFee).toLongLong();
+    nMinerTransFee = settings.value("nMinerTransFee", nMinerTransFee).toLongLong();        ////////// новое //////////
     language = settings.value("language", "").toString();
 
     // These are shared with core Bitcoin; we want
@@ -92,7 +93,7 @@ bool OptionsModel::Upgrade()
     CWalletDB walletdb(strWalletFile);
 
     QList<QString> intOptions;
-    intOptions << "nDisplayUnit" << "nTransactionFee";
+    intOptions << "nDisplayUnit" << "nTransactionFee" << "nMinerTransFee";             ////////// новое //////////
     foreach(QString key, intOptions)
     {
         int value = 0;
@@ -190,6 +191,8 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
         }
         case Fee:
             return QVariant(nTransactionFee);
+        case mtrFee:                                            ////////// новое //////////
+            return QVariant(nMinerTransFee);                    ////////// новое //////////
         case DisplayUnit:
             return QVariant(nDisplayUnit);
         case DisplayAddresses:
@@ -265,6 +268,10 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             nTransactionFee = value.toLongLong();
             settings.setValue("nTransactionFee", nTransactionFee);
             break;
+        case mtrFee:                                                ////////// новое //////////
+            nMinerTransFee = value.toLongLong();                    ////////// новое //////////
+            settings.setValue("nMinerTransFee", nMinerTransFee);    ////////// новое //////////
+            break;                                                  ////////// новое //////////
         case DisplayUnit:
             nDisplayUnit = value.toInt();
             settings.setValue("nDisplayUnit", nDisplayUnit);

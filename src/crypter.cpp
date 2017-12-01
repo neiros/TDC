@@ -50,8 +50,8 @@ bool CCrypter::Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned
     if (!fKeySet)
         return false;
 
-    // max ciphertext len for a n bytes of plaintext is
-    // n + AES_BLOCK_SIZE - 1 bytes
+    // max ciphertext len for a n bytes of plaintext is                         Макс длина шифротекста для n байт обычного текста является
+    // n + AES_BLOCK_SIZE - 1 bytes                                             n + AES_BLOCK_SIZE - 1 байт
     int nLen = vchPlaintext.size();
     int nCLen = nLen + AES_BLOCK_SIZE, nFLen = 0;
     vchCiphertext = std::vector<unsigned char> (nCLen);
@@ -77,7 +77,7 @@ bool CCrypter::Decrypt(const std::vector<unsigned char>& vchCiphertext, CKeyingM
     if (!fKeySet)
         return false;
 
-    // plaintext will always be equal to or lesser than length of ciphertext
+    // plaintext will always be equal to or lesser than length of ciphertext    открытый текст всегда будет равнен или меньше длины зашифрованного текста
     int nLen = vchCiphertext.size();
     int nPLen = nLen, nFLen = 0;
 

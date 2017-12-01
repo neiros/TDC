@@ -23,7 +23,7 @@
 #include "hash.h"
 #include "bloom.h"
 
-/** The maximum number of entries in an 'inv' protocol message */
+/** The maximum number of entries in an 'inv' protocol message                  Максимальное количество записей в 'inv' протоколА сообщений */
 static const unsigned int MAX_INV_SZ = 50000;
 
 class CNode;
@@ -49,7 +49,7 @@ void StartNode(boost::thread_group& threadGroup);
 bool StopNode();
 void SocketSendData(CNode *pnode);
 
-// Signals for message handling
+// Signals for message handling                                                 Сигналы для обработки сообщений
 struct CNodeSignals
 {
     boost::signals2::signal<bool (CNode*)> ProcessMessages;
@@ -61,12 +61,12 @@ CNodeSignals& GetNodeSignals();
 
 enum
 {
-    LOCAL_NONE,   // unknown
-    LOCAL_IF,     // address a local interface listens on
-    LOCAL_BIND,   // address explicit bound to
-    LOCAL_UPNP,   // address reported by UPnP
-    LOCAL_HTTP,   // address reported by whatismyip.com and similar
-    LOCAL_MANUAL, // address explicitly specified (-externalip=)
+    LOCAL_NONE,   // unknown                                                    неизвестный
+    LOCAL_IF,     // address a local interface listens on                       адрес локального интерфейса прослушивается
+    LOCAL_BIND,   // address explicit bound to                                  адрес явно привязанный
+    LOCAL_UPNP,   // address reported by UPnP                                   адрес сообщивший UPnP
+    LOCAL_HTTP,   // address reported by whatismyip.com and similar             адрес сообщивший whatismyip.com и аналогичное
+    LOCAL_MANUAL, // address explicitly specified (-externalip=)                адрес явно указан (-externalip=)
 
     LOCAL_MAX
 };
@@ -126,13 +126,13 @@ public:
 
 class CNetMessage {
 public:
-    bool in_data;                   // parsing header (false) or data (true)
+    bool in_data;                   // parsing header (false) or data (true)        разбора заголовка (ложь) или данные (истина)
 
-    CDataStream hdrbuf;             // partially received header
-    CMessageHeader hdr;             // complete header
+    CDataStream hdrbuf;             // partially received header                    частично полученный заголовок
+    CMessageHeader hdr;             // complete header                              полный заголовок
     unsigned int nHdrPos;
 
-    CDataStream vRecv;              // received message data
+    CDataStream vRecv;              // received message data                        полученные данные сообщения
     unsigned int nDataPos;
 
     CNetMessage(int nTypeIn, int nVersionIn) : hdrbuf(nTypeIn, nVersionIn), vRecv(nTypeIn, nVersionIn) {
@@ -163,7 +163,7 @@ public:
 
 
 
-/** Information about a peer */
+/** Information about a peer                                                        Информация о пирах */
 class CNode
 {
 public:
@@ -171,8 +171,8 @@ public:
     uint64 nServices;
     SOCKET hSocket;
     CDataStream ssSend;
-    size_t nSendSize; // total size of all vSendMsg entries
-    size_t nSendOffset; // offset inside the first vSendMsg already sent
+    size_t nSendSize; // total size of all vSendMsg entries                         Общий размер всех vSendMsg записей
+    size_t nSendOffset; // offset inside the first vSendMsg already sent            смещение внутри первой vSendMsg уже отправленной
     uint64 nSendBytes;
     std::deque<CSerializeData> vSendMsg;
     CCriticalSection cs_vSend;
@@ -198,10 +198,10 @@ public:
     bool fNetworkNode;
     bool fSuccessfullyConnected;
     bool fDisconnect;
-    // We use fRelayTxes for two purposes -
-    // a) it allows us to not relay tx invs before receiving the peer's version message
-    // b) the peer may tell us in their version message that we should not relay tx invs
-    //    until they have initialized their bloom filter.
+    // We use fRelayTxes for two purposes -                                               Мы используем fRelayTxes для двух целей -
+    // a) it allows us to not relay tx invs before receiving the peer's version message   a) это позволяет нам не ретранслировать 'tx invs' до получения от пира версии сообщения
+    // b) the peer may tell us in their version message that we should not relay tx invs  b) пир может сказать нам, в его версии сообщения, что мы не должны ретранслировать tx invs
+    //    until they have initialized their bloom filter.                                    до тех пор, пока он инициализирует их Блум фильтром
     bool fRelayTxes;
     CSemaphoreGrant grantOutbound;
     CCriticalSection cs_filter;
@@ -209,8 +209,8 @@ public:
     int nRefCount;
 protected:
 
-    // Denial-of-service detection/prevention
-    // Key is IP address, value is banned-until-time
+    // Denial-of-service detection/prevention                                       Отказ-в-обслуживании обнаружение/предотвращение
+    // Key is IP address, value is banned-until-time                                Ключ - это IP-адрес, значение которого запрещено-до-время
     static std::map<CNetAddr, int64> setBanned;
     static CCriticalSection cs_setBanned;
     int nMisbehavior;
@@ -222,13 +222,13 @@ public:
     int nStartingHeight;
     bool fStartSync;
 
-    // flood relay
+    // flood relay                                                                  ретрансляция флуда
     std::vector<CAddress> vAddrToSend;
     std::set<CAddress> setAddrKnown;
     bool fGetAddr;
     std::set<uint256> setKnown;
 
-    // inventory based relay
+    // inventory based relay                                                        инвентаризация базовой ретрансляция
     mruset<CInv> setInventoryKnown;
     std::vector<CInv> vInventoryToSend;
     CCriticalSection cs_inventory;
@@ -250,7 +250,7 @@ public:
         nVersion = 0;
         strSubVer = "";
         fOneShot = false;
-        fClient = false; // set by version message
+        fClient = false; // set by version message                                  установка версии сообщения
         fInbound = fInboundIn;
         fNetworkNode = false;
         fSuccessfullyConnected = false;
@@ -269,7 +269,7 @@ public:
         setInventoryKnown.max_size(SendBufferSize() / 1000);
         pfilter = NULL;
 
-        // Be shy and don't send version until we hear
+        // Be shy and don't send version until we hear                              Быть застенчивым(отступать) и не отправлять версию, до тех пор, пока мы слушаем
         if (hSocket != INVALID_SOCKET && !fInbound)
             PushVersion();
     }
@@ -297,7 +297,7 @@ public:
         return nRefCount;
     }
 
-    // requires LOCK(cs_vRecvMsg)
+    // requires(требует) LOCK(cs_vRecvMsg)
     unsigned int GetTotalRecvSize()
     {
         unsigned int total = 0;
@@ -306,10 +306,10 @@ public:
         return total;
     }
 
-    // requires LOCK(cs_vRecvMsg)
+    // requires(требует) LOCK(cs_vRecvMsg)
     bool ReceiveMsgBytes(const char *pch, unsigned int nBytes);
 
-    // requires LOCK(cs_vRecvMsg)
+    // requires(требует) LOCK(cs_vRecvMsg)
     void SetRecvVersion(int nVersionIn)
     {
         nRecvVersion = nVersionIn;
@@ -337,9 +337,9 @@ public:
 
     void PushAddress(const CAddress& addr)
     {
-        // Known checking here is only to save space from duplicates.
-        // SendMessages will filter it again for knowns that were added
-        // after addresses were pushed.
+        // Known checking here is only to save space from duplicates.               Известная проверка здесь только для экономии места от дубликатов
+        // SendMessages will filter it again for knowns that were added             SendMessages будет фильтровать это снова для известных, которые были
+        // after addresses were pushed.                                             добавлены после того, как адреса были протолкнуты
         if (addr.IsValid() && !setAddrKnown.count(addr))
             vAddrToSend.push_back(addr);
     }
@@ -364,8 +364,8 @@ public:
 
     void AskFor(const CInv& inv)
     {
-        // We're using mapAskFor as a priority queue,
-        // the key is the earliest time the request can be sent
+        // We're using mapAskFor as a priority queue,                               Мы используем mapAskFor как приоритетную очередьб
+        // the key is the earliest time the request can be sent                     ключом является самое раннее время, когда запрос может быть отправлен
         int64 nRequestTime;
         limitedmap<CInv, int64>::const_iterator it = mapAlreadyAskedFor.find(inv);
         if (it != mapAlreadyAskedFor.end())
@@ -375,14 +375,14 @@ public:
         if (fDebugNet)
             printf("askfor %s   %"PRI64d" (%s)\n", inv.ToString().c_str(), nRequestTime, DateTimeStrFormat("%H:%M:%S", nRequestTime/1000000).c_str());
 
-        // Make sure not to reuse time indexes to keep things in the same order
+        // Make sure not to reuse time indexes to keep things in the same order     Убедитесь что повторно не используете индексы времени для держания значений в томже порядке
         int64 nNow = (GetTime() - 1) * 1000000;
         static int64 nLastTime;
         ++nLastTime;
         nNow = std::max(nNow, nLastTime);
         nLastTime = nNow;
 
-        // Each retry is 2 minutes after the last
+        // Each retry is 2 minutes after the last                                   повтять каждые 2 минуты после последнего
         nRequestTime = std::max(nRequestTime + 2 * 60 * 1000000, nNow);
         if (it != mapAlreadyAskedFor.end())
             mapAlreadyAskedFor.update(it, nRequestTime);
@@ -393,7 +393,7 @@ public:
 
 
 
-    // TODO: Document the postcondition of this function.  Is cs_vSend locked?
+    // TODO: Document the postcondition of this function.  Is cs_vSend locked?      Документируйте выходное условие этой функции. cs_vSend заблокирован?
     void BeginMessage(const char* pszCommand) EXCLUSIVE_LOCK_FUNCTION(cs_vSend)
     {
         ENTER_CRITICAL_SECTION(cs_vSend);
@@ -403,7 +403,7 @@ public:
             printf("sending: %s ", pszCommand);
     }
 
-    // TODO: Document the precondition of this function.  Is cs_vSend locked?
+    // TODO: Document the postcondition of this function.  Is cs_vSend locked?      Документируйте выходное условие этой функции. cs_vSend заблокирован?
     void AbortMessage() UNLOCK_FUNCTION(cs_vSend)
     {
         ssSend.clear();
@@ -414,7 +414,7 @@ public:
             printf("(aborted)\n");
     }
 
-    // TODO: Document the precondition of this function.  Is cs_vSend locked?
+    // TODO: Document the postcondition of this function.  Is cs_vSend locked?      Документируйте выходное условие этой функции. cs_vSend заблокирован?
     void EndMessage() UNLOCK_FUNCTION(cs_vSend)
     {
         if (mapArgs.count("-dropmessagestest") && GetRand(atoi(mapArgs["-dropmessagestest"])) == 0)
@@ -427,11 +427,11 @@ public:
         if (ssSend.size() == 0)
             return;
 
-        // Set the size
+        // Set the size                                                             Установить размер
         unsigned int nSize = ssSend.size() - CMessageHeader::HEADER_SIZE;
         memcpy((char*)&ssSend[CMessageHeader::MESSAGE_SIZE_OFFSET], &nSize, sizeof(nSize));
 
-        // Set the checksum
+        // Set the checksum                                                         Установить контрольную сумму
         uint256 hash = Hash(ssSend.begin() + CMessageHeader::HEADER_SIZE, ssSend.end());
         unsigned int nChecksum = 0;
         memcpy(&nChecksum, &hash, sizeof(nChecksum));
@@ -446,7 +446,7 @@ public:
         ssSend.GetAndClear(*it);
         nSendSize += (*it).size();
 
-        // If write queue empty, attempt "optimistic write"
+        // If write queue empty, attempt "optimistic write"                         Если очереди записи пуста, попробовать "оптимистическую запись"
         if (it == vSendMsg.begin())
             SocketSendData(this);
 
@@ -621,21 +621,21 @@ public:
     void Cleanup();
 
 
-    // Denial-of-service detection/prevention
-    // The idea is to detect peers that are behaving
-    // badly and disconnect/ban them, but do it in a
-    // one-coding-mistake-won't-shatter-the-entire-network
+    // Denial-of-service detection/prevention                                       Отказ-в-обслуживании обнаружение/предотвращение
+    // The idea is to detect peers that are behaving                                Идея заключается в том, что при обнаружения пиров,
+    // badly and disconnect/ban them, but do it in a                                которые ведут себя плохо, отключить/запрещать их, но сделать это
+    // one-coding-mistake-won't-shatter-the-entire-network                          одной кодированной ошибкой не разрушая весь сетевой путь
     // way.
-    // IMPORTANT:  There should be nothing I can give a
-    // node that it will forward on that will make that
-    // node's peers drop it. If there is, an attacker
-    // can isolate a node and/or try to split the network.
-    // Dropping a node for sending stuff that is invalid
-    // now but might be valid in a later version is also
-    // dangerous, because it can cause a network split
-    // between nodes running old code and nodes running
-    // new code.
-    static void ClearBanned(); // needed for unit testing
+    // IMPORTANT:  There should be nothing I can give a                             ВАЖНО: Не должно быть ничего того, что я могу дать узлу,
+    // node that it will forward on that will make that                             который это передаст на пиры этого узла что бы уронить его(их?).
+    // node's peers drop it. If there is, an attacker                               Если есть, то злоумышленник может изолировать узел и/или
+    // can isolate a node and/or try to split the network.                          попытаться разделить сеть.
+    // Dropping a node for sending stuff that is invalid                            Удаление узла для отправки материал, который недопустим
+    // now but might be valid in a later version is also                            в настоящее время, но может быть действительным в более
+    // dangerous, because it can cause a network split                              поздней версии также опасно, поскольку это может вызвать сетевой
+    // between nodes running old code and nodes running                             раскол между узлами, работающими под управлением старого кода и
+    // new code.                                                                    узлами, работающими под управлением нового кода.
+    static void ClearBanned(); // needed for unit testing          необходимо для модульного тестирования
     static bool IsBanned(CNetAddr ip);
     bool Misbehaving(int howmuch); // 1 == a little, 100 == a lot
     void copyStats(CNodeStats &stats);

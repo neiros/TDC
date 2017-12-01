@@ -40,30 +40,31 @@ enum RPCErrorCode
     RPC_INTERNAL_ERROR   = -32603,
     RPC_PARSE_ERROR      = -32700,
 
-    // General application defined errors
-    RPC_MISC_ERROR                  = -1,  // std::exception thrown in command handling
-    RPC_FORBIDDEN_BY_SAFE_MODE      = -2,  // Server is in safe mode, and command is not allowed in safe mode
-    RPC_TYPE_ERROR                  = -3,  // Unexpected type was passed as parameter
-    RPC_INVALID_ADDRESS_OR_KEY      = -5,  // Invalid address or key
-    RPC_OUT_OF_MEMORY               = -7,  // Ran out of memory during operation
-    RPC_INVALID_PARAMETER           = -8,  // Invalid, missing or duplicate parameter
-    RPC_DATABASE_ERROR              = -20, // Database error
-    RPC_DESERIALIZATION_ERROR       = -22, // Error parsing or validating structure in raw format
+    // General application defined errors                                               Общее применение определенные ошибки
+    RPC_MISC_ERROR                  = -1,  // std::exception thrown in command handling                 std::exception добавление(брость) в команду обработки
+    RPC_FORBIDDEN_BY_SAFE_MODE      = -2,  // Server is in safe mode, and command is not allowed in safe mode       Сервер находится в безопасном режиме, и команда не допускается в безопасном режиме
+    RPC_TYPE_ERROR                  = -3,  // Unexpected type was passed as parameter                   Неожиданный тип был передан в качестве параметра
+    RPC_INVALID_ADDRESS_OR_KEY      = -5,  // Invalid address or key                                    Неверный адрес или ключ
+    RPC_OUT_OF_MEMORY               = -7,  // Ran out of memory during operation                        Исчерпал память во время операции
+    RPC_INVALID_PARAMETER           = -8,  // Invalid, missing or duplicate parameter                   Неверный, отсутствующий или дублирующий параметр
+    RPC_DATABASE_ERROR              = -20, // Database error                                            Ошибка базы данных
+    RPC_DESERIALIZATION_ERROR       = -22, // Error parsing or validating structure in raw format       Ошибка разбора или проверки структуры в сыром(необработанном) формате
+    RPC_SERVER_NOT_STARTED          = -18, // RPC server was not started (StartRPCThreads() not called)
 
     // P2P client errors
-    RPC_CLIENT_NOT_CONNECTED        = -9,  // Bitcoin is not connected
-    RPC_CLIENT_IN_INITIAL_DOWNLOAD  = -10, // Still downloading initial blocks
+    RPC_CLIENT_NOT_CONNECTED        = -9,  // Bitcoin is not connected                                  Bitcoin не подключен
+    RPC_CLIENT_IN_INITIAL_DOWNLOAD  = -10, // Still downloading initial blocks                          Тем не менее скачиваем начальные блоки
 
     // Wallet errors
-    RPC_WALLET_ERROR                = -4,  // Unspecified problem with wallet (key not found etc.)
-    RPC_WALLET_INSUFFICIENT_FUNDS   = -6,  // Not enough funds in wallet or account
-    RPC_WALLET_INVALID_ACCOUNT_NAME = -11, // Invalid account name
-    RPC_WALLET_KEYPOOL_RAN_OUT      = -12, // Keypool ran out, call keypoolrefill first
-    RPC_WALLET_UNLOCK_NEEDED        = -13, // Enter the wallet passphrase with walletpassphrase first
-    RPC_WALLET_PASSPHRASE_INCORRECT = -14, // The wallet passphrase entered was incorrect
-    RPC_WALLET_WRONG_ENC_STATE      = -15, // Command given in wrong wallet encryption state (encrypting an encrypted wallet etc.)
-    RPC_WALLET_ENCRYPTION_FAILED    = -16, // Failed to encrypt the wallet
-    RPC_WALLET_ALREADY_UNLOCKED     = -17, // Wallet is already unlocked
+    RPC_WALLET_ERROR                = -4,  // Unspecified problem with wallet (key not found etc.)      Неопределенная проблема с бумажником (ключ не найден и т.д.)
+    RPC_WALLET_INSUFFICIENT_FUNDS   = -6,  // Not enough funds in wallet or account                     Не достаточно средств в бумажнике или учетной записи
+    RPC_WALLET_INVALID_ACCOUNT_NAME = -11, // Invalid account name                                      Неверное имя учетной записи
+    RPC_WALLET_KEYPOOL_RAN_OUT      = -12, // Keypool ran out, call keypoolrefill first                 Keypool закончился, вызывайте keypoolrefill первым
+    RPC_WALLET_UNLOCK_NEEDED        = -13, // Enter the wallet passphrase with walletpassphrase first   Введите Wallet пароль с walletpassphrase первым
+    RPC_WALLET_PASSPHRASE_INCORRECT = -14, // The wallet passphrase entered was incorrect               Фраза-пароль кошелька неверна
+    RPC_WALLET_WRONG_ENC_STATE      = -15, // Command given in wrong wallet encryption state (encrypting an encrypted wallet etc.)      Команда, данная в неправильно зашифрованном состоянии бумажника(шифрование зашифрованного бумажника и т.д.)
+    RPC_WALLET_ENCRYPTION_FAILED    = -16, // Failed to encrypt the wallet                              Не удалось зашифровать бумажник
+    RPC_WALLET_ALREADY_UNLOCKED     = -17, // Wallet is already unlocked                                Wallet уже разблокирован
 };
 
 json_spirit::Object JSONRPCError(int code, const std::string& message);
@@ -72,26 +73,32 @@ void StartRPCThreads();
 void StopRPCThreads();
 int CommandLineRPC(int argc, char *argv[]);
 
-/** Convert parameter values for RPC call from strings to command-specific JSON objects. */
+/** Convert parameter values for RPC call from strings to command-specific JSON objects.
+                        Преобразование параметров значений для RPC вызова из строк в специфическую-команду JSON объектов */
 json_spirit::Array RPCConvertValues(const std::string &strMethod, const std::vector<std::string> &strParams);
 
 /*
   Type-check arguments; throws JSONRPCError if wrong type given. Does not check that
   the right number of arguments are passed, just that any passed are the correct type.
   Use like:  RPCTypeCheck(params, boost::assign::list_of(str_type)(int_type)(obj_type));
+                        Проверка типов аргументов; создает исключение JSONRPCError, если данный тип неправильный. Не проверять,
+                        что пришло правильное количество аргументов, просто, что любой переданный являются правильным типом.
+                        Используйте как:    RPCTypeCheck(params, boost::assign::list_of(str_type)(int_type)(obj_type));
 */
 void RPCTypeCheck(const json_spirit::Array& params,
                   const std::list<json_spirit::Value_type>& typesExpected, bool fAllowNull=false);
 /*
   Check for expected keys/value types in an Object.
   Use like: RPCTypeCheck(object, boost::assign::map_list_of("name", str_type)("value", int_type));
+                        Проверка типов ожидаемых ключей/значений в объекте
+                        Используйте как:    RPCTypeCheck(object, boost::assign::map_list_of("name", str_type)("value", int_type));
 */
 void RPCTypeCheck(const json_spirit::Object& o,
                   const std::map<std::string, json_spirit::Value_type>& typesExpected, bool fAllowNull=false);
 
 /*
-  Run func nSeconds from now. Uses boost deadline timers.
-  Overrides previous timer <name> (if any).
+  Run func nSeconds from now. Uses boost deadline timers.               Запустите func nSeconds теперь. Используя boost таймеры крайнего срока
+  Overrides previous timer <name> (if any).                             Заменяет(переопределяет) предыдущий таймера <name> (если таковые имеются)
  */
 void RPCRunLater(const std::string& name, boost::function<void(void)> func, int64 nSeconds);
 
@@ -107,7 +114,7 @@ public:
 };
 
 /**
- * Bitcoin RPC command dispatcher.
+ * Bitcoin RPC command dispatcher.                                      Bitcoin RPC командный диспетчер
  */
 class CRPCTable
 {
@@ -119,11 +126,11 @@ public:
     std::string help(std::string name) const;
 
     /**
-     * Execute a method.
-     * @param method   Method to execute
-     * @param params   Array of arguments (JSON objects)
-     * @returns Result of the call.
-     * @throws an exception (json_spirit::Value) when an error happens.
+     * Execute a method.                                                Выполнить метод
+     * @param method   Method to execute                                Метод для выполнения
+     * @param params   Array of arguments (JSON objects)                Массив аргументов (JSON объекты)
+     * @returns Result of the call.                                     Результат выполнения вызова
+     * @throws an exception (json_spirit::Value) when an error happens. Исключение (json_spirit::Value) когда происходят ошибки
      */
     json_spirit::Value execute(const std::string &method, const json_spirit::Array &params) const;
 };

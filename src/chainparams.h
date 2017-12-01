@@ -31,6 +31,11 @@ struct CDNSSeedData {
  * and services, the public test network which gets reset from time to time and
  * a regression test mode which is intended for private networks only. It has
  * minimal difficulty to ensure that blocks can be found instantly.
+ *                  CChainParams определяет различные настраиваемые параметры данного экземпляра
+ *                  системы Биткойн. Существует три: основная сеть, в которой люди торгуют товарами
+ *                  и услугами, сеть общего теста, который получает сброс время от времени и
+ *                  режим регрессионного тестирования, который предназначен только для частных сетей. Он имеет
+ *                  минимальную сложность чтобы блоки могли быть найдены мгновенно.
  */
 class CChainParams
 {
@@ -68,7 +73,7 @@ protected:
 
     uint256 hashGenesisBlock;
     MessageStartChars pchMessageStart;
-    // Raw pub key bytes for the broadcast alert signing key.
+    // Raw pub key bytes for the broadcast alert signing key.               Сырой публичный ключ байтов для трансляции оповещения, подписанного ключём
     vector<unsigned char> vAlertPubKey;
     int nDefaultPort;
     int nRPCPort;
@@ -82,20 +87,25 @@ protected:
 /**
  * Return the currently selected parameters. This won't change after app startup
  * outside of the unit tests.
+ *                  Возвращение текущих выбранных параметров. Это не изменится после запуска приложения
+ *                  вне модульных тестов.
  */
 const CChainParams &Params();
 
-/** Sets the params returned by Params() to those for the given network. */
+/** Sets the params returned by Params() to those for the given network.    Устанавливает параметры возвращаемые Params() для данной сети.*/
 void SelectParams(CChainParams::Network network);
 
 /**
  * Looks for -regtest or -testnet and then calls SelectParams as appropriate.
  * Returns false if an invalid combination is given.
+ *
+ *                  Ищет -regtest или -testnet и затем вызывает SelectParams по мере необходимости.
+ *                  Возвращает FALSE, если недопустимое сочетание выдается.
  */
 bool SelectParamsFromCommandLine();
 
 inline bool TestNet() {
-    // Note: it's deliberate that this returns "false" for regression test mode.
+    // Note: it's deliberate that this returns "false" for regression test mode.    Это преднамеренно возвращает "false" для регрессионного тестового режима
     return Params().NetworkID() == CChainParams::TESTNET;
 }
 
