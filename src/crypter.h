@@ -12,22 +12,21 @@ const unsigned int WALLET_CRYPTO_KEY_SIZE = 32;
 const unsigned int WALLET_CRYPTO_SALT_SIZE = 8;
 
 /*
-Private key encryption is done based on a CMasterKey,                           Приватный ключ шифрование сделан на основе CMasterKey,
-which holds a salt and random encryption key.                                   который держит соль и случайный шифрованный ключ.
+Private key encryption is done based on a CMasterKey,
+which holds a salt and random encryption key.
 
-CMasterKeys are encrypted using AES-256-CBC using a key                         CMasterKeys, шифруются с помощью AES-256-CBC с помощью
-derived using derivation method nDerivationMethod                               ключа на основе использования метода расчета nDerivationMethod
-(0 == EVP_sha512()) and derivation iterations nDeriveIterations.                (0 EVP_sha512 ()) и дифференцированый итерацией nDeriveIterations.
-vchOtherDerivationParameters is provided for alternative algorithms             vchOtherDerivationParameters предусмотрен для альтернативных алгоритмов,
-which may require more parameters (such as scrypt).                             которому может потребоваться больше параметров (такие, как scrypt).
+CMasterKeys are encrypted using AES-256-CBC using a key
+derived using derivation method nDerivationMethod
+(0 == EVP_sha512()) and derivation iterations nDeriveIterations.
+vchOtherDerivationParameters is provided for alternative algorithms
+which may require more parameters (such as scrypt).
 
-Wallet Private Keys are then encrypted using AES-256-CBC                        Приватные ключи кошелька зашифрованы с помощью AES-256-CBC
-with the double-sha256 of the public key as the IV, and the                     с двойном-sha256 открытым ключём как IV,
-master key's key as the encryption key (see keystore.[ch]).                     и мастер ключ, ключ как шифрованный ключ (см. keystore.[ch]).
-
+Wallet Private Keys are then encrypted using AES-256-CBC
+with the double-sha256 of the public key as the IV, and the
+master key's key as the encryption key (see keystore.[ch]).
 */
 
-/** Master key for wallet encryption                                            Мастер ключ для зашифрованного бумажника  */
+/** Master key for wallet encryption */
 class CMasterKey
 {
 public:
@@ -37,8 +36,8 @@ public:
     // 1 = scrypt()
     unsigned int nDerivationMethod;
     unsigned int nDeriveIterations;
-    // Use this for more parameters to key derivation,                          Используйте это для большего количества параметров для производного ключа,
-    // such as the various parameters to scrypt                                 таких как различные параметры для scrypt
+    // Use this for more parameters to key derivation,
+    // such as the various parameters to scrypt
     std::vector<unsigned char> vchOtherDerivationParameters;
 
     IMPLEMENT_SERIALIZE
@@ -51,8 +50,8 @@ public:
     )
     CMasterKey()
     {
-        // 25000 rounds is just under 0.1 seconds on a 1.86 GHz Pentium M       25000 раундов — чуть менее 0,1 секунды на 1,86 ГГц  Pentium M т.е. несколько ниже,
-        // ie slightly lower than the lowest hardware we need bother supporting чем самая низкая (hardware) которую мы должны обеспечивать поддержку
+        // 25000 rounds is just under 0.1 seconds on a 1.86 GHz Pentium M
+        // ie slightly lower than the lowest hardware we need bother supporting
         nDeriveIterations = 25000;
         nDerivationMethod = 0;
         vchOtherDerivationParameters = std::vector<unsigned char>(0);
@@ -61,7 +60,7 @@ public:
 
 typedef std::vector<unsigned char, secure_allocator<unsigned char> > CKeyingMaterial;
 
-/** Encryption/decryption context with key information                          Шифрование/дешифрование контекста с ключевой информацией */
+/** Encryption/decryption context with key information */
 class CCrypter
 {
 private:
@@ -89,9 +88,6 @@ public:
         // Try to keep the key data out of swap (and be a bit over-careful to keep the IV that we don't even use out of swap)
         // Note that this does nothing about suspend-to-disk (which will put all our key data on disk)
         // Note as well that at no point in this program is any attempt made to prevent stealing of keys by reading the memory of the running process.
-        //              Попробуйте сохранить данные ключа из свопа (и будьте немного сверхосторожны, чтобы держать IV, который мы даже не используем для свопа)
-        //              Обратите внимание, что это ничего не делает насчет приостановления-на-диск (который поместит все наши ключевые данные на диск)
-        //              обратите внимание также, что нет точки в этой программы для любой попытки осуществить кражу ключей путем чтения памяти выполняющегося процесса.
         LockedPageManager::instance.LockRange(&chKey[0], sizeof chKey);
         LockedPageManager::instance.LockRange(&chIV[0], sizeof chIV);
     }

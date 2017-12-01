@@ -9,6 +9,10 @@
 #include "main.h"
 
 
+
+
+
+
 //////////////////////////////////////////////////////////////////////////////
 //
 // BitcoinMiner
@@ -50,8 +54,42 @@ void SHA256Transform(void* pstate, void* pinput, const void* pinit)
         ((uint32_t*)pstate)[i] = ctx.h[i];
 }
 
+//
+// ScanHash scans nonces looking for a hash with at least some zero bits.
+// It operates on big endian data.  Caller does the byte reversing.
+// All input buffers are 16-byte aligned.  nNonce is usually preserved
+// between calls, but periodically or if nNonce is 0xffff0000 or above,
+// the block is rebuilt and nNonce starts over at zero.
+//
+unsigned int static ScanHash_CryptoPP(char* pmidstate, char* pdata, char* phash1, char* phash, unsigned int& nHashesDone)
+{
+    unsigned int& nNonce = *(unsigned int*)(pdata + 12);
+    for (;;)
+    {
+        // Crypto++ SHA256
+        // Hash pdata using pmidstate as the starting state into
+        // pre-formatted buffer phash1, then hash phash1 into phash
+        nNonce++;
+        SHA256Transform(phash1, pdata, pmidstate);
+        SHA256Transform(phash, phash1, pSHA256InitState);
 
-// Some explaining would be appreciated                                         Некоторые толкования(объяснения) будут оценены
+        // Return the nonce if the hash has at least some zero bits,
+        // caller will check if it has enough to reach the target
+        if (((unsigned short*)phash)[14] == 0)
+            return nNonce;
+
+        // If nothing found after trying for a while, return -1
+        if ((nNonce & 0xffff) == 0)
+        {
+            nHashesDone = 0xffff+1;
+            return (unsigned int) -1;
+        }
+        if ((nNonce & 0xfff) == 0)
+            boost::this_thread::interruption_point();
+    }
+}
+
+// Some explaining would be appreciated
 class COrphan
 {
 public:
@@ -79,7 +117,7 @@ public:
 uint64 nLastBlockTx = 0;
 uint64 nLastBlockSize = 0;
 
-// We want to sort transactions by priority and fee, so:                            Мы хотим, отсортировать транзакции по приоритету и комиссии, так:
+// We want to sort transactions by priority and fee, so:
 typedef boost::tuple<double, double, CTransaction*> TxPriority;
 class TxPriorityCompare
 {
@@ -103,16 +141,15 @@ public:
     }
 };
 
-
 CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
 {
-    // Create new block                                                             Создание нового блока
+    // Create new block
     auto_ptr<CBlockTemplate> pblocktemplate(new CBlockTemplate());
     if(!pblocktemplate.get())
         return NULL;
-    CBlock *pblock = &pblocktemplate->block; // pointer for convenience             точка для удобства
+    CBlock *pblock = &pblocktemplate->block; // pointer for convenience
 
-    // Create coinbase tx                                                           Создание монетнойбазы транзакций
+    // Create coinbase tx
     CTransaction txNew;
     txNew.vin.resize(1);
     txNew.vin[0].prevout.SetNull();
@@ -122,45 +159,41 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
         return NULL;
     txNew.vout[0].scriptPubKey << pubkey << OP_CHECKSIG;
 
-    // Add our coinbase tx as first transaction                                     Добавьте нашу coinbase tx как первую транзакцию
+    // Add our coinbase tx as first transaction
     pblock->vtx.push_back(txNew);
-    pblocktemplate->vTxFees.push_back(-1); // updated at end                        обновить в конце
-    pblocktemplate->vTxSigOps.push_back(-1); // updated at end                      обновить в конце
+    pblocktemplate->vTxFees.push_back(-1); // updated at end
+    pblocktemplate->vTxSigOps.push_back(-1); // updated at end
 
-    // Largest block you're willing to create:                                      Крупнейший блок вы готовы создавать:
+    // Largest block you're willing to create:
     unsigned int nBlockMaxSize = GetArg("-blockmaxsize", MAX_BLOCK_SIZE_GEN/2);
-    // Limit to betweeen 1K and MAX_BLOCK_SIZE-1K for sanity:                       Ограничения в диапазоне от 1K и MAX_BLOCK_SIZE-1K для здравого смысла.
+    // Limit to betweeen 1K and MAX_BLOCK_SIZE-1K for sanity:
     nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MAX_BLOCK_SIZE-1000), nBlockMaxSize));
 
-    // How much of the block should be dedicated to high-priority transactions,     Сколько в блоке должно быть выделенно первоочередным транзакциям,
-    // included regardless of the fees they pay                                     включая независимо от сборов, которые они платят
+    // How much of the block should be dedicated to high-priority transactions,
+    // included regardless of the fees they pay
     unsigned int nBlockPrioritySize = GetArg("-blockprioritysize", DEFAULT_BLOCK_PRIORITY_SIZE);
     nBlockPrioritySize = std::min(nBlockMaxSize, nBlockPrioritySize);
 
-    // Minimum block size you want to create; block will be filled with free transactions       Минимальный размер блока который вы хотите создать; блок будет заполняться
-    // until there are no more or the block reaches this size:                      бесплатными транзакциями до тех пор, пока будет не более или блок достигает этого размера:
+    // Minimum block size you want to create; block will be filled with free transactions
+    // until there are no more or the block reaches this size:
     unsigned int nBlockMinSize = GetArg("-blockminsize", 0);
     nBlockMinSize = std::min(nBlockMaxSize, nBlockMinSize);
 
-    // Collect memory pool transactions into the block                              Собрать memory pool транзакций в блоке
+    // Collect memory pool transactions into the block
     int64 nFees = 0;
     {
         LOCK2(cs_main, mempool.cs);
         CBlockIndex* pindexPrev = pindexBest;
         CCoinsViewCache view(*pcoinsTip, true);
 
-        // Priority order to process transactions                                   Порядок приоритета для обработки транзакций
-        list<COrphan> vOrphan; // list memory doesn't move                          Список памяти не перемещается
+        // Priority order to process transactions
+        list<COrphan> vOrphan; // list memory doesn't move
         map<uint256, vector<COrphan*> > mapDependers;
         bool fPrintPriority = GetBoolArg("-printpriority", false);
 
-        // This vector will be sorted into a priority queue:                        Этот вектор будет отсортирован в приоритетной очереди:
+        // This vector will be sorted into a priority queue:
         vector<TxPriority> vecPriority;
         vecPriority.reserve(mempool.mapTx.size());
-
-        vector<TxHashPriority> vecTxHashPriority;                               ////////// новое //////////
-        vecTxHashPriority.reserve(mempool.mapTx.size());                        ////////// новое ////////// а это надо?
-
         for (map<uint256, CTransaction>::iterator mi = mempool.mapTx.begin(); mi != mempool.mapTx.end(); ++mi)
         {
             CTransaction& tx = (*mi).second;
@@ -173,12 +206,12 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
             bool fMissingInputs = false;
             BOOST_FOREACH(const CTxIn& txin, tx.vin)
             {
-                // Read prev transaction                                            Чтение предыдущей транзакции
+                // Read prev transaction
                 if (!view.HaveCoins(txin.prevout.hash))
                 {
-                    // This should never happen; all transactions in the memory     Это должно никогда не случаться; все транзакции в пуле памяти
-                    // pool should connect to either transactions in the chain      должны подключаться к любой транзакции в цепочке
-                    // or other transactions in the memory pool.                    или другим транзакциям в пуле памяти.
+                    // This should never happen; all transactions in the memory
+                    // pool should connect to either transactions in the chain
+                    // or other transactions in the memory pool.
                     if (!mempool.mapTx.count(txin.prevout.hash))
                     {
                         printf("ERROR: mempool transaction missing input\n");
@@ -189,10 +222,10 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                         break;
                     }
 
-                    // Has to wait for dependencies                                 Должен ждать зависимостей
+                    // Has to wait for dependencies
                     if (!porphan)
                     {
-                        // Use list for automatic deletion                          Использует список для автоматического удаления
+                        // Use list for automatic deletion
                         vOrphan.push_back(COrphan(&tx));
                         porphan = &vOrphan.back();
                     }
@@ -210,19 +243,15 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
 
                 dPriority += (double)nValueIn * nConf;
             }
-
             if (fMissingInputs) continue;
 
-            // Priority(приоритет) is sum(valuein * age) / txsize
+            // Priority is sum(valuein * age) / txsize
             unsigned int nTxSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
             dPriority /= nTxSize;
 
             // This is a more accurate fee-per-kilobyte than is used by the client code, because the
             // client code rounds up the size to the nearest 1K. That's good, because it gives an
             // incentive to create smaller transactions.
-            //                  Это более точное плата-за-килобайт, чем используемая клиентским кодом, так как
-            //                  код клиента округляет размер до ближайшего 1K. Это хорошо, потому что это дает
-            //                  стимул для создания меньших транзакций.
             double dFeePerKb =  double(nTotalIn-GetValueOut(tx)) / (double(nTxSize)/1000.0);
 
             if (porphan)
@@ -234,7 +263,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                 vecPriority.push_back(TxPriority(dPriority, dFeePerKb, &(*mi).second));
         }
 
-        // Collect transactions into block                                          Собрать транзакции в блок
+        // Collect transactions into block
         uint64 nBlockSize = 1000;
         uint64 nBlockTx = 0;
         int nBlockSigOps = 100;
@@ -245,30 +274,30 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
 
         while (!vecPriority.empty())
         {
-            // Take highest priority transaction off the priority queue:            Брать наивысший приоритет транзакции вне очереди приоритета:
+            // Take highest priority transaction off the priority queue:
             double dPriority = vecPriority.front().get<0>();
             double dFeePerKb = vecPriority.front().get<1>();
             CTransaction& tx = *(vecPriority.front().get<2>());
 
-            std::pop_heap(vecPriority.begin(), vecPriority.end(), comparer);    //     одно           удаление элемента из кучи
-            vecPriority.pop_back();                                             //   удаление         удаление последнего элемента вектора
+            std::pop_heap(vecPriority.begin(), vecPriority.end(), comparer);
+            vecPriority.pop_back();
 
-            // Size limits                                                          Ограничения размера
+            // Size limits
             unsigned int nTxSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
             if (nBlockSize + nTxSize >= nBlockMaxSize)
                 continue;
 
-            // Legacy limits on sigOps:                                             Старые ограничения на sigOps:
+            // Legacy limits on sigOps:
             unsigned int nTxSigOps = GetLegacySigOpCount(tx);
             if (nBlockSigOps + nTxSigOps >= MAX_BLOCK_SIGOPS)
                 continue;
 
-            // Skip free transactions if we're past the minimum block size:         Пропустить бесплатные транзакции если мы за пределами минимального размера блока:
+            // Skip free transactions if we're past the minimum block size:
             if (fSortedByFee && (dFeePerKb < CTransaction::nMinTxFee) && (nBlockSize + nTxSize >= nBlockMinSize))
                 continue;
 
-            // Prioritize by fee once past the priority size or we run out of high-priority     Приоритет по комиссии после приоритета по размеру
-            // transactions:                                                                    или мы исчерпали приоритетные транзакции
+            // Prioritize by fee once past the priority size or we run out of high-priority
+            // transactions:
             if (!fSortedByFee &&
                 ((nBlockSize + nTxSize >= nBlockPrioritySize) || !AllowFree(dPriority)))
             {
@@ -292,7 +321,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
 
             CTxUndo txundo;
             uint256 hash = tx.GetHash();
-            UpdateCoins(tx, state, view, txundo, pindexPrev->nHeight+1, hash);      // очень много я об это спотыкался
+            UpdateCoins(tx, state, view, txundo, pindexPrev->nHeight+1, hash);
 
             // Added
             pblock->vtx.push_back(tx);
@@ -303,14 +332,13 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
             nBlockSigOps += nTxSigOps;
             nFees += nTxFees;
 
-
             if (fPrintPriority)
             {
                 printf("priority %.1f feeperkb %.1f txid %s\n",
                        dPriority, dFeePerKb, tx.GetHash().ToString().c_str());
             }
 
-            // Add transactions that depend on this one to the priority queue       Добавление транзакций, которые зависят от этого в приоритетной очереди
+            // Add transactions that depend on this one to the priority queue
             if (mapDependers.count(hash))
             {
                 BOOST_FOREACH(COrphan* porphan, mapDependers[hash])
@@ -328,232 +356,20 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
             }
         }
 
-
-
-//*****************************************************************
-//************************* Transfer TX ***************************
-
-        if (GetHeightPartChain(pindexPrev->nHeight + 1) != -1)
-        {
-            CBlock ReadBlock;
-            ReadBlockFromDisk(ReadBlock, vBlockIndexByHeight[GetHeightPartChain(pindexPrev->nHeight + 1)]);
-
-            CTransaction txAdd;
-
-            BOOST_FOREACH(CTransaction& tx, ReadBlock.vtx)
-            {
-                uint256 txHash = tx.GetHash();
-                if (view.HaveCoins(txHash))
-                {
-                    const CCoins &coinsOut = view.GetCoins(txHash);
-                    for (unsigned int i = 0; i < tx.vout.size(); i++)
-                    {
-                        if (coinsOut.IsAvailable(i))
-                        {
-                            CTxOut out = coinsOut.vout[i];
-                            int64 rate = out.nValue * RATE_PART_CHAIN;
-                            if (out.nValue - rate > MIN_FEE_PART_CHAIN)
-                            {
-                                out.nValue -= rate;
-                                txAdd.vout.push_back(out);
-                                nFees += rate;
-                            }
-                            else
-                                nFees += out.nValue;
-                            txAdd.vin.push_back(CTxIn(COutPoint(txHash, i), CScript() << OP_0 << OP_0));
-                        }
-                    }
-                }
-            }
-
-            if (!txAdd.IsNull())
-                pblock->vtx.push_back(txAdd);       // появилась новая транзакция c большой комиссией(RATE_PART_CHAIN) на эту комиссию так же возможен кратный возврат
-        }
-//************************* Transfer TX ***************************
-//*****************************************************************
-
-
-        int64 NewCoin = GetBlockValue(pindexPrev->nHeight+1, nFees) - 10 * COIN;    // 10 * COIN гарантированное вознаграждение майнерам блоков
-
-        if (pindexBest->nHeight > int(BLOCK_TX_FEE + NUMBER_BLOCK_TX))
-        {
-            uint256 useHashBack;
-            for (unsigned int i = 0; i < NUMBER_BLOCK_TX; i++)                      // получение транзакций которым возможен возврат комиссий
-            {
-                CBlock rBlock;
-                ReadBlockFromDisk(rBlock, vBlockIndexByHeight[pindexPrev->nHeight - BLOCK_TX_FEE - i]);             // -5, -6, -7, -8, -9 блоки
-
-                if (i == 0)
-                    useHashBack = rBlock.GetHash();                                 // хэш(uint256) блока для определения случайных позиций
-
-                BOOST_FOREACH(CTransaction& tx, rBlock.vtx)
-                {
-                    if (!tx.IsCoinBase())
-                    {
-                        TransM trM;
-
-                        int64 nIn = 0;
-                        BOOST_FOREACH(const CTxIn& txin, tx.vin)
-                        {
-                            trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
-
-                            CTransaction getTx;
-                            const uint256 txHash = txin.prevout.hash;
-                            uint256 hashBlock = 0;
-                            if (GetTransaction(txHash, getTx, hashBlock, false))
-                                nIn += getTx.vout[txin.prevout.n].nValue;
-                            //else проверка ошибок, если нужно
-                        }
-
-                        int64 nOut = 0;
-                        BOOST_FOREACH (CTxOut& out, tx.vout)
-                        {
-                            trM.voutM.push_back(CTxOut(out.nValue, CScript()));
-                            nOut += out.nValue;
-                        }
-
-                        int64 nTxFees = nIn - nOut;
-
-                        trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
-
-                        uint256 HashTrM = SerializeHash(trM);
-
-                        CTransaction getTx;
-                        const uint256 txHash = tx.vin[0].prevout.hash;
-                        uint256 hashBlock = 0;
-                        if (GetTransaction(txHash, getTx, hashBlock, false))
-                            vecTxHashPriority.push_back(TxHashPriority(HashTrM, CTxOut(nTxFees, getTx.vout[tx.vin[0].prevout.n].scriptPubKey)));
-                    }
-                }
-
-                if (vecTxHashPriority.size() > QUANTITY_TX)
-                    break;
-            }
-
-
-            if (vecTxHashPriority.size() > 1)
-            {
-                TxHashPriorityCompare comparerHash(true);
-                std::sort(vecTxHashPriority.begin(), vecTxHashPriority.end(), comparerHash);
-
-// для арифметической прогрессии (a1 + n * d где d = arProgression) определяем a1 как корень powsqrt степени из количества транцакций
-//                                a1 = stepTr       (n - номер промежутка от 0 и более)
-
-                double powsqrt = (useHashBack & CBigNum(uint256(65535)).getuint256()).getdouble() * 0.00001 + 1.2;  // получаем число от 1,2 до 1,85535
-                unsigned int stepTr = pow((double)vecTxHashPriority.size(), 1.0 / powsqrt);                         // величина промежутка
-                unsigned int numPosition = vecTxHashPriority.size() / stepTr;                                       // количество промежутков
-                unsigned int arProgression = stepTr / numPosition;          // аргумент арифметической прогрессии при котором последний промежуток почти равен первым двум
-
-                powsqrt = (useHashBack & CBigNum(uint256(262143)).getuint256()).getdouble() * 0.000001;             // число от 0 до 0,262143
-                unsigned int retFeesTr = (stepTr + 1) * (0.4 + powsqrt);    // во сколько раз нужно умножить возвращаемую комиссию (+1 чтобы не было 0)
-
-
-//                uint256 useHashBack2 = useHashBack;     // для debug.log
-
-
-                unsigned int w = 0;
-                unsigned int cSizeVecTx = 0;
-                while (w < numPosition)
-                {
-                    useHashBack = Hash(BEGIN(useHashBack),  END(useHashBack));
-
-                    unsigned int interval = stepTr + w * arProgression;                                             // разбивка vecTxHashPriority на промежутки
-                    double position = (useHashBack & CBigNum(uint256(1048575)).getuint256()).getdouble() / 1048575.0;// получаем число от 0 до 1
-                    unsigned int cp = cSizeVecTx + position * interval;
-                    if (vecTxHashPriority.size() > cp)  // только >, без =
-                    {
-                        int64 ret = vecTxHashPriority[cp].get<1>().nValue * retFeesTr;                              // величина возврата
-//printf("=!!!==>> while   hashTr: %s  nValue: %"PRI64d" * %i = ret: %"PRI64d"  NewCoin - ret: %"PRI64d"  cp: %i\n",
-//       vecTxHashPriority[cp].get<0>().GetHex().c_str(), vecTxHashPriority[cp].get<1>().nValue, retFeesTr, ret, NewCoin - ret, cp);
-
-                        if (ret <= NewCoin && ret > CTransaction::nMinTxFee)                                        // пылесос
-                        {
-                            pblock->vtx[0].vout.push_back(CTxOut(ret, vecTxHashPriority[cp].get<1>().scriptPubKey));
-                            NewCoin -= ret;
-                        }
-                    }
-                    else
-                        break;
-
-                    cSizeVecTx += interval + 1;  // +1 что бы не произошло наложения соседних интервалов (максимума и 0), т.е. не происходило выбора одной и той же транзакции дважды
-                    w++;
-//printf("=!!!==>> while   cSizeVecTx += interval + 1: %i\n", cSizeVecTx);
-                }
-
-//printf("\nvecTxHashPriority.size() %i\n         stepTr          %i\n         numPosition     %i\n         arProgression   %i\n         retFeesTr       %i\n         NewCoin + 10    %"PRI64d"\n",
-//       vecTxHashPriority.size(), stepTr, numPosition, arProgression, retFeesTr, NewCoin + 10 * COIN);
-
-
-//**********************************************************************************
-//*******************************  для debug.log  **********************************
-//                unsigned int pos = 0;
-//                unsigned int nextInt = 0;
-//                unsigned int www = 0;
-//                unsigned int iii = 0;
-//                BOOST_FOREACH(const TxHashPriority& tx, vecTxHashPriority)
-//                {
-//                    if (nextInt == iii)
-//                    {
-//                        useHashBack2 = Hash(BEGIN(useHashBack2),  END(useHashBack2));
-//                        unsigned int interval = stepTr + www * arProgression;                     // разбивка vecTxHashPriority на промежутки
-//                        pos = nextInt + interval * (useHashBack2 & CBigNum(uint256(1048575)).getuint256()).getdouble() / 1048575.0;   // получаем число от 0 до 1
-//                        nextInt = iii + interval + 1;
-//                        www++;
-//                        printf("=!!!==>>   interval: %i   iii: %i   nextInt: %i\n", interval, iii, nextInt);
-//                    }
-
-//                    if (iii == pos)
-//                        printf(">>  hashTr: %s   pos: %i   fees: %"PRI64d" * %i = ret: %"PRI64d"\n", tx.get<0>().GetHex().c_str(), pos, tx.get<1>().nValue, retFeesTr, tx.get<1>().nValue * retFeesTr);
-//                    else
-//                        printf(">>    hashTr: %s   iii: %i   fees: %"PRI64d"\n", tx.get<0>().GetHex().c_str(), iii, tx.get<1>().nValue);
-//                    iii++;
-//                }
-//*******************************  для debug.log  **********************************
-//**********************************************************************************
-            }
-        }
-
-
         nLastBlockTx = nBlockTx;
         nLastBlockSize = nBlockSize;
-        printf("\nCreateNewBlock(): total size %"PRI64u"\n", nBlockSize);
+        printf("CreateNewBlock(): total size %"PRI64u"\n", nBlockSize);
 
-        pblock->vtx[0].vout[0].nValue = NewCoin + 10 * COIN;                // 10 * COIN минимально возможное вознаграждение за найденный блок
-        pblock->vtx[0].tBlock = pindexPrev->nHeight;                    ////////// новое ////////// можно здесь и 0 оставить
-
+        pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nHeight+1, nFees);
         pblocktemplate->vTxFees[0] = -nFees;
 
-        // Fill in header                                                           Заполнение заголовка
+        // Fill in header
         pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
         UpdateTime(*pblock, pindexPrev);
         pblock->nBits          = GetNextWorkRequired(pindexPrev, pblock);
         pblock->nNonce         = 0;
         pblock->vtx[0].vin[0].scriptSig = CScript() << OP_0 << OP_0;
         pblocktemplate->vTxSigOps[0] = GetLegacySigOpCount(pblock->vtx[0]);
-
-
-
-        CBigNum maxBigNum = CBigNum(~uint256(0));
-        BOOST_FOREACH(CTransaction& tx, pblock->vtx)
-        {
-            TransM trM;
-//            trM.vinM = tx.vin;    // почему в wallet.cpp подобное работает, а здесь нет?
-            BOOST_FOREACH(const CTxIn& txin, tx.vin)
-                trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
-
-            BOOST_FOREACH (const CTxOut& out, tx.vout)
-                trM.voutM.push_back(CTxOut(out.nValue, CScript()));
-
-            trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
-
-            CBigNum bntx = CBigNum(SerializeHash(trM));
-            pblocktemplate->sumTrDif += maxBigNum / bntx;
-//printf(">>>>> BOOST_FOREACH pblock->vtx    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", SerializeHash(trM).GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), pblocktemplate->sumTrDif.ToString().c_str());
-        }
-//printf(">>>>> pblocktemplate->sumTrDif: %s\n %s\n", pblocktemplate->sumTrDif.ToString().c_str(), maxBigNum.ToString().c_str());
-
-
-
 
         CBlockIndex indexDummy(*pblock);
         indexDummy.pprev = pindexPrev;
@@ -578,7 +394,7 @@ void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& 
         hashPrevBlock = pblock->hashPrevBlock;
     }
     ++nExtraNonce;
-    unsigned int nHeight = pindexPrev->nHeight+1; // Height first(высота первого) in coinbase required(требуется) for block.version=2
+    unsigned int nHeight = pindexPrev->nHeight+1; // Height first in coinbase required for block.version=2
     pblock->vtx[0].vin[0].scriptSig = (CScript() << nHeight << CBigNum(nExtraNonce)) + COINBASE_FLAGS;
     assert(pblock->vtx[0].vin[0].scriptSig.size() <= 100);
 
@@ -589,7 +405,7 @@ void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& 
 void FormatHashBuffers(CBlock* pblock, char* pmidstate, char* pdata, char* phash1)
 {
     //
-    // Pre-build hash buffers                                                       Пред-постройка хэш буферов
+    // Pre-build hash buffers
     //
     struct
     {
@@ -620,11 +436,11 @@ void FormatHashBuffers(CBlock* pblock, char* pmidstate, char* pdata, char* phash
     FormatHashBlocks(&tmp.block, sizeof(tmp.block));
     FormatHashBlocks(&tmp.hash1, sizeof(tmp.hash1));
 
-    // Byte swap all the input buffer                                               Байт подкачки всего входного буфера
+    // Byte swap all the input buffer
     for (unsigned int i = 0; i < sizeof(tmp)/4; i++)
         ((unsigned int*)&tmp)[i] = ByteReverse(((unsigned int*)&tmp)[i]);
 
-    // Precalc the first half of the first hash, which stays constant               Предварительный расчет первой половины первого хэша, который остается постоянным
+    // Precalc the first half of the first hash, which stays constant
     SHA256Transform(pmidstate, &tmp.block, pSHA256InitState);
 
     memcpy(pdata, &tmp.block, 128);
@@ -632,56 +448,36 @@ void FormatHashBuffers(CBlock* pblock, char* pmidstate, char* pdata, char* phash
 }
 
 
-bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey, CBigNum& sumTrDifTemplate)
+bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
 {
     uint256 hash = pblock->GetHash();
-    //    uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
-    uint256 hashTarget;
-
-
-
-    CBigNum maxBigNum = CBigNum(~uint256(0));
-    CBigNum divideTarget = maxBigNum / CBigNum().SetCompact(pblock->nBits);
-
-    if (divideTarget <= sumTrDifTemplate)
-        hashTarget = maxBigNum.getuint256();
-    else
-        hashTarget = (maxBigNum / (divideTarget - sumTrDifTemplate)).getuint256();       // уменьшение целевого значения сложности
-
-
-printf(">>>>> CheckWork    divideTarget: %s\n               sumTrDifTemplate: %s\ndivideTarget - sumTrDifTemplate: %s\n",
-       divideTarget.ToString().c_str(), sumTrDifTemplate.ToString().c_str(), (divideTarget - sumTrDifTemplate).ToString().c_str());
-printf(">>>>> CheckWork      hashTarget: %s\n", hashTarget.ToString().c_str());
-
-
+    uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
 
     if (hash > hashTarget)
         return false;
 
     //// debug print
     printf("BitcoinMiner:\n");
-    printf("proof-of-work found  \n     hash: %s  \n   target: %s\n", hash.GetHex().c_str(), hashTarget.GetHex().c_str());
-//    printf("proof-of-work found  \n     hash: %s  \n   target: %s\n", hash.GetHex().c_str(), CBigNum().SetCompact(pblock->nBits).getuint256().GetHex().c_str());
-//    printf("proof-of-work found  \n     hash: %s  \n   target: %s\ntarget+TX: %s\n", hash.GetHex().c_str(), CBigNum().SetCompact(pblock->nBits).getuint256().GetHex().c_str(), hashTarget.GetHex().c_str());
+    printf("proof-of-work found  \n  hash: %s  \ntarget: %s\n", hash.GetHex().c_str(), hashTarget.GetHex().c_str());
     pblock->print();
     printf("generated %s\n", FormatMoney(pblock->vtx[0].vout[0].nValue).c_str());
 
-    // Found a solution                                                             Найденное решение
+    // Found a solution
     {
         LOCK(cs_main);
         if (pblock->hashPrevBlock != hashBestChain)
             return error("BitcoinMiner : generated block is stale");
 
-        // Remove key from key pool                                                 Удаление ключа из пула ключей
+        // Remove key from key pool
         reservekey.KeepKey();
 
-        // Track how many getdata requests this block gets                          Отследить сколько getdata запрасов этот блок получает
+        // Track how many getdata requests this block gets
         {
             LOCK(wallet.cs_wallet);
             wallet.mapRequestCount[pblock->GetHash()] = 0;
         }
 
-        // Process this block the same as if we had received it from another node   Обработать этот блок такой же, как если бы мы получили ее от другого узла
+        // Process this block the same as if we had received it from another node
         CValidationState state;
         if (!ProcessBlock(state, NULL, pblock))
             return error("BitcoinMiner : ProcessBlock, block not accepted");
@@ -694,22 +490,22 @@ void static BitcoinMiner(CWallet *pwallet)
 {
     printf("BitcoinMiner started\n");
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
-    RenameThread("Transib-miner");
+    RenameThread("bitcoin-miner");
 
-    // Each thread has its own key and counter                                      Каждый поток имеет свой собственный ключ и счетчик
+    // Each thread has its own key and counter
     CReserveKey reservekey(pwallet);
     unsigned int nExtraNonce = 0;
 
     try { while (true) {
         if (Params().NetworkID() != CChainParams::REGTEST) {
-            // Busy-wait for the network to come online so we don't waste time      Занят-ожидание для сети, чтобы перейти в оперативный режим, так что бы мы не
-            // mining on an obsolete chain. In regtest mode we expect to fly solo.  тратили время добычи на устаревшей цепи. В режиме regtest мы ожидаем прилёта самостоятельно.
+            // Busy-wait for the network to come online so we don't waste time mining
+            // on an obsolete chain. In regtest mode we expect to fly solo.
             while (vNodes.empty())
                 MilliSleep(1000);
         }
 
         //
-        // Create new block                                                         создание нового блока
+        // Create new block
         //
         unsigned int nTransactionsUpdatedLast = nTransactionsUpdated;
         CBlockIndex* pindexPrev = pindexBest;
@@ -718,15 +514,13 @@ void static BitcoinMiner(CWallet *pwallet)
         if (!pblocktemplate.get())
             return;
         CBlock *pblock = &pblocktemplate->block;
-        CBigNum sumTrDifTemplate = pblocktemplate->sumTrDif;                          ////////// новое //////////
         IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
-
 
         printf("Running BitcoinMiner with %"PRIszu" transactions in block (%u bytes)\n", pblock->vtx.size(),
                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
 
         //
-        // Pre-build hash buffers                                                   Предварительная постройка хэш буферов
+        // Pre-build hash buffers
         //
         char pmidstatebuf[32+16]; char* pmidstate = alignup<16>(pmidstatebuf);
         char pdatabuf[128+16];    char* pdata     = alignup<16>(pdatabuf);
@@ -743,53 +537,44 @@ void static BitcoinMiner(CWallet *pwallet)
         // Search
         //
         int64 nStart = GetTime();
-//        uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
-        uint256 hashTarget;
-
-
-
-        CBigNum maxBigNum = CBigNum(~uint256(0));
-        CBigNum divideTarget = maxBigNum / CBigNum().SetCompact(pblock->nBits);
-
-        if (divideTarget <= sumTrDifTemplate)
-            hashTarget = maxBigNum.getuint256();
-        else
-            hashTarget = (maxBigNum / (divideTarget - sumTrDifTemplate)).getuint256();       // уменьшение целевого значения сложности
-
-
+        uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
+        uint256 hashbuf[2];
+        uint256& hash = *alignup<16>(hashbuf);
         while (true)
         {
             unsigned int nHashesDone = 0;
+            unsigned int nNonceFound;
 
-            uint256 thash;
+            // Crypto++ SHA256
+            nNonceFound = ScanHash_CryptoPP(pmidstate, pdata + 64, phash1,
+                                            (char*)&hash, nHashesDone);
 
-            for (;;)
+            // Check if something found
+            if (nNonceFound != (unsigned int) -1)
             {
-                lyra2re2_hash(BEGIN(pblock->nVersion), BEGIN(thash));
+                for (unsigned int i = 0; i < sizeof(hash)/4; i++)
+                    ((unsigned int*)&hash)[i] = ByteReverse(((unsigned int*)&hash)[i]);
 
-                if (thash <= hashTarget)
+                if (hash <= hashTarget)
                 {
                     // Found a solution
-                    printf("Entering to found a solution section. Hash: %s", thash.GetHex().c_str());
+                    pblock->nNonce = ByteReverse(nNonceFound);
+                    assert(hash == pblock->GetHash());
+
                     SetThreadPriority(THREAD_PRIORITY_NORMAL);
-                    CheckWork(pblock, *pwallet, reservekey, sumTrDifTemplate);
+                    CheckWork(pblock, *pwallet, reservekey);
                     SetThreadPriority(THREAD_PRIORITY_LOWEST);
 
-                    // In regression test mode, stop mining after a block is found. This        В регрессивном тестовом режиме, остановить добычу после найденного блока.
-                    // allows developers to controllably generate a block on demand.            Это позволяет разработчикам контролируемо генерировать блок по требованию.
+                    // In regression test mode, stop mining after a block is found. This
+                    // allows developers to controllably generate a block on demand.
                     if (Params().NetworkID() == CChainParams::REGTEST)
                         throw boost::thread_interrupted();
 
                     break;
                 }
-                pblock->nNonce += 1;
-                nHashesDone += 1;
-                if ((pblock->nNonce & 0xFF) == 0)
-                    break;
             }
 
-
-            // Meter hashes/sec                                                     Измеритель хешей в секунду
+            // Meter hashes/sec
             static int64 nHashCounter;
             if (nHPSTimerStart == 0)
             {
@@ -818,7 +603,7 @@ void static BitcoinMiner(CWallet *pwallet)
                 }
             }
 
-            // Check for stop or if block needs to be rebuilt                       Проверка для остановки или если блок должен быть перестроен
+            // Check for stop or if block needs to be rebuilt
             boost::this_thread::interruption_point();
             if (vNodes.empty() && Params().NetworkID() != CChainParams::REGTEST)
                 break;
@@ -829,12 +614,12 @@ void static BitcoinMiner(CWallet *pwallet)
             if (pindexPrev != pindexBest)
                 break;
 
-            // Update nTime every few seconds                                       Обновление nTime каждые несколько секунд
+            // Update nTime every few seconds
             UpdateTime(*pblock, pindexPrev);
             nBlockTime = ByteReverse(pblock->nTime);
             if (TestNet())
             {
-                // Changing pblock->nTime can change work required on testnet:      Изменение pblock->Ntime можете изменить работу, необходимую на testnet:
+                // Changing pblock->nTime can change work required on testnet:
                 nBlockBits = ByteReverse(pblock->nBits);
                 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
             }
@@ -873,3 +658,6 @@ void GenerateBitcoins(bool fGenerate, CWallet* pwallet)
     for (int i = 0; i < nThreads; i++)
         minerThreads->create_thread(boost::bind(&BitcoinMiner, pwallet));
 }
+
+
+

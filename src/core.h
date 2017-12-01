@@ -8,13 +8,12 @@
 #include "uint256.h"
 #include "serialize.h"
 #include "script.h"
-#include "Lyra2RE/Lyra2RE.h"
 
 #include <stdio.h>
 
 class CTransaction;
 
-/** An outpoint - a combination of a transaction hash and an index n into its vout      В outpoint - сочетание хеш транзакцию и индекс n в vout  */
+/** An outpoint - a combination of a transaction hash and an index n into its vout */
 class COutPoint
 {
 public:
@@ -46,7 +45,7 @@ public:
     void print() const;
 };
 
-/** An inpoint - a combination of a transaction and an index n into its vin         В inpoint - комбинация транзакций и индекс n в vin  */
+/** An inpoint - a combination of a transaction and an index n into its vin */
 class CInPoint
 {
 public:
@@ -59,9 +58,9 @@ public:
     bool IsNull() const { return (ptx == NULL && n == (unsigned int) -1); }
 };
 
-/** An input of a transaction.  It contains the location of the previous            Вход транзакции.  Он содержит расположение выходов предыдущей
- * transaction's output that it claims and a signature that matches the             транзакции, что он утверждает и подпись, которая соответствует вывода
- * output's public key.                                                             открытый ключ.
+/** An input of a transaction.  It contains the location of the previous
+ * transaction's output that it claims and a signature that matches the
+ * output's public key.
  */
 class CTxIn
 {
@@ -111,9 +110,6 @@ public:
 
 /** An output of a transaction.  It contains the public key that the next input
  * must be able to sign with to claim it.
- *
- * Результат транзакции.  Он содержит открытый ключ, следующий входные данные
- * должны быть в состоянии подписать его требования.
  */
 class CTxOut
 {
@@ -149,14 +145,14 @@ public:
 
     bool IsDust(int64 nMinRelayTxFee) const
     {
-        // "Dust" is defined in terms of CTransaction::nMinRelayTxFee,          "Пыль" определяется с точки зрения CTransaction: :nMinRelayTxFee,
-        // which has units satoshis-per-kilobyte.                               подразделения satoshis-per-kilobyte.
-        // If you'd pay more than 1/3 in fees                                   Если вы хотите платить больше, чем 1/3 платы от затрат,
-        // to spend something, then we consider it dust.                        то мы считаем, что это пыль.
-        // A typical txout is 34 bytes big, and will                            Типичный txout составляет 34 байт большие, и будут
-        // need a CTxIn of at least 148 bytes to spend,                         нуждаться в CTxIn по крайней мере 148 затраченных байт
-        // so dust is a txout less than 54 uBTC                                 поэтому пылью будет является txout менее 54 uBTC
-        // (5460 satoshis) with default nMinRelayTxFee                          (5460 satoshis) по умолчанию nMinRelayTxFee
+        // "Dust" is defined in terms of CTransaction::nMinRelayTxFee,
+        // which has units satoshis-per-kilobyte.
+        // If you'd pay more than 1/3 in fees
+        // to spend something, then we consider it dust.
+        // A typical txout is 34 bytes big, and will
+        // need a CTxIn of at least 148 bytes to spend,
+        // so dust is a txout less than 54 uBTC
+        // (5460 satoshis) with default nMinRelayTxFee
         return ((nValue*1000)/(3*((int)GetSerializeSize(SER_DISK,0)+148)) < nMinRelayTxFee);
     }
 
@@ -178,9 +174,6 @@ public:
 
 /** The basic transaction that is broadcasted on the network and contained in
  * blocks.  A transaction can contain multiple inputs and outputs.
- *
- * Основные сделки, транслируемые в сети, и содержится в блоках.
- *          Сделки могут содержать несколько входов и выходов.
  */
 class CTransaction
 {
@@ -191,7 +184,6 @@ public:
     int nVersion;
     std::vector<CTxIn> vin;
     std::vector<CTxOut> vout;
-    int tBlock;                                                 ////////// новое //////////
     unsigned int nLockTime;
 
     CTransaction()
@@ -205,7 +197,6 @@ public:
         nVersion = this->nVersion;
         READWRITE(vin);
         READWRITE(vout);
-        READWRITE(tBlock);                                      ////////// новое //////////
         READWRITE(nLockTime);
     )
 
@@ -214,17 +205,15 @@ public:
         nVersion = CTransaction::CURRENT_VERSION;
         vin.clear();
         vout.clear();
-        tBlock = 0;                                             ////////// новое //////////
         nLockTime = 0;
     }
 
     bool IsNull() const
     {
-        return (vin.empty() && vout.empty());           // std::vector empty() Проверяет отсутствие элементов в контейнере
+        return (vin.empty() && vout.empty());
     }
 
     uint256 GetHash() const;
-
     bool IsNewerThan(const CTransaction& old) const;
 
     bool IsCoinBase() const
@@ -237,7 +226,6 @@ public:
         return (a.nVersion  == b.nVersion &&
                 a.vin       == b.vin &&
                 a.vout      == b.vout &&
-                a.tBlock    == b.tBlock &&                      ////////// новое //////////
                 a.nLockTime == b.nLockTime);
     }
 
@@ -246,11 +234,12 @@ public:
         return !(a == b);
     }
 
+
     std::string ToString() const;
     void print() const;
 };
 
-/** wrapper for CTxOut that provides a more compact serialization           Оболочка для CTxOut, которая обеспечивает более компактную сериализацию*/
+/** wrapper for CTxOut that provides a more compact serialization */
 class CTxOutCompressor
 {
 private:
@@ -276,19 +265,19 @@ public:
     });)
 };
 
-/** Undo information for a CTxIn                                            Информация отмены для CTxIn
+/** Undo information for a CTxIn
  *
- *  Contains the prevout's CTxOut being spent, and if this was the          Содержит prevout`ы CTxOut трат, и если это
- *  last output of the affected transaction, its metadata as well           был последний выход затрагиваемой транзакции, его метаданных такие как
- *  (coinbase or not, height, transaction version)                          (Coinbase или нет, высота, версия транзакции)
+ *  Contains the prevout's CTxOut being spent, and if this was the
+ *  last output of the affected transaction, its metadata as well
+ *  (coinbase or not, height, transaction version)
  */
 class CTxInUndo
 {
 public:
-    CTxOut txout;         // the txout data before being spent                          txout данные перед тем как потратить
-    bool fCoinBase;       // if the outpoint was the last unspent: whether it belonged to a coinbase                                 : относится ли он к coinbase
-    unsigned int nHeight; // if the outpoint was the last unspent: its height           если outpoint был последним неизрасходованным: его высота
-    int nVersion;         // if the outpoint was the last unspent: its version          если outpoint был последним неизрасходованным: его версия
+    CTxOut txout;         // the txout data before being spent
+    bool fCoinBase;       // if the outpoint was the last unspent: whether it belonged to a coinbase
+    unsigned int nHeight; // if the outpoint was the last unspent: its height
+    int nVersion;         // if the outpoint was the last unspent: its version
 
     CTxInUndo() : txout(), fCoinBase(false), nHeight(0), nVersion(0) {}
     CTxInUndo(const CTxOut &txoutIn, bool fCoinBaseIn = false, unsigned int nHeightIn = 0, int nVersionIn = 0) : txout(txoutIn), fCoinBase(fCoinBaseIn), nHeight(nHeightIn), nVersion(nVersionIn) { }
@@ -319,11 +308,11 @@ public:
     }
 };
 
-/** Undo information for a CTransaction                                     Отменить информации для CTransaction */
+/** Undo information for a CTransaction */
 class CTxUndo
 {
 public:
-    // undo information for all txins                                       Отменить информации для для всех txins
+    // undo information for all txins
     std::vector<CTxInUndo> vprevout;
 
     IMPLEMENT_SERIALIZE(
@@ -333,12 +322,11 @@ public:
 
 
 /** pruned version of CTransaction: only retains metadata and unspent transaction outputs
- *      сокращенная версия CTransaction: только сохраняет metadata и непотраченные транзакционные outputs
  *
  * Serialized format:
  * - VARINT(nVersion)
  * - VARINT(nCode)
- * - unspentness bitvector, for vout[2] and further; least significant byte first(и далее; наименее существенный байт сначала)           (unspentness - нет перевода(возможно неизрасходованные))
+ * - unspentness bitvector, for vout[2] and further; least significant byte first
  * - the non-spent CTxOuts (via CTxOutCompressor)
  * - VARINT(nHeight)
  *
@@ -346,9 +334,9 @@ public:
  * - bit 1: IsCoinBase()
  * - bit 2: vout[0] is not spent
  * - bit 4: vout[1] is not spent
- * - The higher bits encode N, the number of non-zero bytes in the following bitvector.     Чем больше битов кодируют N, количество ненулевых байтов в следующих bitvector.
- *   - In case both bit 2 and bit 4 are unset, they encode N-1, as there must be at         В случае, если оба бита 2 и 4 неустановлены, они кодируют N-1, как и должен быть
- *     least one non-spent output).                                                         по крайней мере один не отработанный выход
+ * - The higher bits encode N, the number of non-zero bytes in the following bitvector.
+ *   - In case both bit 2 and bit 4 are unset, they encode N-1, as there must be at
+ *     least one non-spent output).
  *
  * Example: 0104835800816115944e077fe7c803cfa57f29b36bf87c1d358bb85e
  *          <><><--------------------------------------------><---->
@@ -359,7 +347,7 @@ public:
  *    - code = 4 (vout[1] is not spent, and 0 non-zero bytes of bitvector follow)
  *    - unspentness bitvector: as 0 non-zero bytes follow, it has length 0
  *    - vout[1]: 835800816115944e077fe7c803cfa57f29b36bf87c1d35
- *               * 8358: compact amount representation(представление) for 60000000000 (600 BTC)
+ *               * 8358: compact amount representation for 60000000000 (600 BTC)
  *               * 00: special txout type pay-to-pubkey-hash
  *               * 816115944e077fe7c803cfa57f29b36bf87c1d35: address uint160
  *    - height = 203998
@@ -371,15 +359,15 @@ public:
  *  version  code  unspentness       vout[4]                                                     vout[16]           height
  *
  *  - version = 1
- *  - code = 9 (coinbase, neither(ни один) vout[0] or vout[1] are unspent(неизрасходованный),
- *                2 (1, +1 because both bit 2 and bit 4 are unset) non-zero bitvector bytes follow(следовать))
+ *  - code = 9 (coinbase, neither vout[0] or vout[1] are unspent,
+ *                2 (1, +1 because both bit 2 and bit 4 are unset) non-zero bitvector bytes follow)
  *  - unspentness bitvector: bits 2 (0x04) and 14 (0x4000) are set, so vout[2+2] and vout[14+2] are unspent
  *  - vout[4]: 86ef97d5790061b01caab50f1b8e9c50a5057eb43c2d9563a4ee
- *             * 86ef97d579: compact amount representation(представление) for 234925952 (2.35 BTC)
+ *             * 86ef97d579: compact amount representation for 234925952 (2.35 BTC)
  *             * 00: special txout type pay-to-pubkey-hash
  *             * 61b01caab50f1b8e9c50a5057eb43c2d9563a4ee: address uint160
  *  - vout[16]: bbd123008c988f1a4a4de2161e0f50aac7f17e7f9555caa4
- *              * bbd123: compact amount representation(представление) for 110397 (0.001 BTC)
+ *              * bbd123: compact amount representation for 110397 (0.001 BTC)
  *              * 00: special txout type pay-to-pubkey-hash
  *              * 8c988f1a4a4de2161e0f50aac7f17e7f9555caa4: address uint160
  *  - height = 120891
@@ -387,29 +375,26 @@ public:
 class CCoins
 {
 public:
-    // whether transaction is a coinbase                                            является ли сделка из coinbase
+    // whether transaction is a coinbase
     bool fCoinBase;
 
     // unspent transaction outputs; spent outputs are .IsNull(); spent outputs at the end of the array are dropped
-    //      неизрасходованные outputs транзакций; проведённые выходы IsNull(); проведённые outputs в конце массива удаляются
     std::vector<CTxOut> vout;
 
-    // at which height this transaction was included in the active block chain      на какой высота эта сделка была включена в активную цепочку блоков
+    // at which height this transaction was included in the active block chain
     int nHeight;
 
     // version of the CTransaction; accesses to this value should probably check for nHeight as well,
     // as new tx version will probably only be introduced at certain heights
-    //      версия CTransaction; доступ к этому значению, вероятно, следует проверить для nHeight, а также,
-    //      как новая версия TX, вероятно, будет введена только на определенных высот
     int nVersion;
 
-    // construct a CCoins from a CTransaction, at a given height                    конструктор CCoins от CTransaction, на заданной высоте
+    // construct a CCoins from a CTransaction, at a given height
     CCoins(const CTransaction &tx, int nHeightIn) : fCoinBase(tx.IsCoinBase()), vout(tx.vout), nHeight(nHeightIn), nVersion(tx.nVersion) { }
 
-    // empty constructor                                                            пустой конструктор
+    // empty constructor
     CCoins() : fCoinBase(false), vout(0), nHeight(0), nVersion(0) { }
 
-    // remove spent outputs at the end of vout                                      удаление проведенных outputs в конце vout
+    // remove spent outputs at the end of vout
     void Cleanup() {
         while (vout.size() > 0 && vout.back().IsNull())
             vout.pop_back();
@@ -418,13 +403,13 @@ public:
     }
 
     void swap(CCoins &to) {
-        std::swap(to.fCoinBase, fCoinBase);       // обмен значениями переменных и массивов
+        std::swap(to.fCoinBase, fCoinBase);
         to.vout.swap(vout);
         std::swap(to.nHeight, nHeight);
         std::swap(to.nVersion, nVersion);
     }
 
-    // equality test                                                                проверка равенства
+    // equality test
     friend bool operator==(const CCoins &a, const CCoins &b) {
          return a.fCoinBase == b.fCoinBase &&
                 a.nHeight == b.nHeight &&
@@ -451,15 +436,15 @@ public:
         unsigned int nCode = 8*(nMaskCode - (fFirst || fSecond ? 0 : 1)) + (fCoinBase ? 1 : 0) + (fFirst ? 2 : 0) + (fSecond ? 4 : 0);
         // version
         nSize += ::GetSerializeSize(VARINT(this->nVersion), nType, nVersion);
-        // size of header code (размер заголовка кода)
+        // size of header code
         nSize += ::GetSerializeSize(VARINT(nCode), nType, nVersion);
         // spentness bitmask
         nSize += nMaskSize;
-        // txouts themself(сам себе)
+        // txouts themself
         for (unsigned int i = 0; i < vout.size(); i++)
             if (!vout[i].IsNull())
                 nSize += ::GetSerializeSize(CTxOutCompressor(REF(vout[i])), nType, nVersion);
-        // height (высота)
+        // height
         nSize += ::GetSerializeSize(VARINT(nHeight), nType, nVersion);
         return nSize;
     }
@@ -484,7 +469,7 @@ public:
                     chAvail |= (1 << i);
             ::Serialize(s, chAvail, nType, nVersion);
         }
-        // txouts themself(сам себе)
+        // txouts themself
         for (unsigned int i = 0; i < vout.size(); i++) {
             if (!vout[i].IsNull())
                 ::Serialize(s, CTxOutCompressor(REF(vout[i])), nType, nVersion);
@@ -516,7 +501,7 @@ public:
             if (chAvail != 0)
                 nMaskCode--;
         }
-        // txouts themself(сам себе)
+        // txouts themself
         vout.assign(vAvail.size(), CTxOut());
         for (unsigned int i = 0; i < vAvail.size(); i++) {
             if (vAvail[i])
@@ -527,19 +512,19 @@ public:
         Cleanup();
     }
 
-    // mark an outpoint spent, and construct undo information                       отметить в outpoint перевод, и сконструировать информацию отмены
+    // mark an outpoint spent, and construct undo information
     bool Spend(const COutPoint &out, CTxInUndo &undo);
 
-    // mark a vout spent                                                            отметить vout перевод
+    // mark a vout spent
     bool Spend(int nPos);
 
-    // check whether a particular output is still available                         проверьте, является ли определенный output(выход) по-прежнему доступен
+    // check whether a particular output is still available
     bool IsAvailable(unsigned int nPos) const {
         return (nPos < vout.size() && !vout[nPos].IsNull());
     }
 
-    // check whether the entire CCoins is spent                                     проверить, что весь CCoins расходуется
-    // note that only !IsPruned() CCoins can be serialized                          обратите внимание, что только !IsPruned() CCoins могут быть сериализованы
+    // check whether the entire CCoins is spent
+    // note that only !IsPruned() CCoins can be serialized
     bool IsPruned() const {
         BOOST_FOREACH(const CTxOut &out, vout)
             if (!out.IsNull())
@@ -555,17 +540,11 @@ public:
  * to everyone and the block is added to the block chain.  The first transaction
  * in the block is a special one that creates a new coin owned by the creator
  * of the block.
- *
- * Узлы собирают новые транзакции в блок, хеш-их в хеш-дерево
- * и сканируют прошлые nonce значения в блоках хеш требования proof-of-work.
- * Когда они решить доказательство-работы, они передаются в блок для всех, и блок добавляется в block chain.
- * Первая транзакция в блоке - это специальный одна, создающая новую монету, принадлежащую создателю блока.
- *
  */
 class CBlockHeader
 {
 public:
-    // header (заголовок)
+    // header
     static const int CURRENT_VERSION=2;
     int nVersion;
     uint256 hashPrevBlock;
@@ -662,12 +641,12 @@ public:
     uint256 BuildMerkleTree() const;
 
     const uint256 &GetTxHash(unsigned int nIndex) const {
-        assert(vMerkleTree.size() > 0); // BuildMerkleTree must have been called first  (BuildMerkleTree должен быть вызван первым)
+        assert(vMerkleTree.size() > 0); // BuildMerkleTree must have been called first
         assert(nIndex < vtx.size());
         return vMerkleTree[nIndex];
     }
 
-    std::vector<uint256> GetMerkleBranch(int nIndex) const;               // Branch - ветка
+    std::vector<uint256> GetMerkleBranch(int nIndex) const;
     static uint256 CheckMerkleBranch(uint256 hash, const std::vector<uint256>& vMerkleBranch, int nIndex);
     void print() const;
 };

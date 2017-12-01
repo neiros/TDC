@@ -20,7 +20,7 @@ enum BlockSource {
     BLOCK_SOURCE_NETWORK
 };
 
-/** Model for Bitcoin network client.                                                       Модель для Bitcoin сетевого клиента */
+/** Model for Bitcoin network client. */
 class ClientModel : public QObject
 {
     Q_OBJECT
@@ -38,15 +38,15 @@ public:
     double getVerificationProgress() const;
     QDateTime getLastBlockDate() const;
 
-    //! Return true if client connected to testnet                                          Возвращает true, если клиент подключен к testnet
+    //! Return true if client connected to testnet
     bool isTestNet() const;
-    //! Return true if core is doing initial block download                                 Возвращает true, если ядро делает начальную загрузку блока
+    //! Return true if core is doing initial block download
     bool inInitialBlockDownload() const;
-    //! Return true if core is importing blocks                                             Возвращает true, если ядро импортирует блоки
+    //! Return true if core is importing blocks
     enum BlockSource getBlockSource() const;
-    //! Return conservative estimate of total number of blocks, or 0 if unknown             Вернуться консервативную оценку общего числа блоков, или 0 если неизвестно
+    //! Return conservative estimate of total number of blocks, or 0 if unknown
     int getNumBlocksOfPeers() const;
-    //! Return warnings to be displayed in status bar                                       Вернуться предупреждения, которые будут отображаться в строке состояния
+    //! Return warnings to be displayed in status bar
     QString getStatusBarWarnings() const;
 
     QString formatFullVersion() const;

@@ -63,8 +63,8 @@ uint256 CTxOut::GetHash() const
 
 std::string CTxOut::ToString() const
 {
-//    if (scriptPubKey.size() < 6)      для отображения wtxHash с пустым scriptPubKey
-//        return "CTxOut(error)";
+    if (scriptPubKey.size() < 6)
+        return "CTxOut(error)";
     return strprintf("CTxOut(nValue=%"PRI64d".%08"PRI64d", scriptPubKey=%s)", nValue / COIN, nValue % COIN, scriptPubKey.ToString().substr(0,30).c_str());
 }
 
@@ -110,12 +110,11 @@ bool CTransaction::IsNewerThan(const CTransaction& old) const
 std::string CTransaction::ToString() const
 {
     std::string str;
-    str += strprintf("CTransaction(hash=%s, ver=%d, vin.size=%"PRIszu", vout.size=%"PRIszu", tBlock=%u, nLockTime=%u)\n",
+    str += strprintf("CTransaction(hash=%s, ver=%d, vin.size=%"PRIszu", vout.size=%"PRIszu", nLockTime=%u)\n",
         GetHash().ToString().substr(0,10).c_str(),
         nVersion,
         vin.size(),
         vout.size(),
-        tBlock,
         nLockTime);
     for (unsigned int i = 0; i < vin.size(); i++)
         str += "    " + vin[i].ToString() + "\n";
@@ -129,7 +128,7 @@ void CTransaction::print() const
     printf("%s", ToString().c_str());
 }
 
-// Amount compression(количество сжатия):
+// Amount compression:
 // * If the amount is 0, output 0
 // * first, divide the amount (in base units) by the largest power of 10 possible; call the exponent e (e is max 9)
 // * if e<9, the last digit of the resulting number cannot be 0; store it as d, and drop it (divide by 10)
@@ -183,9 +182,9 @@ uint64 CTxOutCompressor::DecompressAmount(uint64 x)
     return n;
 }
 
-// calculate number of bytes for the bitmask, and its number of non-zero bytes          вычисления числа байтов для битовой маски, а его количество ненулевых байт
-// each bit in the bitmask represents the availability of one output, but the           каждый бит в битовой маске представляет наличии одного выхода,
-// availabilities of the first two outputs are encoded separately                       но наличность первых двух выходов закодированы отдельно
+// calculate number of bytes for the bitmask, and its number of non-zero bytes
+// each bit in the bitmask represents the availability of one output, but the
+// availabilities of the first two outputs are encoded separately
 void CCoins::CalcMaskSize(unsigned int &nBytes, unsigned int &nNonzeroBytes) const {
     unsigned int nLastUsedByte = 0;
     for (unsigned int b = 0; 2+b*8 < vout.size(); b++) {
@@ -228,10 +227,7 @@ bool CCoins::Spend(int nPos) {
 
 uint256 CBlockHeader::GetHash() const
 {
-    uint256 thash;
-    lyra2re2_hash(BEGIN(nVersion), BEGIN(thash));
-    return thash;
-//    return Hash(BEGIN(nVersion), END(nNonce));
+    return Hash(BEGIN(nVersion), END(nNonce));
 }
 
 uint256 CBlock::BuildMerkleTree() const
@@ -253,7 +249,7 @@ uint256 CBlock::BuildMerkleTree() const
     return (vMerkleTree.empty() ? 0 : vMerkleTree.back());
 }
 
-std::vector<uint256> CBlock::GetMerkleBranch(int nIndex) const          // Branch - ветка
+std::vector<uint256> CBlock::GetMerkleBranch(int nIndex) const
 {
     if (vMerkleTree.empty())
         BuildMerkleTree();

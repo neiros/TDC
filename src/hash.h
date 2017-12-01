@@ -45,7 +45,7 @@ public:
         return (*this);
     }
 
-    // invalidates the object                               делает недействительным объект
+    // invalidates the object
     uint256 GetHash() {
         uint256 hash1;
         SHA256_Final((unsigned char*)&hash1, &ctx);
@@ -56,7 +56,7 @@ public:
 
     template<typename T>
     CHashWriter& operator<<(const T& obj) {
-        // Serialize to this stream                         сериализовать в этом потоке
+        // Serialize to this stream
         ::Serialize(*this, obj, nType, nVersion);
         return (*this);
     }

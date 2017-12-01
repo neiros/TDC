@@ -12,13 +12,13 @@
 using namespace json_spirit;
 using namespace std;
 
-// Key used by getwork/getblocktemplate miners.                                 Ключь, используемый для getwork/getblocktemplate майнеров
-// Allocated in InitRPCMining, free'd in ShutdownRPCMining                      Выделенный в InitRPCMining, освобожденный в ShutdownRPCMining
+// Key used by getwork/getblocktemplate miners.
+// Allocated in InitRPCMining, free'd in ShutdownRPCMining
 static CReserveKey* pMiningKey = NULL;
 
 void InitRPCMining()
 {
-    // getwork/getblocktemplate mining rewards paid here:                       getwork/getblocktemplate майнинг вознаграждение выплачивается здесь:
+    // getwork/getblocktemplate mining rewards paid here:
     pMiningKey = new CReserveKey(pwalletMain);
 }
 
@@ -112,10 +112,10 @@ Value getwork(const Array& params, bool fHelp)
             "If [data] is specified, tries to solve the block and returns true if it was successful.");
 
     if (vNodes.empty())
-        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "---TTC--- is not connected!");
+        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "Bitcoin is not connected!");
 
     if (IsInitialBlockDownload())
-        throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "---TTC--- is downloading blocks...");
+        throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Bitcoin is downloading blocks...");
 
     typedef map<uint256, pair<CBlock*, CScript> > mapNewBlock_t;
     static mapNewBlock_t mapNewBlock;    // FIXME: thread safety
@@ -123,7 +123,7 @@ Value getwork(const Array& params, bool fHelp)
 
     if (params.size() == 0)
     {
-        // Update block                                                         Обновление блока
+        // Update block
         static unsigned int nTransactionsUpdatedLast;
         static CBlockIndex* pindexPrev;
         static int64 nStart;
@@ -133,7 +133,7 @@ Value getwork(const Array& params, bool fHelp)
         {
             if (pindexPrev != pindexBest)
             {
-                // Deallocate old blocks since they're obsolete now             Освобождение старых блоков, так как они являются устаревшими теперь
+                // Deallocate old blocks since they're obsolete now
                 mapNewBlock.clear();
                 BOOST_FOREACH(CBlockTemplate* pblocktemplate, vNewBlockTemplate)
                     delete pblocktemplate;
@@ -141,37 +141,36 @@ Value getwork(const Array& params, bool fHelp)
             }
 
             // Clear pindexPrev so future getworks make a new block, despite any failures from here on
-            //                  Очистить pindexPrev так будущие getworks будут делать новый блок, несмотря на какие-либо ошибки
             pindexPrev = NULL;
 
-            // Store the pindexBest used before CreateNewBlock, to avoid races  Сохранение pindexBest использующийся до CreateNewBlock, что бы избежать гонок
+            // Store the pindexBest used before CreateNewBlock, to avoid races
             nTransactionsUpdatedLast = nTransactionsUpdated;
             CBlockIndex* pindexPrevNew = pindexBest;
             nStart = GetTime();
 
-            // Create new block                                                 Создание нового блока
+            // Create new block
             pblocktemplate = CreateNewBlock(*pMiningKey);
             if (!pblocktemplate)
                 throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
             vNewBlockTemplate.push_back(pblocktemplate);
 
-            // Need to update only after we know CreateNewBlock succeeded       Необходимое обновление только после того, как мы узнаем, что CreateNewBlock удалось
+            // Need to update only after we know CreateNewBlock succeeded
             pindexPrev = pindexPrevNew;
         }
         CBlock* pblock = &pblocktemplate->block; // pointer for convenience
 
-        // Update nTime                                                         обновление nTime
+        // Update nTime
         UpdateTime(*pblock, pindexPrev);
         pblock->nNonce = 0;
 
-        // Update nExtraNonce                                                   обновление nExtraNonce
+        // Update nExtraNonce
         static unsigned int nExtraNonce = 0;
         IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
 
         // Save
         mapNewBlock[pblock->hashMerkleRoot] = make_pair(pblock, pblock->vtx[0].vin[0].scriptSig);
 
-        // Pre-build hash buffers                                               Предварительная сборка хеш буферов
+        // Pre-build hash buffers
         char pmidstate[32];
         char pdata[128];
         char phash1[64];
@@ -180,25 +179,25 @@ Value getwork(const Array& params, bool fHelp)
         uint256 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint256();
 
         Object result;
-        result.push_back(Pair("midstate", HexStr(BEGIN(pmidstate), END(pmidstate)))); // deprecated(возражать,устарело)
+        result.push_back(Pair("midstate", HexStr(BEGIN(pmidstate), END(pmidstate)))); // deprecated
         result.push_back(Pair("data",     HexStr(BEGIN(pdata), END(pdata))));
-        result.push_back(Pair("hash1",    HexStr(BEGIN(phash1), END(phash1)))); // deprecated(возражать,устарело)
+        result.push_back(Pair("hash1",    HexStr(BEGIN(phash1), END(phash1)))); // deprecated
         result.push_back(Pair("target",   HexStr(BEGIN(hashTarget), END(hashTarget))));
         return result;
     }
     else
     {
-        // Parse parameters                                                     Парсинг параметров
+        // Parse parameters
         vector<unsigned char> vchData = ParseHex(params[0].get_str());
         if (vchData.size() != 128)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter");
         CBlock* pdata = (CBlock*)&vchData[0];
 
-        // Byte reverse                                                         байт реверс
+        // Byte reverse
         for (int i = 0; i < 128/4; i++)
             ((unsigned int*)pdata)[i] = ByteReverse(((unsigned int*)pdata)[i]);
 
-        // Get saved block                                                      Получить сохраненный блок
+        // Get saved block
         if (!mapNewBlock.count(pdata->hashMerkleRoot))
             return false;
         CBlock* pblock = mapNewBlock[pdata->hashMerkleRoot].first;
@@ -208,45 +207,7 @@ Value getwork(const Array& params, bool fHelp)
         pblock->vtx[0].vin[0].scriptSig = mapNewBlock[pdata->hashMerkleRoot].second;
         pblock->hashMerkleRoot = pblock->BuildMerkleTree();
 
-
-//*****************************************************************
-        uint256 hashTarget;
-
-        CBigNum maxBigNum = CBigNum(~uint256(0));
-        CBigNum sumTrDifTemplate = 0;
-
-        BOOST_FOREACH(CTransaction& tx, pblock->vtx)
-        {
-            TransM trM;
-
-//            trM.vinM = tx.vin;    // почемуто в wallet.cpp подобное работает, а здесь нет
-            BOOST_FOREACH(const CTxIn& txin, tx.vin)
-                trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
-
-            BOOST_FOREACH (const CTxOut& out, tx.vout)
-                trM.voutM.push_back(CTxOut(out.nValue, CScript()));
-
-            trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
-
-            CBigNum bntx = CBigNum(SerializeHash(trM));
-            sumTrDifTemplate += maxBigNum / bntx;
-
-//printf(">>>>> BOOST_FOREACH pblock->vtx    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", SerializeHash(trM).GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), pblocktemplate->sumTrDif.ToString().c_str());
-        }
-
-        CBigNum divideTarget = maxBigNum / CBigNum().SetCompact(pblock->nBits);
-
-        if (divideTarget <= sumTrDifTemplate)
-            hashTarget = maxBigNum.getuint256();
-        else
-            hashTarget = (maxBigNum / (divideTarget - sumTrDifTemplate)).getuint256();       // уменьшение целевого значения сложности
-
-
-
-        return CheckWork(pblock, *pwalletMain, *pMiningKey, sumTrDifTemplate);
-
-//*****************************************************************
-//        return CheckWork(pblock, *pwalletMain, *pMiningKey);
+        return CheckWork(pblock, *pwalletMain, *pMiningKey);
     }
 }
 
@@ -292,12 +253,12 @@ Value getblocktemplate(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid mode");
 
     if (vNodes.empty())
-        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "---TTC--- is not connected!");
+        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "Bitcoin is not connected!");
 
     if (IsInitialBlockDownload())
-        throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "---TTC--- is downloading blocks...");
+        throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Bitcoin is downloading blocks...");
 
-    // Update block                                                             Обновление блока
+    // Update block
     static unsigned int nTransactionsUpdatedLast;
     static CBlockIndex* pindexPrev;
     static int64 nStart;
@@ -306,7 +267,6 @@ Value getblocktemplate(const Array& params, bool fHelp)
         (nTransactionsUpdated != nTransactionsUpdatedLast && GetTime() - nStart > 5))
     {
         // Clear pindexPrev so future calls make a new block, despite any failures from here on
-        //                  Очистить pindexPrev так будущие вызовы будут делать новый блок, несмотря на какие-либо ошибки
         pindexPrev = NULL;
 
         // Store the pindexBest used before CreateNewBlock, to avoid races
@@ -314,7 +274,7 @@ Value getblocktemplate(const Array& params, bool fHelp)
         CBlockIndex* pindexPrevNew = pindexBest;
         nStart = GetTime();
 
-        // Create new block                                                     Создание нового блока
+        // Create new block
         if(pblocktemplate)
         {
             delete pblocktemplate;
@@ -324,12 +284,12 @@ Value getblocktemplate(const Array& params, bool fHelp)
         if (!pblocktemplate)
             throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
 
-        // Need to update only after we know CreateNewBlock succeeded           Необходимое обновление только после того, как мы узнаем, что CreateNewBlock удалось
+        // Need to update only after we know CreateNewBlock succeeded
         pindexPrev = pindexPrevNew;
     }
-    CBlock* pblock = &pblocktemplate->block; // pointer for convenience         Указатель для удобства
+    CBlock* pblock = &pblocktemplate->block; // pointer for convenience
 
-    // Update nTime                                                             Обновление nTime
+    // Update nTime
     UpdateTime(*pblock, pindexPrev);
     pblock->nNonce = 0;
 

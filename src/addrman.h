@@ -16,29 +16,29 @@
 #include <openssl/rand.h>
 
 
-/** Extended statistics about a CAddress                                Расширенная статистика о CAddress  */
+/** Extended statistics about a CAddress */
 class CAddrInfo : public CAddress
 {
 private:
-    // where knowledge about this address first came from               когда знания об этом адресе впервые прибыли
+    // where knowledge about this address first came from
     CNetAddr source;
 
-    // last successful connection by us                                 последнее успешное соединение с нам
+    // last successful connection by us
     int64 nLastSuccess;
 
-    // last try whatsoever by us:                                       последняя попытка чего-либо с нами
+    // last try whatsoever by us:
     // int64 CAddress::nLastTry
 
-    // connection attempts since last successful attempt                попытки соединения с момента последней успешной попытки
+    // connection attempts since last successful attempt
     int nAttempts;
 
-    // reference count in new sets (memory only)                        счетчик ссылок в новых наборах (только память)
+    // reference count in new sets (memory only)
     int nRefCount;
 
-    // in tried set? (memory only)                                      при верных установках? (только память)
+    // in tried set? (memory only)
     bool fInTried;
 
-    // position in vRandom                                              позиция в vRandom
+    // position in vRandom
     int nRandomPos;
 
     friend class CAddrMan;
@@ -73,42 +73,34 @@ public:
         Init();
     }
 
-    // Calculate in which "tried" bucket this entry belongs             Вычислить в которой «попытке» bucket(ведро) эта запись принадлежит
+    // Calculate in which "tried" bucket this entry belongs
     int GetTriedBucket(const std::vector<unsigned char> &nKey) const;
 
     // Calculate in which "new" bucket this entry belongs, given a certain source
-    //      Вычислить к которому «new» bucket(ведру) принадлежит эта запись, учитывая определенный источник
     int GetNewBucket(const std::vector<unsigned char> &nKey, const CNetAddr& src) const;
 
     // Calculate in which "new" bucket this entry belongs, using its default source
-    //      Вычислить к которому «new» bucket(ведру) принадлежит эта запись, с использованием источника по умолчанию
     int GetNewBucket(const std::vector<unsigned char> &nKey) const
     {
         return GetNewBucket(nKey, source);
     }
 
     // Determine whether the statistics about this entry are bad enough so that it can just be deleted
-    //      Определить, являются ли статистические данные об этой записи достаточно плохи, что бы их можно было просто удалить
     bool IsTerrible(int64 nNow = GetAdjustedTime()) const;
 
     // Calculate the relative chance this entry should be given when selecting nodes to connect to
-    //      Вычислить относительную вероятность что эта записи должна быть предоставленна при выборе узлов подключения
     double GetChance(int64 nNow = GetAdjustedTime()) const;
 
 };
 
-// Stochastic address manager               Стохастические менеджер адресов
+// Stochastic address manager
 //
-// Design goals:                            Дизайн задач(целей):
+// Design goals:
 //  * Only keep a limited number of addresses around, so that addr.dat and memory requirements do not grow without bound.
 //  * Keep the address tables in-memory, and asynchronously dump the entire to able in addr.dat.
 //  * Make sure no (localized) attacker can fill the entire table with his nodes/addresses.
 //
-//              * Только держать ограниченное количество адресов вокруг, так что addr.dat и требуемая память не растут неограниченно.
-//              * Держите адреса таблиц в памяти, и асинхронно сбрасывают все состояния в addr.dat.
-//              * Убедитесь, что (локальные) злоумышленник не может заполнить таблицу его узлами/адресами.
-//
-// To that end:                             С этой целью:
+// To that end:
 //  * Addresses are organized into buckets.
 //    * Address that have not yet been tried go into 256 "new" buckets.
 //      * Based on the address range (/16 for IPv4) of source of the information, 32 buckets are selected at random
@@ -117,174 +109,145 @@ public:
 //        are seen frequently. The chance for increasing this multiplicity decreases exponentially.
 //      * When adding a new address to a full bucket, a randomly chosen entry (with a bias favoring less recently seen
 //        ones) is removed from it first.
-//
-//              * Адреса организованы в buckets(ведрах).
-//                * Адрес, которые еще не были опробованы идтут в 256 «новые» buckets(ведра).
-//                  * Исходя из диапазона адресов (/16 для IPv4) из источника информации, 32 buckets(ведер) выбираются произвольно
-//                  * Выбор одного актуального bucketа из них, на основе диапазона адресов сам по себе находится.
-//                  * Один и тот же адрес может появиться в до 4 различных вакетах, чтобы увеличить шансы на выбор для этих адресов,
-//                    которые часто можно увидеть. Шанс для увеличения это множество уменьшается экспоненциально.
-//                  * При добавлении нового адреса в полный бакет, случайно выбранная запись (с уклоном в пользу менее видимой)
-//                    удаляется из него первой.
-//
 //    * Addresses of nodes that are known to be accessible go into 64 "tried" buckets.
 //      * Each address range selects at random 4 of these buckets.
 //      * The actual bucket is chosen from one of these, based on the full address.
 //      * When adding a new good address to a full bucket, a randomly chosen entry (with a bias favoring less recently
 //        tried ones) is evicted from it, back to the "new" buckets.
-//
-//              * Адреса узлов, которые как известно доступны, идут в 64 "tried" buckets.
-//                * Каждый диапазон адресов выбирает наугад 4 бакетами.
-//                * Фактический бакет выбирается из одного из них, на основе полного адреса.
-//                * При добавлении нового хорошего адреса в полный бакет, случайно выбранная запись (с уклоном в пользу менее опробованной)
-//                  выселяется из него обратно в "new" buckets.
-//
 //    * Bucket selection is based on cryptographic hashing, using a randomly-generated 256-bit key, which should not
 //      be observable by adversaries.
 //    * Several indexes are kept for high performance. Defining DEBUG_ADDRMAN will introduce frequent (and expensive)
 //      consistency checks for the entire data structure.
-//
-//              * Выбор бакета основана на криптографическом хешировании, используя случайно сгенерированный 256-битный ключ,
-//                который не должен быть видимым противникам
-//              * Несколько индексов хранятся для высокой производительности. Определение DEBUG_ADDRMAN представит частые (и дорогие)
-//                проверки согласованности для сплошной структуры данных
-//
 
-// total number of buckets for tried addresses                          общее количество бакетов для пробуемых адресов
+// total number of buckets for tried addresses
 #define ADDRMAN_TRIED_BUCKET_COUNT 64
 
-// maximum allowed number of entries in buckets for tried addresses     максимально допустимое количество записей в бакетах для проверяемых адресов
+// maximum allowed number of entries in buckets for tried addresses
 #define ADDRMAN_TRIED_BUCKET_SIZE 64
 
-// total number of buckets for new addresses                            общее количество бакетов для новых адресов
+// total number of buckets for new addresses
 #define ADDRMAN_NEW_BUCKET_COUNT 256
 
-// maximum allowed number of entries in buckets for new addresses       максимально допустимое количество записей в ифлуеу для новых адресов
+// maximum allowed number of entries in buckets for new addresses
 #define ADDRMAN_NEW_BUCKET_SIZE 64
 
 // over how many buckets entries with tried addresses from a single group (/16 for IPv4) are spread
-//                      сколько записей бакетов с пробуемыми адресами от единственной группы (/16 для IPv4) распространяются
 #define ADDRMAN_TRIED_BUCKETS_PER_GROUP 4
 
 // over how many buckets entries with new addresses originating from a single group are spread
-//                      сколько записей бакетов с новыми адресами, происходящими из одной группы распространяются
 #define ADDRMAN_NEW_BUCKETS_PER_SOURCE_GROUP 32
 
 // in how many buckets for entries with new addresses a single address may occur
-//                      в скольких бакетах для записей с новыми адресами один адрес может произойти
 #define ADDRMAN_NEW_BUCKETS_PER_ADDRESS 4
 
 // how many entries in a bucket with tried addresses are inspected, when selecting one to replace
-//                      сколько записей в бакете с проверенными адресами проверяются, когда выбираем один для замены
 #define ADDRMAN_TRIED_ENTRIES_INSPECT_ON_EVICT 4
 
-// how old addresses can maximally be                                   сколько старых адресов могут максимально быть
+// how old addresses can maximally be
 #define ADDRMAN_HORIZON_DAYS 30
 
-// after how many failed attempts we give up on a new node              через сколько неудачных попыток мы отказаться от нового узла
+// after how many failed attempts we give up on a new node
 #define ADDRMAN_RETRIES 3
 
-// how many successive failures are allowed ...                         сколько последовательныех отказов допускается ...
+// how many successive failures are allowed ...
 #define ADDRMAN_MAX_FAILURES 10
 
-// ... in at least this many days                                       ... по крайней мере этого множества дней
+// ... in at least this many days
 #define ADDRMAN_MIN_FAIL_DAYS 7
 
-// the maximum percentage of nodes to return in a getaddr call          максимальный процент узлов для возвращения getaddr вызова
+// the maximum percentage of nodes to return in a getaddr call
 #define ADDRMAN_GETADDR_MAX_PCT 23
 
-// the maximum number of nodes to return in a getaddr call              максимальное количество узлов для возвращения getaddr вызова
+// the maximum number of nodes to return in a getaddr call
 #define ADDRMAN_GETADDR_MAX 2500
 
 /** Stochastical (IP) address manager */
 class CAddrMan
 {
 private:
-    // critical section to protect the inner data structures            серьезная секция, чтобы защитить внутренние структуры данных
+    // critical section to protect the inner data structures
     mutable CCriticalSection cs;
 
-    // secret key to randomize bucket select with                       Секретный ключ для случайного выбера бакета
+    // secret key to randomize bucket select with
     std::vector<unsigned char> nKey;
 
-    // last used nId                                                    последний используеюй nId
+    // last used nId
     int nIdCount;
 
-    // table with information about all nIds                            таблица с информацией о всех nId
+    // table with information about all nIds
     std::map<int, CAddrInfo> mapInfo;
 
-    // find an nId based on its network address                         поиск nId на основе его сетевого адреса
+    // find an nId based on its network address
     std::map<CNetAddr, int> mapAddr;
 
-    // randomly-ordered vector of all nIds                              случайно-упорядоченный вектор всх nIds
+    // randomly-ordered vector of all nIds
     std::vector<int> vRandom;
 
-    // number of "tried" entries                                        количество "испытанных" записей
+    // number of "tried" entries
     int nTried;
 
-    // list of "tried" buckets                                          список "испытанных" бакетов
+    // list of "tried" buckets
     std::vector<std::vector<int> > vvTried;
 
-    // number of (unique) "new" entries                                 количество (уникальных) "новых" записей
+    // number of (unique) "new" entries
     int nNew;
 
-    // list of "new" buckets                                            список "новых" бакетов
+    // list of "new" buckets
     std::vector<std::set<int> > vvNew;
 
 protected:
 
-    // Find an entry.                                                   найти запись
+    // Find an entry.
     CAddrInfo* Find(const CNetAddr& addr, int *pnId = NULL);
 
-    // find an entry, creating it if necessary.                         найти запись, создавая её если это необходимо
-    // nTime and nServices of found node is updated, if necessary.      ntime и nServices из найденного узла обновляется, если необходимо
+    // find an entry, creating it if necessary.
+    // nTime and nServices of found node is updated, if necessary.
     CAddrInfo* Create(const CAddress &addr, const CNetAddr &addrSource, int *pnId = NULL);
 
-    // Swap two elements in vRandom.                                    поменять два элемента в vRandom
+    // Swap two elements in vRandom.
     void SwapRandom(unsigned int nRandomPos1, unsigned int nRandomPos2);
 
-    // Return position in given bucket to replace.                      вернуться позицию в данном бакете для замены
+    // Return position in given bucket to replace.
     int SelectTried(int nKBucket);
 
-    // Remove an element from a "new" bucket.                           удаление элемента из "нового" бакета
-    // This is the only place where actual deletes occur.               это единственное место, где происходит фактическое удаление.
+    // Remove an element from a "new" bucket.
+    // This is the only place where actual deletes occur.
     // They are never deleted while in the "tried" table, only possibly evicted back to the "new" table.
-    //                  Они никогда не удаляются в таблице "проверенных", только возможно выселение обратно в таблицу "новых".
     int ShrinkNew(int nUBucket);
 
-    // Move an entry from the "new" table(s) to the "tried" table       переместить запись из таблицы "new" в таблицу "проверенных"
+    // Move an entry from the "new" table(s) to the "tried" table
     // @pre vvUnkown[nOrigin].count(nId) != 0
     void MakeTried(CAddrInfo& info, int nId, int nOrigin);
 
-    // Mark an entry "good", possibly moving it from "new" to "tried".  Отметить запись "хороший", возможно его перемещение из "новых" в "проверенные"
+    // Mark an entry "good", possibly moving it from "new" to "tried".
     void Good_(const CService &addr, int64 nTime);
 
-    // Add an entry to the "new" table.                                 добпвления записи в таблицу "новых"
+    // Add an entry to the "new" table.
     bool Add_(const CAddress &addr, const CNetAddr& source, int64 nTimePenalty);
 
-    // Mark an entry as attempted to connect.                           пометить запись как попытку подключения
+    // Mark an entry as attempted to connect.
     void Attempt_(const CService &addr, int64 nTime);
 
-    // Select an address to connect to.                                 выбор адреса для подключения
+    // Select an address to connect to.
     // nUnkBias determines how much to favor new addresses over tried ones (min=0, max=100)
-    //                  nUnkBias определяет, на сколько предпочтительнее новые адреса над проверенными (min=0, max=100)
     CAddress Select_(int nUnkBias);
 
 #ifdef DEBUG_ADDRMAN
-    // Perform consistency check. Returns an error code or zero.        выполняет проверку согласованности. Возвращает код ошибки или ноль.
+    // Perform consistency check. Returns an error code or zero.
     int Check_();
 #endif
 
-    // Select several addresses at once.                                выберите несколько адресов сразу
+    // Select several addresses at once.
     void GetAddr_(std::vector<CAddress> &vAddr);
 
-    // Mark an entry as currently-connected-to.                         отметить запись как в настоящее_время_подключен
+    // Mark an entry as currently-connected-to.
     void Connected_(const CService &addr, int64 nTime);
 
 public:
 
     IMPLEMENT_SERIALIZE
     (({
-        // serialized format:                                           Формат скриализации
+        // serialized format:
         // * version byte (currently 0)
         // * nKey
         // * nNew
@@ -296,18 +259,14 @@ public:
         //   * number of elements
         //   * for each element: index
         //
-        // Notice(обратите внимание ) that vvTried, mapAddr and vVector are never encoded explicitly(никогда не кодируется явно);
-        // they are instead reconstructed from the other information.   они вместо этого восстанавливаются из другой информации
+        // Notice that vvTried, mapAddr and vVector are never encoded explicitly;
+        // they are instead reconstructed from the other information.
         //
         // vvNew is serialized, but only used if ADDRMAN_UNKOWN_BUCKET_COUNT didn't change,
         // otherwise it is reconstructed as well.
-        //          vvNew скриализуется, но только в том случае, если ADDRMAN_UNKOWN_BUCKET_COUNT не изменился
-        //          в противном случае он будет восстановлен также
         //
         // This format is more complex, but significantly smaller (at most 1.5 MiB), and supports
         // changes to the ADDRMAN_ parameters without breaking the on-disk structure.
-        //          Этот формат является более сложным, но значительно меньшим (не более 1,5 Мб),
-        //          и поддерживает изменения параметров ADDRMAN_, не нарушая структуры на диске
         {
             LOCK(cs);
             unsigned char nVersion = 0;
@@ -325,7 +284,7 @@ public:
                 int nIds = 0;
                 for (std::map<int, CAddrInfo>::iterator it = am->mapInfo.begin(); it != am->mapInfo.end(); it++)
                 {
-                    if (nIds == nNew) break; // this means nNew was wrong, oh ow        Это значит, nNew был ошибочен, ой ой
+                    if (nIds == nNew) break; // this means nNew was wrong, oh ow
                     mapUnkIds[(*it).first] = nIds;
                     CAddrInfo &info = (*it).second;
                     if (info.nRefCount)
@@ -337,7 +296,7 @@ public:
                 nIds = 0;
                 for (std::map<int, CAddrInfo>::iterator it = am->mapInfo.begin(); it != am->mapInfo.end(); it++)
                 {
-                    if (nIds == nTried) break; // this means nTried was wrong, oh ow    Это значит, nTried был ошибочен, ой ой
+                    if (nIds == nTried) break; // this means nTried was wrong, oh ow
                     CAddrInfo &info = (*it).second;
                     if (info.fInTried)
                     {
@@ -430,13 +389,13 @@ public:
          nNew = 0;
     }
 
-    // Return the number of (unique) addresses in all tables.           возвращает количество (уникальных) адресов во всех таблицах
+    // Return the number of (unique) addresses in all tables.
     int size()
     {
         return vRandom.size();
     }
 
-    // Consistency check                                                проверка согласованность
+    // Consistency check
     void Check()
     {
 #ifdef DEBUG_ADDRMAN
@@ -449,7 +408,7 @@ public:
 #endif
     }
 
-    // Add a single address.                                            добавить один адрес
+    // Add a single address.
     bool Add(const CAddress &addr, const CNetAddr& source, int64 nTimePenalty = 0)
     {
         bool fRet = false;
@@ -464,7 +423,7 @@ public:
         return fRet;
     }
 
-    // Add multiple addresses.                                          добавить несколько адресов
+    // Add multiple addresses.
     bool Add(const std::vector<CAddress> &vAddr, const CNetAddr& source, int64 nTimePenalty = 0)
     {
         int nAdd = 0;
@@ -480,7 +439,7 @@ public:
         return nAdd > 0;
     }
 
-    // Mark an entry as accessible.                                     отметить запись как доступную
+    // Mark an entry as accessible.
     void Good(const CService &addr, int64 nTime = GetAdjustedTime())
     {
         {
@@ -491,7 +450,7 @@ public:
         }
     }
 
-    // Mark an entry as connection attempted to.                        отметить запись как попытка подключения
+    // Mark an entry as connection attempted to.
     void Attempt(const CService &addr, int64 nTime = GetAdjustedTime())
     {
         {
@@ -502,9 +461,8 @@ public:
         }
     }
 
-    // Choose an address to connect to.                                 выбор адреса для подключения
+    // Choose an address to connect to.
     // nUnkBias determines how much "new" entries are favored over "tried" ones (0-100).
-    //                              определяет, скольким "новым" записям отдается предпочтение перед "проверенными" (0-100)
     CAddress Select(int nUnkBias = 50)
     {
         CAddress addrRet;
@@ -517,7 +475,7 @@ public:
         return addrRet;
     }
 
-    // Return a bunch of addresses, selected at random.                 вернуться кучу адресов, выбранных наугад
+    // Return a bunch of addresses, selected at random.
     std::vector<CAddress> GetAddr()
     {
         Check();
@@ -530,7 +488,7 @@ public:
         return vAddr;
     }
 
-    // Mark an entry as currently-connected-to.                         отметить запись как в настоящее_время_подключен
+    // Mark an entry as currently-connected-to.
     void Connected(const CService &addr, int64 nTime = GetAdjustedTime())
     {
         {

@@ -2,24 +2,24 @@
 #define CLIENTVERSION_H
 
 //
-// client versioning and copyright year                                                 версия клиента и авторских год
+// client versioning and copyright year
 //
 
-// These need to be macros, as version.cpp's and bitcoin-qt.rc's voodoo requires it     Они должны быть макросами, поскольку version.cpp и bitcoin-qt.rc's voodoo требует этого
+// These need to be macros, as version.cpp's and bitcoin-qt.rc's voodoo requires it
 #define CLIENT_VERSION_MAJOR       0
 #define CLIENT_VERSION_MINOR       8
 #define CLIENT_VERSION_REVISION    99
 #define CLIENT_VERSION_BUILD       0
 
-// Set to true for release, false for prerelease or test build                          Установите true для релиза, false для предварительной или тестовой сборки
+// Set to true for release, false for prerelease or test build
 #define CLIENT_VERSION_IS_RELEASE  false
 
 // Copyright year (2009-this)
-// Todo: update this when changing our copyright comments in the source                 обновите это при изменении наших авторских комментариев в исходниках
+// Todo: update this when changing our copyright comments in the source
 #define COPYRIGHT_YEAR 2013
 
-// Converts the parameter X to a string after macro replacement on X has been performed.Преобразует значение параметра X в строку после макро замены на X которая была выполнена
-// Don't merge these into one macro!                                                    Не объединяйте их в один макрос!
+// Converts the parameter X to a string after macro replacement on X has been performed.
+// Don't merge these into one macro!
 #define STRINGIZE(X) DO_STRINGIZE(X)
 #define DO_STRINGIZE(X) #X
 

@@ -77,7 +77,7 @@ Value importprivkey(const Array& params, bool fHelp)
     if (params.size() > 1)
         strLabel = params[1].get_str();
 
-    // Whether to perform rescan after import                                       Выполнять ли повторное сканирование после импорта
+    // Whether to perform rescan after import
     bool fRescan = true;
     if (params.size() > 2)
         fRescan = params[2].get_bool();
@@ -96,7 +96,7 @@ Value importprivkey(const Array& params, bool fHelp)
         pwalletMain->MarkDirty();
         pwalletMain->SetAddressBookName(vchAddress, strLabel);
 
-        // Don't throw error in case a key is already there                         Не выбрасывать ошибку в случае уже существующего ключа
+        // Don't throw error in case a key is already there
         if (pwalletMain->HaveKey(vchAddress))
             return Value::null;
 
@@ -204,7 +204,7 @@ Value dumpprivkey(const Array& params, bool fHelp)
     string strAddress = params[0].get_str();
     CBitcoinAddress address;
     if (!address.SetString(strAddress))
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid ---TTC--- address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
     CKeyID keyID;
     if (!address.GetKeyID(keyID))
         throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to a key");
@@ -234,7 +234,7 @@ Value dumpwallet(const Array& params, bool fHelp)
     pwalletMain->GetKeyBirthTimes(mapKeyBirth);
     pwalletMain->GetAllReserveKeys(setKeyPool);
 
-    // sort time/key pairs                                                          Сортировка время/ключ пары
+    // sort time/key pairs
     std::vector<std::pair<int64, CKeyID> > vKeyBirth;
     for (std::map<CKeyID, int64>::const_iterator it = mapKeyBirth.begin(); it != mapKeyBirth.end(); it++) {
         vKeyBirth.push_back(std::make_pair(it->second, it->first));
@@ -242,8 +242,8 @@ Value dumpwallet(const Array& params, bool fHelp)
     mapKeyBirth.clear();
     std::sort(vKeyBirth.begin(), vKeyBirth.end());
 
-    // produce output                                                               Результат выхода
-    file << strprintf("# Wallet dump created by ---TTC--- %s (%s)\n", CLIENT_BUILD.c_str(), CLIENT_DATE.c_str());
+    // produce output
+    file << strprintf("# Wallet dump created by Bitcoin %s (%s)\n", CLIENT_BUILD.c_str(), CLIENT_DATE.c_str());
     file << strprintf("# * Created on %s\n", EncodeDumpTime(GetTime()).c_str());
     file << strprintf("# * Best block at time of backup was %i (%s),\n", nBestHeight, hashBestChain.ToString().c_str());
     file << strprintf("#   mined on %s\n", EncodeDumpTime(pindexBest->nTime).c_str());

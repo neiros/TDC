@@ -28,8 +28,6 @@ bool CWalletDB::EraseName(const string& strAddress)
 {
     // This should only be used for sending addresses, never for receiving addresses,
     // receiving addresses must always have an address book entry if they're not change return.
-    //              Это должно использоваться только для отправки адреса, а не для получение адреса,
-    //              получение адресов должен всегда иметь в адресную книгу, если они не изменят возвращения.
     nWalletDBUpdated++;
     return Erase(make_pair(string("name"), strAddress));
 }
@@ -77,7 +75,7 @@ void CWalletDB::ListAccountCreditDebit(const string& strAccount, list<CAccountin
     unsigned int fFlags = DB_SET_RANGE;
     while (true)
     {
-        // Read next record                                                         чтение следующей записи
+        // Read next record
         CDataStream ssKey(SER_DISK, CLIENT_VERSION);
         if (fFlags == DB_SET_RANGE)
             ssKey << boost::make_tuple(string("acentry"), (fAllAccounts? string("") : strAccount), uint64(0));
@@ -115,10 +113,10 @@ DBErrors
 CWalletDB::ReorderTransactions(CWallet* pwallet)
 {
     LOCK(pwallet->cs_wallet);
-    // Old wallets didn't have any defined order for transactions                   Старый кошельки не было установленному порядку для сделок
-    // Probably a bad idea to change the output of this                             Вероятно, плохая идея, чтобы изменить выход этого
+    // Old wallets didn't have any defined order for transactions
+    // Probably a bad idea to change the output of this
 
-    // First: get all CWalletTx and CAccountingEntry into a sorted-by-time multimap.    Первый: получить все CWalletTx и CAccountingEntry в отсортированный-за-время multimap.
+    // First: get all CWalletTx and CAccountingEntry into a sorted-by-time multimap.
     typedef pair<CWalletTx*, CAccountingEntry*> TxPair;
     typedef multimap<int64, TxPair > TxItems;
     TxItems txByTime;
@@ -150,7 +148,7 @@ CWalletDB::ReorderTransactions(CWallet* pwallet)
             nOrderPosOffsets.push_back(nOrderPos);
 
             if (pacentry)
-                // Have to write accounting regardless, since we don't keep it in memory    Придется писать учета независимо, так как мы не держать его в памяти
+                // Have to write accounting regardless, since we don't keep it in memory
                 if (!WriteAccountingEntry(pacentry->nEntryNo, *pacentry))
                     return DB_LOAD_FAIL;
         }
@@ -168,7 +166,7 @@ CWalletDB::ReorderTransactions(CWallet* pwallet)
             if (!nOrderPosOff)
                 continue;
 
-            // Since we're changing the order, write it back                        Так как мы меняем порядок, записать его обратно
+            // Since we're changing the order, write it back
             if (pwtx)
             {
                 if (!WriteTx(pwtx->GetHash(), *pwtx))
@@ -207,8 +205,8 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
 {
     try {
         // Unserialize
-        // Taking advantage of the fact that pair serialization                     Воспользовавшись тем, что пара сериализации
-        // is just the two items serialized one after the other                     только два элемента сериализованы один за другим
+        // Taking advantage of the fact that pair serialization
+        // is just the two items serialized one after the other
         ssKey >> strType;
         if (strType == "name")
         {
@@ -231,7 +229,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 return false;
             }
 
-            // Undo serialize changes in 31600                                      Отменить изменения в сериализации 31600
+            // Undo serialize changes in 31600
             if (31404 <= wtx.fTimeReceivedIsTxTime && wtx.fTimeReceivedIsTxTime <= 31703)
             {
                 if (!ssValue.empty())
@@ -355,7 +353,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
 
             pwallet->LoadKeyMetadata(vchPubKey, keyMeta);
 
-            // find earliest key creation time, as wallet birthday                  найти раннее время создания ключа, как день рождения кошелька
+            // find earliest key creation time, as wallet birthday
             if (!pwallet->nTimeFirstKey ||
                 (keyMeta.nCreateTime < pwallet->nTimeFirstKey))
                 pwallet->nTimeFirstKey = keyMeta.nCreateTime;
@@ -372,9 +370,9 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             ssValue >> keypool;
             pwallet->setKeyPool.insert(nIndex);
 
-            // If no metadata exists yet, create a default with the pool key's      Когда метаданных еще ​​не существует, создайте по умолчанию по времени
-            // creation time. Note that this may be overwritten by actually         создания пула ключей. Заметим, что это могут быть перезаписаны на самом деле
-            // stored metadata for that key later, which is fine.                   хранится метаданные для этой ключ позже, и это хорошо.
+            // If no metadata exists yet, create a default with the pool key's
+            // creation time. Note that this may be overwritten by actually
+            // stored metadata for that key later, which is fine.
             CKeyID keyid = keypool.vchPubKey.GetID();
             if (pwallet->mapKeyMetadata.count(keyid) == 0)
                 pwallet->mapKeyMetadata[keyid] = CKeyMetadata(keypool.nTime);
@@ -453,21 +451,20 @@ DBErrors CWalletDB::LoadWallet(CWallet* pwallet)
                 return DB_CORRUPT;
             }
 
-            // Try to be tolerant of single corrupt records:                        Постарайтесь быть терпимыми к одной коррумпированной записей:
+            // Try to be tolerant of single corrupt records:
             string strType, strErr;
             if (!ReadKeyValue(pwallet, ssKey, ssValue, wss, strType, strErr))
             {
-                // losing keys is considered a catastrophic error, anything else    потери ключей считается катастрофической ошибкой, все остальное
-                // we assume the user can live with:                                мы предполагаем, что пользователь может живу:
+                // losing keys is considered a catastrophic error, anything else
+                // we assume the user can live with:
                 if (IsKeyType(strType))
                     result = DB_CORRUPT;
                 else
                 {
                     // Leave other errors alone, if we try to fix them we might make things worse.
-                    //          Оставьте другие ошибки в одиночку, если мы будем пытаться исправить их мы могли бы сделать хуже.
-                    fNoncriticalErrors = true; // ... but do warn the user there is something wrong. (но действительно предупреждают пользователя есть что-то не так.)
+                    fNoncriticalErrors = true; // ... but do warn the user there is something wrong.
                     if (strType == "tx")
-                        // Rescan if there is a bad transaction record:             Повторное сканирование, если есть плохая сделка:
+                        // Rescan if there is a bad transaction record:
                         SoftSetBoolArg("-rescan", true);
                 }
             }
@@ -486,8 +483,8 @@ DBErrors CWalletDB::LoadWallet(CWallet* pwallet)
     if (fNoncriticalErrors && result == DB_LOAD_OK)
         result = DB_NONCRITICAL_ERROR;
 
-    // Any wallet corruption at all: skip any rewriting or                          Любой бумажник с коррупцией на всех: пропускать или перезаписи
-    // upgrading, we don't want to make it worse.                                   модернизации, мы не хотим, чтобы сделать его хуже.
+    // Any wallet corruption at all: skip any rewriting or
+    // upgrading, we don't want to make it worse.
     if (result != DB_LOAD_OK)
         return result;
 
@@ -496,14 +493,14 @@ DBErrors CWalletDB::LoadWallet(CWallet* pwallet)
     printf("Keys: %u plaintext, %u encrypted, %u w/ metadata, %u total\n",
            wss.nKeys, wss.nCKeys, wss.nKeyMeta, wss.nKeys + wss.nCKeys);
 
-    // nTimeFirstKey is only reliable if all keys have metadata                     nTimeFirstKey только надежнее, если все клавиши имеют метаданные
+    // nTimeFirstKey is only reliable if all keys have metadata
     if ((wss.nKeys + wss.nCKeys) != wss.nKeyMeta)
-        pwallet->nTimeFirstKey = 1; // 0 would be considered 'no value' (0 будет считаться "нет значения")
+        pwallet->nTimeFirstKey = 1; // 0 would be considered 'no value'
 
     BOOST_FOREACH(uint256 hash, wss.vWalletUpgrade)
         WriteTx(hash, pwallet->mapWallet[hash]);
 
-    // Rewrite encrypted wallets of versions 0.4.0 and 0.5.0rc:                     Перепишите зашифрованные кошельки версий 0.4.0 и 0.5.0rc:
+    // Rewrite encrypted wallets of versions 0.4.0 and 0.5.0rc:
     if (wss.fIsEncrypted && (wss.nFileVersion == 40000 || wss.nFileVersion == 50000))
         return DB_NEED_REWRITE;
 
@@ -518,8 +515,8 @@ DBErrors CWalletDB::LoadWallet(CWallet* pwallet)
 
 void ThreadFlushWalletDB(const string& strFile)
 {
-    // Make this thread recognisable as the wallet flushing thread                  Сделать эту тему узнаваемым, как бумажник промывки нити
-    RenameThread("---TTC---wallet");
+    // Make this thread recognisable as the wallet flushing thread
+    RenameThread("bitcoin-wallet");
 
     static bool fOneThread;
     if (fOneThread)
@@ -546,7 +543,7 @@ void ThreadFlushWalletDB(const string& strFile)
             TRY_LOCK(bitdb.cs_db,lockDb);
             if (lockDb)
             {
-                // Don't do this if any databases are in use                        Не делайте этого, если какие-либо базы данных находятся в использовании
+                // Don't do this if any databases are in use
                 int nRefCount = 0;
                 map<string, int>::iterator mi = bitdb.mapFileUseCount.begin();
                 while (mi != bitdb.mapFileUseCount.end())
@@ -565,7 +562,7 @@ void ThreadFlushWalletDB(const string& strFile)
                         nLastFlushed = nWalletDBUpdated;
                         int64 nStart = GetTimeMillis();
 
-                        // Flush wallet.dat so it's self contained                  сброс wallet.dat так он автономный
+                        // Flush wallet.dat so it's self contained
                         bitdb.CloseDb(strFile);
                         bitdb.CheckpointLSN(strFile);
 
@@ -588,7 +585,7 @@ bool BackupWallet(const CWallet& wallet, const string& strDest)
             LOCK(bitdb.cs_db);
             if (!bitdb.mapFileUseCount.count(wallet.strWalletFile) || bitdb.mapFileUseCount[wallet.strWalletFile] == 0)
             {
-                // Flush log data to the dat file                                   сброс данных журнала в DAT файл
+                // Flush log data to the dat file
                 bitdb.CloseDb(wallet.strWalletFile);
                 bitdb.CheckpointLSN(wallet.strWalletFile);
                 bitdb.mapFileUseCount.erase(wallet.strWalletFile);
@@ -619,16 +616,16 @@ bool BackupWallet(const CWallet& wallet, const string& strDest)
 }
 
 //
-// Try to (very carefully!) recover wallet.dat if there is a problem.               Попробуйте (очень аккуратно!) Wallet.dat восстановиться, если есть проблема.
+// Try to (very carefully!) recover wallet.dat if there is a problem.
 //
 bool CWalletDB::Recover(CDBEnv& dbenv, std::string filename, bool fOnlyKeys)
 {
-    // Recovery procedure:                                                          Процедура восстановления:
-    // move wallet.dat to wallet.timestamp.bak                                      переместить wallet.dat в wallet.timestamp.bak
-    // Call Salvage with fAggressive=true to                                        Вызвать Salvage с fAggressive=true
-    // get as much data as possible.                                                получить как можно больше данных, сколько возможно.
-    // Rewrite salvaged data to wallet.dat                                          Перепишите спасённые данные wallet.dat
-    // Set -rescan so any missing transactions will be                              Set-повторное сканирование так недостающие операции будут найдены
+    // Recovery procedure:
+    // move wallet.dat to wallet.timestamp.bak
+    // Call Salvage with fAggressive=true to
+    // get as much data as possible.
+    // Rewrite salvaged data to wallet.dat
+    // Set -rescan so any missing transactions will be
     // found.
     int64 now = GetTime();
     std::string newFilename = strprintf("wallet.%"PRI64d".bak", now);

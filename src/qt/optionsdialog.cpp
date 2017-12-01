@@ -126,7 +126,6 @@ void OptionsDialog::setMapper()
 {
     /* Main */
     mapper->addMapping(ui->transactionFee, OptionsModel::Fee);
-    mapper->addMapping(ui->MiningTrFee, OptionsModel::mtrFee);
     mapper->addMapping(ui->bitcoinAtStartup, OptionsModel::StartAtStartup);
 
     /* Network */
@@ -225,7 +224,7 @@ void OptionsDialog::showRestartWarning_Proxy()
 {
     if(!fRestartWarningDisplayed_Proxy)
     {
-        QMessageBox::warning(this, tr("Warning"), tr("This setting will take effect after restarting ---TTC---."), QMessageBox::Ok);
+        QMessageBox::warning(this, tr("Warning"), tr("This setting will take effect after restarting Bitcoin."), QMessageBox::Ok);
         fRestartWarningDisplayed_Proxy = true;
     }
 }
@@ -234,7 +233,7 @@ void OptionsDialog::showRestartWarning_Lang()
 {
     if(!fRestartWarningDisplayed_Lang)
     {
-        QMessageBox::warning(this, tr("Warning"), tr("This setting will take effect after restarting ---TTC---."), QMessageBox::Ok);
+        QMessageBox::warning(this, tr("Warning"), tr("This setting will take effect after restarting Bitcoin."), QMessageBox::Ok);
         fRestartWarningDisplayed_Lang = true;
     }
 }

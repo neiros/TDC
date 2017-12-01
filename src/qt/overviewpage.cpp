@@ -9,9 +9,6 @@
 #include "transactionfilterproxy.h"
 #include "guiutil.h"
 #include "guiconstants.h"
-//#include "main.h"                    ////////// новое //////////
-#include "miner.h"                   ////////// новое //////////
-#include "init.h"                    ////////// новое //////////
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
@@ -92,8 +89,6 @@ public:
     int unit;
 
 };
-
-
 #include "overviewpage.moc"
 
 OverviewPage::OverviewPage(QWidget *parent) :

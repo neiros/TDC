@@ -72,8 +72,7 @@ static bool ThreadSafeAskFee(int64 nFeeRequired)
 {
     if(!guiref)
         return false;
-    //if(nFeeRequired < CTransaction::nMinTxFee || nFeeRequired <= nTransactionFee || fDaemon)
-    if(nFeeRequired < CTransaction::nMinTxFee || nFeeRequired <= nTransactionFee + nMinerTransFee || fDaemon)         ////////// новое //////////
+    if(nFeeRequired < CTransaction::nMinTxFee || nFeeRequired <= nTransactionFee || fDaemon)
         return true;
 
     bool payFee = false;
@@ -100,7 +99,7 @@ static void InitMessage(const std::string &message)
  */
 static std::string Translate(const char* psz)
 {
-    return QCoreApplication::translate("---TTC---core", psz).toStdString();
+    return QCoreApplication::translate("bitcoin-core", psz).toStdString();
 }
 
 /* Handle runaway exceptions. Shows a message box with the problem and quits the program.
@@ -108,7 +107,7 @@ static std::string Translate(const char* psz)
 static void handleRunawayException(std::exception *e)
 {
     PrintExceptionContinue(e, "Runaway exception");
-    QMessageBox::critical(0, "Runaway exception", BitcoinGUI::tr("A fatal error occurred. ---TTC--- can no longer continue safely and will quit.") + QString("\n\n") + QString::fromStdString(strMiscWarning));
+    QMessageBox::critical(0, "Runaway exception", BitcoinGUI::tr("A fatal error occurred. Bitcoin can no longer continue safely and will quit.") + QString("\n\n") + QString::fromStdString(strMiscWarning));
     exit(1);
 }
 
@@ -152,7 +151,7 @@ static void initTranslations(QTranslator &qtTranslatorBase, QTranslator &qtTrans
         QApplication::installTranslator(&translator);
 }
 
-#ifndef BITCOIN_QT_TEST  // #ifndef указывает, что на этапе компиляции следует включить заданную группу команд, если константа этапа компиляции с именем BITCOIN_QT_TEST не определена.
+#ifndef BITCOIN_QT_TEST
 int main(int argc, char *argv[])
 {
     fHaveGUI = true;
@@ -174,12 +173,12 @@ int main(int argc, char *argv[])
 
     // Application identification (must be set before OptionsModel is initialized,
     // as it is used to locate QSettings)
-    QApplication::setOrganizationName("---TTC---");
+    QApplication::setOrganizationName("Bitcoin");
     QApplication::setOrganizationDomain("bitcoin.org");
     if (GetBoolArg("-testnet", false)) // Separate UI settings for testnet
-        QApplication::setApplicationName("---TTC---Qt-testnet");
+        QApplication::setApplicationName("Bitcoin-Qt-testnet");
     else
-        QApplication::setApplicationName("---TTC---Qt");
+        QApplication::setApplicationName("Bitcoin-Qt");
 
     // Now that QSettings are accessible, initialize translations
     QTranslator qtTranslatorBase, qtTranslator, translatorBase, translator;
@@ -200,7 +199,7 @@ int main(int argc, char *argv[])
     // ... then bitcoin.conf:
     if (!boost::filesystem::is_directory(GetDataDir(false)))
     {
-        QMessageBox::critical(0, QObject::tr("---TTC---"),
+        QMessageBox::critical(0, QObject::tr("Bitcoin"),
                               QObject::tr("Error: Specified data directory \"%1\" does not exist.").arg(QString::fromStdString(mapArgs["-datadir"])));
         return 1;
     }

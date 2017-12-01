@@ -30,28 +30,28 @@ class CDataStream;
 class CAutoFile;
 static const unsigned int MAX_SIZE = 0x02000000;
 
-// Used to bypass the rule against non-const reference to temporary         Используется для обхода правил против неконстантная ссылкой на временного
-// where it makes sense with wrappers such as CFlatData or CTxDB            где это имеет смысл с помощью оболочек, таких как CFlatData или CTxDB
+// Used to bypass the rule against non-const reference to temporary
+// where it makes sense with wrappers such as CFlatData or CTxDB
 template<typename T>
 inline T& REF(const T& val)
 {
-    return const_cast<T&>(val);     // const_cast убирает const, навешанный на объект, который изначально константным не являлся
+    return const_cast<T&>(val);
 }
 
 /////////////////////////////////////////////////////////////////
 //
-// Templates for serializing to anything that looks like a stream,          Шаблоны для сериализации всего, что выглядит как поток,
-// i.e. anything that supports .read(char*, int) and .write(char*, int)     то есть все, что поддерживает .read(char*, int) и .write(char*, int)
+// Templates for serializing to anything that looks like a stream,
+// i.e. anything that supports .read(char*, int) and .write(char*, int)
 //
 
 enum
 {
-    // primary actions                                                      первичные действия
-    SER_NETWORK         = (1 << 0),         // результат побитового сдвига влево - 1    int
-    SER_DISK            = (1 << 1),         // результат побитового сдвига влево - 2    int
-    SER_GETHASH         = (1 << 2),         // результат побитового сдвига влево - 4    int
+    // primary actions
+    SER_NETWORK         = (1 << 0),
+    SER_DISK            = (1 << 1),
+    SER_GETHASH         = (1 << 2),
 };
-                                                                            // nSerSize - размер в байтах
+
 #define IMPLEMENT_SERIALIZE(statements)    \
     unsigned int GetSerializeSize(int nType, int nVersion) const  \
     {                                           \
@@ -61,7 +61,7 @@ enum
         const bool fRead = false;               \
         unsigned int nSerSize = 0;              \
         ser_streamplaceholder s;                \
-        assert(fGetSize||fWrite||fRead); /* suppress warning    вывод предупреждений*/ \
+        assert(fGetSize||fWrite||fRead); /* suppress warning */ \
         s.nType = nType;                        \
         s.nVersion = nVersion;                  \
         {statements}                            \
@@ -98,7 +98,7 @@ enum
 
 
 //
-// Basic types                                                              Основные типы
+// Basic types
 //
 #define WRITEDATA(s, obj)   s.write((char*)&(obj), sizeof(obj))
 #define READDATA(s, obj)    s.read((char*)&(obj), sizeof(obj))
@@ -234,20 +234,20 @@ uint64 ReadCompactSize(Stream& is)
     return nSizeRet;
 }
 
-// Variable-length integers: bytes are a MSB base-128 encoding of the number.   Переменной длины целые числа: количество байтов кодированных MSB base-128
-// The high bit in each byte signifies whether another digit follows. To make   Старший бит в каждом байте означает, следующий другой разряд(цифру). Чтобы сделать
-// the encoding is one-to-one, one is subtracted from all but the last digit.   кодирование один-к-одному, один вычитается из всех, кроме последней цифры.
-// Thus, the byte sequence a[] with length len, where all but the last byte     Таким образом, последовательность байт a[] с длиной Len, где все, кроме последнего
-// has bit 128 set, encodes the number:                                         байта имеет битовый набор 128, кодирует выражением:
+// Variable-length integers: bytes are a MSB base-128 encoding of the number.
+// The high bit in each byte signifies whether another digit follows. To make
+// the encoding is one-to-one, one is subtracted from all but the last digit.
+// Thus, the byte sequence a[] with length len, where all but the last byte
+// has bit 128 set, encodes the number:
 //
 //   (a[len-1] & 0x7F) + sum(i=1..len-1, 128^i*((a[len-i-1] & 0x7F)+1))
 //
-// Properties:                                                                  Свойства:
-// * Very small (0-127: 1 byte, 128-16511: 2 bytes, 16512-2113663: 3 bytes)     * Очень маленький (0-127: 1 байт, 128-16511: 2 байта, 16512-2113663: 3 байта)
-// * Every integer has exactly one encoding                                     * Каждое целое число имеет ровно одно кодирование
-// * Encoding does not depend on size of original integer type                  * Кодирование не зависит от размера исходного целочисленного типа
-// * No redundancy: every (infinite) byte sequence corresponds to a list        * Без избыточности: каждая последовательность байтов (бесконечное) соответствует
-//   of encoded integers.                                                         списку закодированных целых чисел
+// Properties:
+// * Very small (0-127: 1 byte, 128-16511: 2 bytes, 16512-2113663: 3 bytes)
+// * Every integer has exactly one encoding
+// * Encoding does not depend on size of original integer type
+// * No redundancy: every (infinite) byte sequence corresponds to a list
+//   of encoded integers.
 //
 // 0:         [0x00]  256:        [0x81 0x00]
 // 1:         [0x01]  16383:      [0xFE 0x7F]
@@ -264,7 +264,7 @@ inline unsigned int GetSizeOfVarInt(I n)
         nRet++;
         if (n <= 0x7F)
             break;
-        n = (n >> 7) - 1;       // >> побитовый правый сдвиг
+        n = (n >> 7) - 1;
     }
     return nRet;
 }
@@ -304,7 +304,7 @@ I ReadVarInt(Stream& is)
 #define FLATDATA(obj)  REF(CFlatData((char*)&(obj), (char*)&(obj) + sizeof(obj)))
 #define VARINT(obj)    REF(WrapVarInt(REF(obj)))
 
-/** Wrapper for serializing arrays and POD.                                         Оболочка для сериализации массивов и POD(простых структур данных)
+/** Wrapper for serializing arrays and POD.
  */
 class CFlatData
 {
@@ -363,7 +363,7 @@ template<typename I>
 CVarInt<I> WrapVarInt(I& n) { return CVarInt<I>(n); }
 
 //
-// Forward(вперед, дальше) declarations
+// Forward declarations
 //
 
 // string
@@ -382,22 +382,22 @@ template<typename Stream, typename T, typename A> void Unserialize_impl(Stream& 
 template<typename Stream, typename T, typename A> void Unserialize_impl(Stream& is, std::vector<T, A>& v, int nType, int nVersion, const boost::false_type&);
 template<typename Stream, typename T, typename A> inline void Unserialize(Stream& is, std::vector<T, A>& v, int nType, int nVersion);
 
-// others derived from vector           другие производные от вектора(полученные как вектор)
+// others derived from vector
 extern inline unsigned int GetSerializeSize(const CScript& v, int nType, int nVersion);
 template<typename Stream> void Serialize(Stream& os, const CScript& v, int nType, int nVersion);
 template<typename Stream> void Unserialize(Stream& is, CScript& v, int nType, int nVersion);
 
-// pair                                 пара
+// pair
 template<typename K, typename T> unsigned int GetSerializeSize(const std::pair<K, T>& item, int nType, int nVersion);
 template<typename Stream, typename K, typename T> void Serialize(Stream& os, const std::pair<K, T>& item, int nType, int nVersion);
 template<typename Stream, typename K, typename T> void Unserialize(Stream& is, std::pair<K, T>& item, int nType, int nVersion);
 
-// 3 tuple                              3 кортежа
+// 3 tuple
 template<typename T0, typename T1, typename T2> unsigned int GetSerializeSize(const boost::tuple<T0, T1, T2>& item, int nType, int nVersion);
 template<typename Stream, typename T0, typename T1, typename T2> void Serialize(Stream& os, const boost::tuple<T0, T1, T2>& item, int nType, int nVersion);
 template<typename Stream, typename T0, typename T1, typename T2> void Unserialize(Stream& is, boost::tuple<T0, T1, T2>& item, int nType, int nVersion);
 
-// 4 tuple                              4 кортежа
+// 4 tuple
 template<typename T0, typename T1, typename T2, typename T3> unsigned int GetSerializeSize(const boost::tuple<T0, T1, T2, T3>& item, int nType, int nVersion);
 template<typename Stream, typename T0, typename T1, typename T2, typename T3> void Serialize(Stream& os, const boost::tuple<T0, T1, T2, T3>& item, int nType, int nVersion);
 template<typename Stream, typename T0, typename T1, typename T2, typename T3> void Unserialize(Stream& is, boost::tuple<T0, T1, T2, T3>& item, int nType, int nVersion);
@@ -421,11 +421,6 @@ template<typename Stream, typename K, typename Pred, typename A> void Unserializ
 // "int nType" is changed to "long nType" to keep from getting an ambiguous overload error.
 // The compiler will only cast int to long if none of the other templates matched.
 // Thanks to Boost serialization for this idea.
-//
-//      Если ни одно из специализированных версий выше не соответствуют, по умолчанию вызываем функцию члена
-//      "int nType" изменится на "long nType", чтобы не допустить неопределенной ошибки перегрузки.
-//      Компилятор будет только приводить int к long, если ни один из других шаблонов не соответствует.
-//      Спасибо Boost сериализации для этой идеи.
 //
 template<typename T>
 inline unsigned int GetSerializeSize(const T& a, long nType, int nVersion)
@@ -528,7 +523,7 @@ inline void Serialize(Stream& os, const std::vector<T, A>& v, int nType, int nVe
 template<typename Stream, typename T, typename A>
 void Unserialize_impl(Stream& is, std::vector<T, A>& v, int nType, int nVersion, const boost::true_type&)
 {
-    // Limit size per read so bogus size value won't cause out of memory        ограничить размер чтения, чтобы фиктивных значения размера не были вызваны из памяти
+    // Limit size per read so bogus size value won't cause out of memory
     v.clear();
     unsigned int nSize = ReadCompactSize(is);
     unsigned int i = 0;
@@ -568,7 +563,7 @@ inline void Unserialize(Stream& is, std::vector<T, A>& v, int nType, int nVersio
 
 
 //
-// others derived from vector       (другие, полученные как вектор)
+// others derived from vector
 //
 inline unsigned int GetSerializeSize(const CScript& v, int nType, int nVersion)
 {
@@ -590,7 +585,7 @@ void Unserialize(Stream& is, CScript& v, int nType, int nVersion)
 
 
 //
-// pair     (пара)
+// pair
 //
 template<typename K, typename T>
 unsigned int GetSerializeSize(const std::pair<K, T>& item, int nType, int nVersion)
@@ -615,7 +610,7 @@ void Unserialize(Stream& is, std::pair<K, T>& item, int nType, int nVersion)
 
 
 //
-// 3 tuple      (кортеж)
+// 3 tuple
 //
 template<typename T0, typename T1, typename T2>
 unsigned int GetSerializeSize(const boost::tuple<T0, T1, T2>& item, int nType, int nVersion)
@@ -646,7 +641,7 @@ void Unserialize(Stream& is, boost::tuple<T0, T1, T2>& item, int nType, int nVer
 
 
 //
-// 4 tuple      (кортеж)
+// 4 tuple
 //
 template<typename T0, typename T1, typename T2, typename T3>
 unsigned int GetSerializeSize(const boost::tuple<T0, T1, T2, T3>& item, int nType, int nVersion)
@@ -796,10 +791,10 @@ struct ser_streamplaceholder
 
 typedef std::vector<char, zero_after_free_allocator<char> > CSerializeData;
 
-/** Double ended buffer combining vector and stream-like interfaces.                    Двухсторонний буфер объединяющий вектор и потоку-подобные интерфейсы.
+/** Double ended buffer combining vector and stream-like interfaces.
  *
- * >> and << read and write unformatted data using the above serialization templates.   >> и << читать и писать неформатированные данные с помощью вышележащих шаблонов сериализации.
- * Fills with data in linear time; some stringstream implementations take N^2 time.     Заполняется данными в линейном времени; некоторые stringstream реализаций принять n^2 раз
+ * >> and << read and write unformatted data using the above serialization templates.
+ * Fills with data in linear time; some stringstream implementations take N^2 time.
  */
 class CDataStream
 {
@@ -884,7 +879,7 @@ public:
 
 
     //
-    // Vector subset(подмножество)
+    // Vector subset
     //
     const_iterator begin() const                     { return vch.begin() + nReadPos; }
     iterator begin()                                 { return vch.begin() + nReadPos; }
@@ -905,7 +900,7 @@ public:
         assert(last - first >= 0);
         if (it == vch.begin() + nReadPos && (unsigned int)(last - first) <= nReadPos)
         {
-            // special case for inserting at the front when there's room            специальный случай для того, чтобы вставлять во фронте, когда есть место
+            // special case for inserting at the front when there's room
             nReadPos -= (last - first);
             memcpy(&vch[nReadPos], &first[0], last - first);
         }
@@ -918,7 +913,7 @@ public:
         assert(last - first >= 0);
         if (it == vch.begin() + nReadPos && (unsigned int)(last - first) <= nReadPos)
         {
-            // special case for inserting at the front when there's room            специальный случай для того, чтобы вставлять во фронте, когда есть место
+            // special case for inserting at the front when there's room
             nReadPos -= (last - first);
             memcpy(&vch[nReadPos], &first[0], last - first);
         }
@@ -932,7 +927,7 @@ public:
         assert(last - first >= 0);
         if (it == vch.begin() + nReadPos && (unsigned int)(last - first) <= nReadPos)
         {
-            // special case for inserting at the front when there's room            специальный случай для того, чтобы вставлять во фронте, когда есть место
+            // special case for inserting at the front when there's room
             nReadPos -= (last - first);
             memcpy(&vch[nReadPos], &first[0], last - first);
         }
@@ -945,10 +940,10 @@ public:
     {
         if (it == vch.begin() + nReadPos)
         {
-            // special case for inserting at the front                              специальный случай для того, чтобы вставлять во фронте
+            // special case for erasing from the front
             if (++nReadPos >= vch.size())
             {
-                // whenever we reach the end, we take the opportunity to clear the buffer (всякий раз, когда мы достигаем конца, мы пользуемся этой возможностью, чтобы очистить буфер)
+                // whenever we reach the end, we take the opportunity to clear the buffer
                 nReadPos = 0;
                 return vch.erase(vch.begin(), vch.end());
             }
@@ -962,7 +957,7 @@ public:
     {
         if (first == vch.begin() + nReadPos)
         {
-            // special case for inserting at the front                              специальный случай для того, чтобы вставлять во фронте
+            // special case for erasing from the front
             if (last == vch.end())
             {
                 nReadPos = 0;
@@ -986,7 +981,7 @@ public:
 
     bool Rewind(size_type n)
     {
-        // Rewind by n characters if the buffer hasn't been compacted yet           Перемотка в n символов, если буфер не был уплотнен еще
+        // Rewind by n characters if the buffer hasn't been compacted yet
         if (n > nReadPos)
             return false;
         nReadPos -= n;
@@ -995,7 +990,7 @@ public:
 
 
     //
-    // Stream subset                                                                Подмножество потока
+    // Stream subset
     //
     void setstate(short bits, const char* psz)
     {
@@ -1022,7 +1017,7 @@ public:
 
     CDataStream& read(char* pch, int nSize)
     {
-        // Read from the beginning of the buffer                                    Читать с самого начала буфера
+        // Read from the beginning of the buffer
         assert(nSize >= 0);
         unsigned int nReadPosNext = nReadPos + nSize;
         if (nReadPosNext >= vch.size())
@@ -1045,7 +1040,7 @@ public:
 
     CDataStream& ignore(int nSize)
     {
-        // Ignore from the beginning of the buffer                                  Игнорировать от начала буфера
+        // Ignore from the beginning of the buffer
         assert(nSize >= 0);
         unsigned int nReadPosNext = nReadPos + nSize;
         if (nReadPosNext >= vch.size())
@@ -1065,7 +1060,7 @@ public:
 
     CDataStream& write(const char* pch, int nSize)
     {
-        // Write to the end of the buffer                                           Записи в конец буфера
+        // Write to the end of the buffer
         assert(nSize >= 0);
         vch.insert(vch.end(), pch, pch + nSize);
         return (*this);
@@ -1074,7 +1069,7 @@ public:
     template<typename Stream>
     void Serialize(Stream& s, int nType, int nVersion) const
     {
-        // Special case: stream << stream concatenates like stream += stream        Специальный случай: stream << stream конкатенирует(склеивается) как stream += stream
+        // Special case: stream << stream concatenates like stream += stream
         if (!vch.empty())
             s.write((char*)&vch[0], vch.size() * sizeof(vch[0]));
     }
@@ -1082,14 +1077,14 @@ public:
     template<typename T>
     unsigned int GetSerializeSize(const T& obj)
     {
-        // Tells the size of the object if serialized to this stream                Указывает размер объекта, если сериализовать в этот поток
+        // Tells the size of the object if serialized to this stream
         return ::GetSerializeSize(obj, nType, nVersion);
     }
 
     template<typename T>
     CDataStream& operator<<(const T& obj)
     {
-        // Serialize to this stream                                                 сериализовать в этот поток
+        // Serialize to this stream
         ::Serialize(*this, obj, nType, nVersion);
         return (*this);
     }
@@ -1097,7 +1092,7 @@ public:
     template<typename T>
     CDataStream& operator>>(T& obj)
     {
-        // Unserialize from this stream                                             ансериализовать из этого потока
+        // Unserialize from this stream
         ::Unserialize(*this, obj, nType, nVersion);
         return (*this);
     }
@@ -1122,10 +1117,6 @@ public:
  * Will automatically close the file when it goes out of scope if not null.
  * If you're returning the file pointer, return file.release().
  * If you need to close the file early, use file.fclose() instead of fclose(file).
- *
- * Автоматически закроет файл когда он выходит из области видимости, если не нулевой.
- * Если вы возвращаете указатель файла, возвращайте file.release().
- * Если вам нужно закрыть файл рано, используйте file.fclose() вместо fclose(file)
  */
 class CAutoFile
 {
@@ -1168,7 +1159,7 @@ public:
 
 
     //
-    // Stream subset   (Подмножество потока)
+    // Stream subset
     //
     void setstate(short bits, const char* psz)
     {
@@ -1211,14 +1202,14 @@ public:
     template<typename T>
     unsigned int GetSerializeSize(const T& obj)
     {
-        // Tells the size of the object if serialized to this stream                Указывает размер объекта если разложить-серелизовать на этот поток
+        // Tells the size of the object if serialized to this stream
         return ::GetSerializeSize(obj, nType, nVersion);
     }
 
     template<typename T>
     CAutoFile& operator<<(const T& obj)
     {
-        // Serialize to this stream                                                 Серелизовать в этот поток
+        // Serialize to this stream
         if (!file)
             throw std::ios_base::failure("CAutoFile::operator<< : file handle is NULL");
         ::Serialize(*this, obj, nType, nVersion);
@@ -1228,7 +1219,7 @@ public:
     template<typename T>
     CAutoFile& operator>>(T& obj)
     {
-        // Unserialize from this stream                                             ансериализовать из этого потока
+        // Unserialize from this stream
         if (!file)
             throw std::ios_base::failure("CAutoFile::operator>> : file handle is NULL");
         ::Unserialize(*this, obj, nType, nVersion);
@@ -1236,17 +1227,17 @@ public:
     }
 };
 
-/** Wrapper around a FILE* that implements a ring buffer to                         Оболочка вокруг FILE*, реализующая кольцевой буфер для десериализации
- *  deserialize from. It guarantees the ability to rewind                           Это гарантирует возможность перемотки на заданное количество байт
+/** Wrapper around a FILE* that implements a ring buffer to
+ *  deserialize from. It guarantees the ability to rewind
  *  a given number of bytes. */
 class CBufferedFile
 {
 private:
-    FILE *src;          // source file                                              исходный файл
-    uint64 nSrcPos;     // how many bytes have been read from source                сколько байт было прочитано из источника
-    uint64 nReadPos;    // how many bytes have been read from this                  сколько байт было прочитано из этого
-    uint64 nReadLimit;  // up to which position we're allowed to read               до какой позиции мы разрешили читать
-    uint64 nRewind;     // how many bytes we guarantee to rewind                    сколько байт мы гарантируем для перемотки
+    FILE *src;          // source file
+    uint64 nSrcPos;     // how many bytes have been read from source
+    uint64 nReadPos;    // how many bytes have been read from this
+    uint64 nReadLimit;  // up to which position we're allowed to read
+    uint64 nRewind;     // how many bytes we guarantee to rewind
     std::vector<char> vchBuf; // the buffer
 
     short state;
@@ -1259,7 +1250,7 @@ protected:
             throw std::ios_base::failure(psz);
     }
 
-    // read data from the source to fill the buffer                                 чтение данных из источника для заполнения буфера
+    // read data from the source to fill the buffer
     bool Fill() {
         unsigned int pos = nSrcPos % vchBuf.size();
         unsigned int readNow = vchBuf.size() - pos;
@@ -1287,17 +1278,17 @@ public:
         state(0), exceptmask(std::ios_base::badbit | std::ios_base::failbit), nType(nTypeIn), nVersion(nVersionIn) {
     }
 
-    // check whether(ли) no error occurred                                          проверить не произошло ли каких ошибок
+    // check whether no error occurred
     bool good() const {
         return state == 0;
     }
 
-    // check whether(ли) we're at the end of the source file                        проверить мы в конце ли исходного файла
+    // check whether we're at the end of the source file
     bool eof() const {
         return nReadPos == nSrcPos && feof(src);
     }
 
-    // read a number of bytes                                                       чтение количества байт
+    // read a number of bytes
     CBufferedFile& read(char *pch, size_t nSize) {
         if (nSize + nReadPos > nReadLimit)
             throw std::ios_base::failure("Read attempted past buffer limit");
@@ -1320,12 +1311,12 @@ public:
         return (*this);
     }
 
-    // return the current reading position                                          возвращает текущую позицию чтения
+    // return the current reading position
     uint64 GetPos() {
         return nReadPos;
     }
 
-    // rewind to a given reading position                                           назад к заданной положении считывания
+    // rewind to a given reading position
     bool SetPos(uint64 nPos) {
         nReadPos = nPos;
         if (nReadPos + nRewind < nSrcPos) {
@@ -1352,8 +1343,8 @@ public:
         return true;
     }
 
-    // prevent reading beyond a certain position                                    предотвращение чтения за пределами определенной позиции
-    // no argument removes the limit                                                аргумент не устраняет ограничение
+    // prevent reading beyond a certain position
+    // no argument removes the limit
     bool SetLimit(uint64 nPos = (uint64)(-1)) {
         if (nPos < nReadPos)
             return false;
@@ -1363,12 +1354,12 @@ public:
 
     template<typename T>
     CBufferedFile& operator>>(T& obj) {
-        // Unserialize from this stream                                             ансериализовать из этого потока
+        // Unserialize from this stream
         ::Unserialize(*this, obj, nType, nVersion);
         return (*this);
     }
 
-    // search for a given byte in the stream, and remain positioned on it           искать заданный байт в потоке и оставаясь на нём
+    // search for a given byte in the stream, and remain positioned on it
     void FindByte(char ch) {
         while (true) {
             if (nReadPos == nSrcPos)

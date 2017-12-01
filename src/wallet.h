@@ -19,25 +19,25 @@
 #include "ui_interface.h"
 #include "util.h"
 
-
 class CAccountingEntry;
 class CWalletTx;
 class CReserveKey;
 class COutput;
 class CWalletDB;
 
-/** (client) version numbers for particular wallet features                 (клиент) номера версий особенности бумажник*/
+/** (client) version numbers for particular wallet features */
 enum WalletFeature
 {
-    FEATURE_BASE = 10500, // the earliest version new wallets supports only useful for getinfo's clientversion output
-                          //        ранняя версия поддерживает новые кошельки имеет смысл только для getinfo's clientversion выхода
-    FEATURE_WALLETCRYPT = 40000, // wallet encryption                       бумажник шифрования
-    FEATURE_COMPRPUBKEY = 60000, // compressed public keys                  сжатие открытых ключей
+    FEATURE_BASE = 10500, // the earliest version new wallets supports (only useful for getinfo's clientversion output)
+
+    FEATURE_WALLETCRYPT = 40000, // wallet encryption
+    FEATURE_COMPRPUBKEY = 60000, // compressed public keys
 
     FEATURE_LATEST = 60000
 };
 
-/** A key pool entry                                                        ключевой пул вхождения*/
+
+/** A key pool entry */
 class CKeyPool
 {
 public:
@@ -66,8 +66,6 @@ public:
 
 /** A CWallet is an extension of a keystore, which also maintains a set of transactions and balances,
  * and provides the ability to create new transactions.
- *                  CWallet является расширенным хранилищем ключей, который также поддерживает набор транзакций и балансов,
- *                  а предоставляет возможность для создания новых транзакций.
  */
 class CWallet : public CCryptoKeyStore
 {
@@ -77,11 +75,9 @@ private:
     CWalletDB *pwalletdbEncryption;
 
     // the current wallet version: clients below this version are not able to load the wallet
-    //              Текущая версия бумажника: клиенты ниже этой версии не в состоянии загрузить бумажник
     int nWalletVersion;
 
     // the maximum wallet format version: memory-only variable that specifies to what version this wallet may be upgraded
-    //              максимальный формат версии бумажника: переменная только для памяти, которая определяет, к какой версии может быть модернизирован этот бумажник
     int nWalletMaxVersion;
 
     int64 nNextResend;
@@ -137,7 +133,6 @@ public:
     int64 nTimeFirstKey;
 
     // check whether we are allowed to upgrade (or already support) to the named feature
-    //              проверьте, разрешается ли нам модернизировать (или уже поддерживается) к названной особенности
     bool CanSupportFeature(enum WalletFeature wf) { return nWalletMaxVersion >= wf; }
 
     void AvailableCoins(std::vector<COutput>& vCoins, bool fOnlyConfirmed=true) const;
@@ -148,22 +143,21 @@ public:
     void UnlockAllCoins();
     void ListLockedCoins(std::vector<COutPoint>& vOutpts);
 
-    // keystore implementation                                                  реализация хранилища
-    // Generate a new key                                                       создайние нового ключа
+    // keystore implementation
+    // Generate a new key
     CPubKey GenerateNewKey();
-    // Adds a key to the store, and saves it to disk.                           добавляет ключ к магазину, и сохраняет его на диск.
+    // Adds a key to the store, and saves it to disk.
     bool AddKeyPubKey(const CKey& key, const CPubKey &pubkey);
-    // Adds a key to the store, without saving it to disk (used by LoadWallet)  добавляет ключ к магазину, не сохраняя его на диске (используется LoadWallet)
+    // Adds a key to the store, without saving it to disk (used by LoadWallet)
     bool LoadKey(const CKey& key, const CPubKey &pubkey) { return CCryptoKeyStore::AddKeyPubKey(key, pubkey); }
-    // Load metadata (used by LoadWallet)                                       загрузка метаданных (используется LoadWallet)
+    // Load metadata (used by LoadWallet)
     bool LoadKeyMetadata(const CPubKey &pubkey, const CKeyMetadata &metadata);
 
     bool LoadMinVersion(int nVersion) { nWalletVersion = nVersion; nWalletMaxVersion = std::max(nWalletMaxVersion, nVersion); return true; }
 
-    // Adds an encrypted key to the store, and saves it to disk.                добавляет зашифрованный ключ в магазин, и сохраняет его на диск.
+    // Adds an encrypted key to the store, and saves it to disk.
     bool AddCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
     // Adds an encrypted key to the store, without saving it to disk (used by LoadWallet)
-    //              Добавляет зашифрованный ключ в магазин, не сохраняя его на диске (используется LoadWallet)
     bool LoadCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret);
     bool AddCScript(const CScript& redeemScript);
     bool LoadCScript(const CScript& redeemScript) { return CCryptoKeyStore::AddCScript(redeemScript); }
@@ -174,8 +168,8 @@ public:
 
     void GetKeyBirthTimes(std::map<CKeyID, int64> &mapKeyBirth) const;
 
-    /** Increment the next transaction order id                                 Увеличиваем следующем порядке ID транзакции
-        @return next transaction order id                                       @return в следующем порядке ID транзакции
+    /** Increment the next transaction order id
+        @return next transaction order id
      */
     int64 IncOrderPosNext(CWalletDB *pwalletdb = NULL);
 
@@ -185,10 +179,6 @@ public:
     /** Get the wallet's activity log
         @return multimap of ordered transactions and accounting entries
         @warning Returned pointers are *only* valid within the scope of passed acentries
-
-        Получить журнал активности кошелька
-        @return MultiMap упорядоченной операций и бухгалтерских проводок
-        @warning Возвращается указатели *только* действительны в рамках прошедшего acentries
      */
     TxItems OrderedTxItems(std::list<CAccountingEntry>& acentries, std::string strAccount = "");
 
@@ -203,15 +193,13 @@ public:
     int64 GetBalance() const;
     int64 GetUnconfirmedBalance() const;
     int64 GetImmatureBalance() const;
-    bool CreateTransactionOLD(const std::vector<std::pair<CScript, int64> >& vecSend,
-                           CWalletTx& wtx, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason);
-    bool CreateTransaction(const std::vector<std::pair<CScript, int64> >& vecSend,                                   ////////// новое //////////
-                           CWalletTx& wtx, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason);  ////////// новое //////////
+    bool CreateTransaction(const std::vector<std::pair<CScript, int64> >& vecSend,
+                           CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason);
     bool CreateTransaction(CScript scriptPubKey, int64 nValue,
-                           CWalletTx& wtx, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason);
-    bool CommitTransaction(CWalletTx& wtx, CReserveKey& reservekey);
-    std::string SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtx, bool fAskFee=false);
-    std::string SendMoneyToDestination(const CTxDestination &address, int64 nValue, CWalletTx& wtx, bool fAskFee=false);
+                           CWalletTx& wtxNew, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason);
+    bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey);
+    std::string SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false);
+    std::string SendMoneyToDestination(const CTxDestination &address, int64 nValue, CWalletTx& wtxNew, bool fAskFee=false);
 
     bool NewKeyPool();
     bool TopUpKeyPool();
@@ -321,29 +309,26 @@ public:
     bool SetDefaultKey(const CPubKey &vchPubKey);
 
     // signify that a particular wallet feature is now used. this may change nWalletVersion and nWalletMaxVersion if those are lower
-    //              означают, что конкретный признак бумажник в настоящее время используется. это может измениться и nWalletVersion nWalletMaxVersion если те ниже
     bool SetMinVersion(enum WalletFeature, CWalletDB* pwalletdbIn = NULL, bool fExplicit = false);
 
     // change which version we're allowed to upgrade to (note that this does not immediately imply upgrading to that format)
-    //              изменение, к каким версии нам разрешают модернизировать (следует отметить, что это немедленно не подразумевает модернизацию к тому формату)
     bool SetMaxVersion(int nVersion);
 
     // get the current wallet format (the oldest client version guaranteed to understand this wallet)
-    //              получить текущий формат бумажника (самая старая версия клиента гарантировано поймёт это кошелек)
     int GetVersion() { return nWalletVersion; }
 
-    /** Address book entry changed.                                             Адресную книгу изменился.
-     * @note called with lock cs_wallet held.                                   @note вызываются с заблокированном cs_wallet состоянии.
+    /** Address book entry changed.
+     * @note called with lock cs_wallet held.
      */
     boost::signals2::signal<void (CWallet *wallet, const CTxDestination &address, const std::string &label, bool isMine, ChangeType status)> NotifyAddressBookChanged;
 
-    /** Wallet transaction added, removed or updated.                           Бумажника транзакции добавлены, удалены или обновлены.
-     * @note called with lock cs_wallet held.                                   @note вызываются с заблокированном cs_wallet состоянии.
+    /** Wallet transaction added, removed or updated.
+     * @note called with lock cs_wallet held.
      */
     boost::signals2::signal<void (CWallet *wallet, const uint256 &hashTx, ChangeType status)> NotifyTransactionChanged;
 };
 
-/** A key allocated from the key pool.                                          Зарегистрированный ключ от ключевого пула.*/
+/** A key allocated from the key pool. */
 class CReserveKey
 {
 protected:
@@ -375,7 +360,7 @@ static void ReadOrderPos(int64& nOrderPos, mapValue_t& mapValue)
 {
     if (!mapValue.count("n"))
     {
-        nOrderPos = -1; // TODO: calculate elsewhere                            TODO: вычисляется в другом месте
+        nOrderPos = -1; // TODO: calculate elsewhere
         return;
     }
     nOrderPos = atoi64(mapValue["n"].c_str());
@@ -392,8 +377,6 @@ static void WriteOrderPos(const int64& nOrderPos, mapValue_t& mapValue)
 
 /** A transaction with a bunch of additional info that only the owner cares about.
  * It includes any unrecorded transactions needed to link it back to the block chain.
- *                  Транзакции со связанной дополнительной информацией, что только владелец заботится об этом.
- *                  Сюда входят любые неучтенные транзакции необходимые в связи их обратно к блоку цепи.
  */
 class CWalletTx : public CMerkleTx
 {
@@ -405,14 +388,14 @@ public:
     mapValue_t mapValue;
     std::vector<std::pair<std::string, std::string> > vOrderForm;
     unsigned int fTimeReceivedIsTxTime;
-    unsigned int nTimeReceived;  // time received by this node                  время, полученных этим узлом
+    unsigned int nTimeReceived;  // time received by this node
     unsigned int nTimeSmart;
     char fFromMe;
     std::string strFromAccount;
-    std::vector<char> vfSpent; // which outputs are already spent               выходы которого уже потрачены
-    int64 nOrderPos;  // position in ordered transaction list                   позиции в упорядоченном списке транзакций
+    std::vector<char> vfSpent; // which outputs are already spent
+    int64 nOrderPos;  // position in ordered transaction list
 
-    // memory only                                                              только память
+    // memory only
     mutable bool fDebitCached;
     mutable bool fCreditCached;
     mutable bool fImmatureCreditCached;
@@ -526,8 +509,8 @@ public:
         pthis->mapValue.erase("timesmart");
     )
 
-    // marks certain txout's as spent                                           отмечает определенные txout как потраченные
-    // returns true if any update took place                                    возвращает истину, если таковые обновление состоялось
+    // marks certain txout's as spent
+    // returns true if any update took place
     bool UpdateSpent(const std::vector<char>& vfNewSpent)
     {
         bool fReturn = false;
@@ -546,7 +529,7 @@ public:
         return fReturn;
     }
 
-    // make sure balances are recalculated                                      убедитесь, что остатки пересчитываются
+    // make sure balances are recalculated
     void MarkDirty()
     {
         fCreditCached = false;
@@ -596,11 +579,10 @@ public:
     int64 GetCredit(bool fUseCache=true) const
     {
         // Must wait until coinbase is safely deep enough in the chain before valuing it
-        //              Должны ждать, пока coinbase не безопасно достаточно глубоко в цепи до оценки его
         if (IsCoinBase() && GetBlocksToMaturity() > 0)
             return 0;
 
-        // GetBalance can assume transactions in mapWallet won't change         GetBalance может принять транзакции в mapWallet неизменёнными
+        // GetBalance can assume transactions in mapWallet won't change
         if (fUseCache && fCreditCached)
             return nCreditCached;
         nCreditCached = pwallet->GetCredit(*this);
@@ -625,7 +607,6 @@ public:
     int64 GetAvailableCredit(bool fUseCache=true) const
     {
         // Must wait until coinbase is safely deep enough in the chain before valuing it
-        //              Должны ждать, пока coinbase для безопасности достаточно глубоко в цепи до оценки этоо
         if (IsCoinBase() && GetBlocksToMaturity() > 0)
             return 0;
 
@@ -672,16 +653,16 @@ public:
 
     bool IsConfirmed() const
     {
-        // Quick answer in most cases                                       Быстрый ответ в большинстве случаев
+        // Quick answer in most cases
         if (!IsFinalTx(*this))
             return false;
         if (GetDepthInMainChain() >= 1)
             return true;
-        if (!IsFromMe()) // using wtx's cached debit                        используя wtx's кэшированные дебета
+        if (!IsFromMe()) // using wtx's cached debit
             return false;
 
-        // If no confirmations but it's from us, we can still               Если нет подтверждения, но это от нас, мы все-таки считаем что
-        // consider it confirmed if all dependencies are confirmed          это подтверждоно, если все зависимости подтверждаются
+        // If no confirmations but it's from us, we can still
+        // consider it confirmed if all dependencies are confirmed
         std::map<uint256, const CMerkleTx*> mapPrev;
         std::vector<const CMerkleTx*> vWorkQueue;
         vWorkQueue.reserve(vtxPrev.size()+1);
@@ -752,7 +733,7 @@ public:
 
 
 
-/** Private key that includes an expiration date in case it never gets used. (Закрытый ключ, который включает в себя дату истечения срока действия в случае, если он никогда не использовался )*/
+/** Private key that includes an expiration date in case it never gets used. */
 class CWalletKey
 {
 public:
@@ -760,8 +741,8 @@ public:
     int64 nTimeCreated;
     int64 nTimeExpires;
     std::string strComment;
-    //// todo: add something to note what created it (user, getnewaddress, change)   добавить кое-что отметить, обратив внимание того кто создал это (пользователя, getnewaddress, изменение)
-    ////   maybe should have a map<string, string> property map                      возможно должно иметь map<string, string> свойство карты
+    //// todo: add something to note what created it (user, getnewaddress, change)
+    ////   maybe should have a map<string, string> property map
 
     CWalletKey(int64 nExpires=0)
     {
@@ -786,7 +767,7 @@ public:
 
 
 /** Account information.
- * Stored in wallet with key "acc"+string account name.                             Хранится в бумажнике с ключом "acc"+string имя учетной записи.
+ * Stored in wallet with key "acc"+string account name.
  */
 class CAccount
 {
@@ -813,8 +794,8 @@ public:
 
 
 
-/** Internal transfers.                                                             Внутренние переводы
- * Database key is acentry<account><counter>.                                       База данных ключ acentry<account><counter>
+/** Internal transfers.
+ * Database key is acentry<account><counter>.
  */
 class CAccountingEntry
 {
@@ -825,7 +806,7 @@ public:
     std::string strOtherAccount;
     std::string strComment;
     mapValue_t mapValue;
-    int64 nOrderPos;  // position in ordered transaction list                       позиции в упорядоченном списке транзакций
+    int64 nOrderPos;  // position in ordered transaction list
     uint64 nEntryNo;
 
     CAccountingEntry()
@@ -848,7 +829,7 @@ public:
         CAccountingEntry& me = *const_cast<CAccountingEntry*>(this);
         if (!(nType & SER_GETHASH))
             READWRITE(nVersion);
-        // Note: strAccount is serialized as part of the key, not here.             Примечание: strAccount сериализуется как часть ключа, не здесь.
+        // Note: strAccount is serialized as part of the key, not here.
         READWRITE(nCreditDebit);
         READWRITE(nTime);
         READWRITE(strOtherAccount);

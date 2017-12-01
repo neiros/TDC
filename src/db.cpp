@@ -77,12 +77,12 @@ bool CDBEnv::Open(const boost::filesystem::path& pathIn)
         nEnvFlags |= DB_PRIVATE;
 
     dbenv.set_lg_dir(pathLogDir.string().c_str());
-    dbenv.set_cachesize(0, 0x100000, 1); // 1 MiB should be enough for just the wallet  1 МБ должно быть достаточно для всего кошелек
+    dbenv.set_cachesize(0, 0x100000, 1); // 1 MiB should be enough for just the wallet
     dbenv.set_lg_bsize(0x10000);
     dbenv.set_lg_max(1048576);
     dbenv.set_lk_max_locks(40000);
     dbenv.set_lk_max_objects(40000);
-    dbenv.set_errfile(fopen(pathErrorFile.string().c_str(), "a")); /// debug            отлаживать(отладка)
+    dbenv.set_errfile(fopen(pathErrorFile.string().c_str(), "a")); /// debug
     dbenv.set_flags(DB_AUTO_COMMIT, 1);
     dbenv.set_flags(DB_TXN_WRITE_NOSYNC, 1);
     dbenv.log_set_config(DB_LOG_AUTO_REMOVE, 1);
@@ -148,7 +148,7 @@ CDBEnv::VerifyResult CDBEnv::Verify(std::string strFile, bool (*recoverFunc)(CDB
     else if (recoverFunc == NULL)
         return RECOVER_FAIL;
 
-    // Try to recover:                                                                  Попытка восстановления
+    // Try to recover:
     bool fRecovered = (*recoverFunc)(*this, strFile);
     return (fRecovered ? RECOVER_OK : RECOVER_FAIL);
 }
@@ -181,7 +181,7 @@ bool CDBEnv::Salvage(std::string strFile, bool fAggressive,
         return false;
     }
 
-    // Format of bdb dump is ascii lines:                                               Формат bdb дампа ascii строк:
+    // Format of bdb dump is ascii lines:
     // header lines...
     // HEADER=END
     // hexadecimal key
@@ -191,7 +191,7 @@ bool CDBEnv::Salvage(std::string strFile, bool fAggressive,
 
     string strLine;
     while (!strDump.eof() && strLine != "HEADER=END")
-        getline(strDump, strLine); // Skip past header (Пропустить заголовок)
+        getline(strDump, strLine); // Skip past header
 
     std::string keyHex, valueHex;
     while (!strDump.eof() && keyHex != "DATA=END")
@@ -285,7 +285,7 @@ void CDB::Flush()
     if (activeTxn)
         return;
 
-    // Flush database activity from memory pool to disk log                             Сброс активности базы данных из памяти пула в лог диска
+    // Flush database activity from memory pool to disk log
     unsigned int nMinutes = 0;
     if (fReadOnly)
         nMinutes = 1;
@@ -316,7 +316,7 @@ void CDBEnv::CloseDb(const string& strFile)
         LOCK(cs_db);
         if (mapDb[strFile] != NULL)
         {
-            // Close the database handle                                                Закрыть дескриптор базы данных
+            // Close the database handle
             Db* pdb = mapDb[strFile];
             pdb->close(0);
             delete pdb;
@@ -342,7 +342,7 @@ bool CDB::Rewrite(const string& strFile, const char* pszSkip)
             LOCK(bitdb.cs_db);
             if (!bitdb.mapFileUseCount.count(strFile) || bitdb.mapFileUseCount[strFile] == 0)
             {
-                // Flush log data to the dat file                                       сброс данных журнала в файл DAT
+                // Flush log data to the dat file
                 bitdb.CloseDb(strFile);
                 bitdb.CheckpointLSN(strFile);
                 bitdb.mapFileUseCount.erase(strFile);
@@ -350,7 +350,7 @@ bool CDB::Rewrite(const string& strFile, const char* pszSkip)
                 bool fSuccess = true;
                 printf("Rewriting %s...\n", strFile.c_str());
                 string strFileRes = strFile + ".rewrite";
-                { // surround usage of db with extra {}                                 окружают использование db дополнительными {}
+                { // surround usage of db with extra {}
                     CDB db(strFile.c_str(), "r");
                     Db* pdbCopy = new Db(&bitdb.dbenv, 0);
 
@@ -431,8 +431,8 @@ bool CDB::Rewrite(const string& strFile, const char* pszSkip)
 void CDBEnv::Flush(bool fShutdown)
 {
     int64 nStart = GetTimeMillis();
-    // Flush log data to the actual data file                                           Сброс данных журнала на актуальный файл данных
-    //  on all files that are not in use                                                на все файлы, которые не используются
+    // Flush log data to the actual data file
+    //  on all files that are not in use
     printf("Flush(%s)%s\n", fShutdown ? "true" : "false", fDbEnvInit ? "" : " db not started");
     if (!fDbEnvInit)
         return;
@@ -446,7 +446,7 @@ void CDBEnv::Flush(bool fShutdown)
             printf("%s refcount=%d\n", strFile.c_str(), nRefCount);
             if (nRefCount == 0)
             {
-                // Move log data to the dat file                                        переместить лог данных в файл DAT
+                // Move log data to the dat file
                 CloseDb(strFile);
                 printf("%s checkpoint\n", strFile.c_str());
                 dbenv.txn_checkpoint(0, 0, 0);
@@ -495,26 +495,26 @@ CAddrDB::CAddrDB()
 
 bool CAddrDB::Write(const CAddrMan& addr)
 {
-    // Generate random temporary filename                                               Генерация случайного временного файла
+    // Generate random temporary filename
     unsigned short randv = 0;
     RAND_bytes((unsigned char *)&randv, sizeof(randv));
     std::string tmpfn = strprintf("peers.dat.%04x", randv);
 
-    // serialize addresses, checksum data up to that point, then append csum            сериализации адреса, контрольная сумма данных до того момента, затем добавить CSUM
+    // serialize addresses, checksum data up to that point, then append csum
     CDataStream ssPeers(SER_DISK, CLIENT_VERSION);
     ssPeers << FLATDATA(Params().MessageStart());
     ssPeers << addr;
     uint256 hash = Hash(ssPeers.begin(), ssPeers.end());
     ssPeers << hash;
 
-    // open temp output file, and associate with CAutoFile                              открытыть временный выходной файл и ассоциировать с CAutoFile
+    // open temp output file, and associate with CAutoFile
     boost::filesystem::path pathTmp = GetDataDir() / tmpfn;
     FILE *file = fopen(pathTmp.string().c_str(), "wb");
     CAutoFile fileout = CAutoFile(file, SER_DISK, CLIENT_VERSION);
     if (!fileout)
         return error("CAddrman::Write() : open failed");
 
-    // Write and commit header, data                                                    запись и фиксация заголовка, данных
+    // Write and commit header, data
     try {
         fileout << ssPeers;
     }
@@ -524,7 +524,7 @@ bool CAddrDB::Write(const CAddrMan& addr)
     FileCommit(fileout);
     fileout.fclose();
 
-    // replace existing peers.dat, if any, with new peers.dat.XXXX                      заменить существующие peers.dat, если таковые имеются, новыми peers.dat.XXXX
+    // replace existing peers.dat, if any, with new peers.dat.XXXX
     if (!RenameOver(pathTmp, pathAddr))
         return error("CAddrman::Write() : Rename-into-place failed");
 
@@ -533,22 +533,22 @@ bool CAddrDB::Write(const CAddrMan& addr)
 
 bool CAddrDB::Read(CAddrMan& addr)
 {
-    // open input file, and associate with CAutoFile                                    открытые входной файл и ассоциировать с CAutoFile
+    // open input file, and associate with CAutoFile
     FILE *file = fopen(pathAddr.string().c_str(), "rb");
     CAutoFile filein = CAutoFile(file, SER_DISK, CLIENT_VERSION);
     if (!filein)
         return error("CAddrman::Read() : open failed");
 
-    // use file size to size memory buffer                                              использовать размер файла для размера буфера памяти
+    // use file size to size memory buffer
     int fileSize = GetFilesize(filein);
     int dataSize = fileSize - sizeof(uint256);
-    //Don't try to resize to a negative number if file is small                         не пытайтесь изменить размер на отрицательное число, если файл небольшой
+    //Don't try to resize to a negative number if file is small
     if ( dataSize < 0 ) dataSize = 0;
     vector<unsigned char> vchData;
     vchData.resize(dataSize);
     uint256 hashIn;
 
-    // read data and checksum from file                                                 чтение данных и контрольной суммы из файла
+    // read data and checksum from file
     try {
         filein.read((char *)&vchData[0], dataSize);
         filein >> hashIn;
@@ -560,21 +560,21 @@ bool CAddrDB::Read(CAddrMan& addr)
 
     CDataStream ssPeers(vchData, SER_DISK, CLIENT_VERSION);
 
-    // verify stored checksum matches input data                                        проверить совпадение сохранённой контрольной суммы входным данным
+    // verify stored checksum matches input data
     uint256 hashTmp = Hash(ssPeers.begin(), ssPeers.end());
     if (hashIn != hashTmp)
         return error("CAddrman::Read() : checksum mismatch; data corrupted");
 
     unsigned char pchMsgTmp[4];
     try {
-        // de-serialize file header (network specific magic number) and ..              десериализация заголовка файла (сетевой специфический магический номер) и ..
+        // de-serialize file header (network specific magic number) and ..
         ssPeers >> FLATDATA(pchMsgTmp);
 
-        // ... verify the network matches ours                                          ... проверка нашего сетевого соответствия
+        // ... verify the network matches ours
         if (memcmp(pchMsgTmp, Params().MessageStart(), sizeof(pchMsgTmp)))
             return error("CAddrman::Read() : invalid network magic number");
 
-        // de-serialize address data into one CAddrMan object                           десериализация адресных данных в один объект CAddrMan
+        // de-serialize address data into one CAddrMan object
         ssPeers >> addr;
     }
     catch (std::exception &e) {

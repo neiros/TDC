@@ -20,8 +20,8 @@ inline int Testuint256AdHoc(std::vector<std::string> vArg);
 
 
 
-/** Base class without constructors for uint256 and uint160.                    Базовый класс без конструкторов для uint256 и uint160.
- * This makes the compiler let you use it in a union.                           Это делает компилятор позволяет использовать его в Союз.
+/** Base class without constructors for uint256 and uint160.
+ * This makes the compiler let you use it in a union.
  */
 template<unsigned int BITS>
 class base_uint
@@ -62,7 +62,7 @@ public:
         double fact = 1.0;
         for (int i = 0; i < WIDTH; i++) {
             ret += fact * pn[i];
-            fact *= 4294967296.0;                                               // число 2 в степени 32
+            fact *= 4294967296.0;
         }
         return ret;
     }
@@ -294,19 +294,6 @@ public:
     }
 
 
-//    std::string GetHex1() const                ////////// новое //////////
-//    {
-//        char str[1];
-//        sprintf(str, "%02x", ((unsigned char*)pn)[sizeof(pn) - (WIDTH * 4 - 1)]);
-//        return std::string(str);
-//    }
-//    std::string GetHex2() const                ////////// новое //////////
-//    {
-//        char str[1];
-//        sprintf(str, "%02x", ((unsigned char*)pn)[sizeof(pn) - (WIDTH * 4)]);
-//        return std::string(str);
-//    }
-
 
     std::string GetHex() const
     {
@@ -321,15 +308,15 @@ public:
         for (int i = 0; i < WIDTH; i++)
             pn[i] = 0;
 
-        // skip leading spaces                                                  пропустить начальные пробелы
+        // skip leading spaces
         while (isspace(*psz))
             psz++;
 
-        // skip 0x                                                              пропустить 0x
+        // skip 0x
         if (psz[0] == '0' && tolower(psz[1]) == 'x')
             psz += 2;
 
-        // hex string to uint                                                   шестнадцатеричная строка для uint
+        // hex string to uint
         static const unsigned char phexdigit[256] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,1,2,3,4,5,6,7,8,9,0,0,0,0,0,0, 0,0xa,0xb,0xc,0xd,0xe,0xf,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0xa,0xb,0xc,0xd,0xe,0xf,0,0,0,0,0,0,0,0,0 };
         const char* pbegin = psz;
         while (phexdigit[(unsigned char)*psz] || *psz == '0')
@@ -420,8 +407,8 @@ typedef base_uint<256> base_uint256;
 
 
 //
-// uint160 and uint256 could be implemented as templates, but to keep       UINT160 и uint256 определяется как "ограничение" могут быть выполнены в виде шаблонов,
-// compile errors and debugging cleaner, they're copy and pasted.           но держать сбор ошибок и отладки очиститель, они копировать и вставлять.
+// uint160 and uint256 could be implemented as templates, but to keep
+// compile errors and debugging cleaner, they're copy and pasted.
 //
 
 
@@ -431,7 +418,7 @@ typedef base_uint<256> base_uint256;
 // uint160
 //
 
-/** 160-bit unsigned integer                                                целое число без знака */
+/** 160-bit unsigned integer */
 class uint160 : public base_uint160
 {
 public:
@@ -546,7 +533,7 @@ inline const uint160 operator-(const uint160& a, const uint160& b)      { return
 // uint256
 //
 
-/** 256-bit unsigned integer                                                целое число без знака*/
+/** 256-bit unsigned integer */
 class uint256 : public base_uint256
 {
 public:

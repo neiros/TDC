@@ -208,7 +208,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 CDiskBlockIndex diskindex;
                 ssValue >> diskindex;
 
-                // Construct block index object                                     Построить блок индекс объекта
+                // Construct block index object
                 CBlockIndex* pindexNew = InsertBlockIndex(diskindex.GetBlockHash());
                 pindexNew->pprev          = InsertBlockIndex(diskindex.hashPrev);
                 pindexNew->nHeight        = diskindex.nHeight;
@@ -223,16 +223,16 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
                 pindexNew->nStatus        = diskindex.nStatus;
                 pindexNew->nTx            = diskindex.nTx;
 
-                // Watch for genesis block                                          Следите за начальным блоком
+                // Watch for genesis block
                 if (pindexGenesisBlock == NULL && diskindex.GetBlockHash() == Params().HashGenesisBlock())
                     pindexGenesisBlock = pindexNew;
 
-//                if (!pindexNew->CheckIndex())
-//                    return error("LoadBlockIndex() : CheckIndex failed: %s", pindexNew->ToString().c_str());  В CBlockIndex нет массива с транзакциями для проверки nBits в старом CheckProofOfWork
+                if (!pindexNew->CheckIndex())
+                    return error("LoadBlockIndex() : CheckIndex failed: %s", pindexNew->ToString().c_str());
 
                 pcursor->Next();
             } else {
-                break; // if shutdown requested or finished loading block index     Если запрос на выключение или завершение загрузки индекса блоков
+                break; // if shutdown requested or finished loading block index
             }
         } catch (std::exception &e) {
             return error("%s() : deserialize error", __PRETTY_FUNCTION__);

@@ -11,7 +11,7 @@
 
 #include "util.h" // for uint64
 
-/** Errors thrown by the bignum class                              ошибки, выброшенные bignum классом */
+/** Errors thrown by the bignum class */
 class bignum_error : public std::runtime_error
 {
 public:
@@ -19,7 +19,7 @@ public:
 };
 
 
-/** RAII encapsulated(скрытый, изолированный, инкапсулированный) BN_CTX (OpenSSL bignum context(контекст)) */
+/** RAII encapsulated BN_CTX (OpenSSL bignum context) */
 class CAutoBN_CTX
 {
 protected:
@@ -47,7 +47,7 @@ public:
 };
 
 
-/** C++ wrapper for BIGNUM (OpenSSL bignum)                         C++ оболочка для BIGNUM (OpenSSL bignum) */
+/** C++ wrapper for BIGNUM (OpenSSL bignum) */
 class CBigNum : public BIGNUM
 {
 public:
@@ -134,9 +134,6 @@ public:
             // Since the minimum signed integer cannot be represented as positive so long as its type is signed, 
             // and it's not well-defined what happens if you make it unsigned before negating it,
             // we instead increment the negative integer by 1, convert it, then increment the (now positive) unsigned integer by 1 to compensate
-            //      Поскольку минимальное целое число не может быть представлено как положительное до тех пор пока его не подписали,
-            //      и это не четко, что произойдет, если вы сделаете его беззнаковым до отрицания этого,
-            //      мы вместо этого увеличиваем отрицательное целое число на 1, преобразовываем его, затем увеличиваем (теперь положительное) целое число без знака на 1 для компенсации
             n = -(sn + 1);
             ++n;
             fNegative = true;
@@ -244,13 +241,13 @@ public:
     {
         std::vector<unsigned char> vch2(vch.size() + 4);
         unsigned int nSize = vch.size();
-        // BIGNUM's byte stream format expects 4 bytes of                   BIGNUM's байты потокового формата ожидают 4 байта
-        // big endian size data info at the front                           от старшего к младшему(big-endian) информации данных на фронте
+        // BIGNUM's byte stream format expects 4 bytes of
+        // big endian size data info at the front
         vch2[0] = (nSize >> 24) & 0xff;
         vch2[1] = (nSize >> 16) & 0xff;
         vch2[2] = (nSize >> 8) & 0xff;
         vch2[3] = (nSize >> 0) & 0xff;
-        // swap data to big endian                                          обмен данных от старшего к младшему(big-endian)
+        // swap data to big endian
         reverse_copy(vch.begin(), vch.end(), vch2.begin() + 4);
         BN_mpi2bn(&vch2[0], vch2.size(), this);
     }
@@ -267,27 +264,28 @@ public:
         return vch;
     }
 
-    // The "compact" format is a representation of a whole                  'Компактный' формат представления целого числа N использующий
-    // number N using an unsigned 32bit number similar to a                 unsigned 32bit числа похож на формат с плавающей точкой.
+    // The "compact" format is a representation of a whole
+    // number N using an unsigned 32bit number similar to a
     // floating point format.
-    // The most significant 8 bits are the unsigned exponent of base 256.   8 старших бит без знака показателя базы 256
-    // This exponent can be thought of as "number of bytes of N".           Этот показатель можно рассматривать как "число байтов N".
-    // The lower 23 bits are the mantissa.                                  Нижние 23 бита это mantissa.
-    // Bit number 24 (0x800000) represents the sign of N.                   Бит номер 24 (0x800000) представляет собой знак N.
+    // The most significant 8 bits are the unsigned exponent of base 256.
+    // This exponent can be thought of as "number of bytes of N".
+    // The lower 23 bits are the mantissa.
+    // Bit number 24 (0x800000) represents the sign of N.
     // N = (-1^sign) * mantissa * 256^(exponent-3)
     //
-    // Satoshi's original implementation used(использовал оригинальную реализацию) BN_bn2mpi() and BN_mpi2bn().
-    // MPI uses the most significant bit of the first byte as sign. (интерфейс передачи сообщений(MPI) использует старший бит первого байта, как знак)
-    // Thus(поэтому) 0x1234560000 is compact (0x05123456)
+    // Satoshi's original implementation used BN_bn2mpi() and BN_mpi2bn().
+    // MPI uses the most significant bit of the first byte as sign.
+    // Thus 0x1234560000 is compact (0x05123456)
     // and  0xc0de000000 is compact (0x0600c0de)
-    // (0x05c0de00) would be(будет) -0x40de000000
+    // (0x05c0de00) would be -0x40de000000
     //
-    // Bitcoin only uses this "compact" format for encoding difficulty      Bitcoin использует только этот "compact" формат для кодирования цели трудности,
-    // targets, which are unsigned 256bit quantities.  Thus, all the        которые являются беззнаковые(unsigned) 256-разрядные величины.
-    // complexities of the sign bit and using base 256 are probably an      Таким образом, некоторые значения сложности могут привестик к аварии.
+    // Bitcoin only uses this "compact" format for encoding difficulty
+    // targets, which are unsigned 256bit quantities.  Thus, all the
+    // complexities of the sign bit and using base 256 are probably an
+    // implementation accident.
     //
-    // This implementation directly uses shifts instead of going            Это внедрение непосредственно использует изменения вместо того,
-    // through an intermediate MPI representation.                          чтобы пройти промежуточное представление MPI
+    // This implementation directly uses shifts instead of going
+    // through an intermediate MPI representation.
     CBigNum& SetCompact(unsigned int nCompact)
     {
         unsigned int nSize = nCompact >> 24;
@@ -319,8 +317,8 @@ public:
             BN_rshift(&bn, this, 8*(nSize-3));
             nCompact = BN_get_word(&bn);
         }
-        // The 0x00800000 bit denotes the sign.                                              0x00800000 бит обозначает знак
-        // Thus, if it is already set, divide the mantissa by 256 and increase the exponent. Таким образом, если он уже установлен, разделите мантиссы на 256 и увеличте показатель.
+        // The 0x00800000 bit denotes the sign.
+        // Thus, if it is already set, divide the mantissa by 256 and increase the exponent.
         if (nCompact & 0x00800000)
         {
             nCompact >>= 8;
@@ -333,7 +331,7 @@ public:
 
     void SetHex(const std::string& str)
     {
-        // skip(пропустить) 0x
+        // skip 0x
         const char* psz = str.c_str();
         while (isspace(*psz))
             psz++;
@@ -348,7 +346,7 @@ public:
         while (isspace(*psz))
             psz++;
 
-        // hex string to bignum     шестнадцатеричная строка для bignum
+        // hex string to bignum
         static const signed char phexdigit[256] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,1,2,3,4,5,6,7,8,9,0,0,0,0,0,0, 0,0xa,0xb,0xc,0xd,0xe,0xf,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0xa,0xb,0xc,0xd,0xe,0xf,0,0,0,0,0,0,0,0,0 };
         *this = 0;
         while (isxdigit(*psz))
@@ -400,7 +398,7 @@ public:
     template<typename Stream>
     void Serialize(Stream& s, int nType=0, int nVersion=PROTOCOL_VERSION) const
     {
-        ::Serialize(s, getvch(), nType, nVersion);      // Указание члена(функции) глобального пространства ( :: оператором разрешения(изменения) области видимости. )
+        ::Serialize(s, getvch(), nType, nVersion);
     }
 
     template<typename Stream>
@@ -459,8 +457,8 @@ public:
 
     CBigNum& operator>>=(unsigned int shift)
     {
-        // Note: BN_rshift segfaults on 64-bit if 2^shift is greater than the number  Примечание: ошибка сегментации BN_rshift на 64-битных если 2^shift больше, чем число
-        //   if built on ubuntu 9.04 or 9.10, probably depends on version of OpenSSL  Если собирается на ubuntu 9.04 или 9.10, возможно, зависит от версии OpenSSL
+        // Note: BN_rshift segfaults on 64-bit if 2^shift is greater than the number
+        //   if built on ubuntu 9.04 or 9.10, probably depends on version of OpenSSL
         CBigNum a = 1;
         a <<= shift;
         if (BN_cmp(&a, this) > 0)
@@ -477,7 +475,7 @@ public:
 
     CBigNum& operator++()
     {
-        // prefix operator(по русски то-же самое)
+        // prefix operator
         if (!BN_add(this, this, BN_value_one()))
             throw bignum_error("CBigNum::operator++ : BN_add failed");
         return *this;

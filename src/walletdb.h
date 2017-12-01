@@ -30,7 +30,7 @@ class CKeyMetadata
 public:
     static const int CURRENT_VERSION=1;
     int nVersion;
-    int64 nCreateTime; // 0 means unknown                                           0 означает, что неизвестно
+    int64 nCreateTime; // 0 means unknown
 
     CKeyMetadata()
     {
@@ -56,7 +56,7 @@ public:
     }
 };
 
-/** Access to the wallet database (wallet.dat)                                      Доступ к базе дынных бумажника (wallet.dat) */
+/** Access to the wallet database (wallet.dat) */
 class CWalletDB : public CDB
 {
 public:
@@ -168,8 +168,8 @@ public:
         return Erase(std::make_pair(std::string("pool"), nPool));
     }
 
-    // Settings are no longer stored in wallet.dat; these are                       Настройки больше не хранятся в wallet.dat;
-    // used only for backwards compatibility:                                       они используются только для обратной совместимости:
+    // Settings are no longer stored in wallet.dat; these are
+    // used only for backwards compatibility:
     template<typename T>
     bool ReadSetting(const std::string& strKey, T& value)
     {

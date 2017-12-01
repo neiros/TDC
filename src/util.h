@@ -53,9 +53,9 @@ static const int64 CENT = 1000000;
 #endif
 #endif
 
-/* Format characters for (s)size_t and ptrdiff_t                                    Формат символов (s)size_t и ptrdiff_t */
+/* Format characters for (s)size_t and ptrdiff_t */
 #if defined(_MSC_VER) || defined(__MSVCRT__)
-  /* (s)size_t and ptrdiff_t have the same size specifier in MSVC:                  (s)size_t and ptrdiff_t имеют те же спецификаторв размера в MSVC
+  /* (s)size_t and ptrdiff_t have the same size specifier in MSVC:
      http://msdn.microsoft.com/en-us/library/tcxf1dw6%28v=vs.100%29.aspx
    */
   #define PRIszx    "Ix"
@@ -73,10 +73,10 @@ static const int64 CENT = 1000000;
   #define PRIpdd    "td"
 #endif
 
-// This is needed because the foreach macro can't get over the comma in pair<t1, t2>  Это необходимо, поскольку по каждому элементу макроса не может получить более запятая в паре <t1, t2>
+// This is needed because the foreach macro can't get over the comma in pair<t1, t2>
 #define PAIRTYPE(t1, t2)    std::pair<t1, t2>
 
-// Align by increasing pointer, must have extra space at end of buffer              Выровнять за счет увеличения указателя, должны иметь дополнительное пространство в конце буфера
+// Align by increasing pointer, must have extra space at end of buffer
 template <size_t nBytes, typename T>
 T* alignup(T* p)
 {
@@ -104,8 +104,8 @@ T* alignup(T* p)
 
 inline void MilliSleep(int64 n)
 {
-// Boost's sleep_for was uninterruptable when backed by nanosleep from 1.50         Boost's сон_для повышение было бесперебойным, когда при поддержке nanosleep от 1,50
-// until fixed in 1.52. Use the deprecated sleep method for the broken case.        пока не зафиксированы в 1.52. Использование устаревшего метода сна за разбитую случае.
+// Boost's sleep_for was uninterruptable when backed by nanosleep from 1.50
+// until fixed in 1.52. Use the deprecated sleep method for the broken case.
 // See: https://svn.boost.org/trac/boost/ticket/7238
 
 #if BOOST_VERSION >= 105000 && (!defined(BOOST_HAS_NANOSLEEP) || BOOST_VERSION >= 105200)
@@ -118,9 +118,6 @@ inline void MilliSleep(int64 n)
 /* This GNU C extension enables the compiler to check the format string against the parameters provided.
  * X is the number of the "format string" parameter, and Y is the number of the first variadic parameter.
  * Parameters count from 1.
- *                  Это расширение GNU C позволяет компилятору проверить формат строки с параметрами предоставляется.
- *                  Х представляет собой число "формат строки" параметра, а Y является номером первого переменным числом параметров.
- *                  Параметры считать от 1
  */
 #ifdef __GNUC__
 #define ATTR_WARN_PRINTF(X,Y) __attribute__((format(printf,X,Y)))
@@ -158,18 +155,12 @@ int ATTR_WARN_PRINTF(1,2) OutputDebugStringF(const char* pszFormat, ...);
     It is not allowed to use va_start with a pass-by-reference argument.
     (C++ standard, 18.7, paragraph 3). Use a dummy argument to work around this, and use a
     macro to keep similar semantics.
-                    Обоснование real_strprintf / strprintf строительства:
-                      Не допускается использовать va_start с пропуском по ссылке аргумент.
-                      (C + + стандарт, 18.7, пункт 3). Используйте фиктивный аргумент, чтобы обойти это, и использовать
-                      Макрос вести сходную семантику.
 */
 
-/** Overload strprintf for char*, so that GCC format type warnings can be given     Перегрузка для strprintf символ *, так что GCC предупреждения формате типа могут предоставляться*/
+/** Overload strprintf for char*, so that GCC format type warnings can be given */
 std::string ATTR_WARN_PRINTF(1,3) real_strprintf(const char *format, int dummy, ...);
 /** Overload strprintf for std::string, to be able to use it with _ (translation).
  * This will not support GCC format type warnings (-Wformat) so be careful.
- *                  Перегрузка strprintf для std::string, чтобы иметь возможность использовать его с _ (translation)
- *                  Это не будет поддерживать формат GCC типа предупреждений (-Wformat) так что будьте осторожны.
  */
 std::string real_strprintf(const std::string &format, int dummy, ...);
 #define strprintf(format, ...) real_strprintf(format, 0, __VA_ARGS__)
@@ -177,11 +168,11 @@ std::string vstrprintf(const char *format, va_list ap);
 
 bool ATTR_WARN_PRINTF(1,2) error(const char *format, ...);
 
-/* Redefine printf so that it directs output to debug.log                           Пересмотрите printf так, что она направляет вывод на debug.log
+/* Redefine printf so that it directs output to debug.log
  *
- * Do this *after* defining the other printf-like functions, because otherwise the  Сделайте это *after* определение других printf-подобные функции, поскольку в противном случае
+ * Do this *after* defining the other printf-like functions, because otherwise the
  * __attribute__((format(printf,X,Y))) gets expanded to __attribute__((format(OutputDebugStringF,X,Y)))
- * which confuses gcc.                                                              которая дезориентирует GCC
+ * which confuses gcc.
  */
 #define printf OutputDebugStringF
 
@@ -378,7 +369,7 @@ inline bool IsSwitchChar(char c)
 }
 
 /**
- * Return string argument or default value                                          Вернуться строку аргумент или значение по умолчанию
+ * Return string argument or default value
  *
  * @param strArg Argument to get (e.g. "-foo")
  * @param default (e.g. "1")
@@ -387,7 +378,7 @@ inline bool IsSwitchChar(char c)
 std::string GetArg(const std::string& strArg, const std::string& strDefault);
 
 /**
- * Return integer argument or default value                                         Вернуться целый аргумент или значение по умолчанию
+ * Return integer argument or default value
  *
  * @param strArg Argument to get (e.g. "-foo")
  * @param default (e.g. 1)
@@ -396,7 +387,7 @@ std::string GetArg(const std::string& strArg, const std::string& strDefault);
 int64 GetArg(const std::string& strArg, int64 nDefault);
 
 /**
- * Return boolean argument or default value                                         Вернуться булевый аргумент или значение по умолчанию
+ * Return boolean argument or default value
  *
  * @param strArg Argument to get (e.g. "-foo")
  * @param default (true or false)
@@ -405,7 +396,7 @@ int64 GetArg(const std::string& strArg, int64 nDefault);
 bool GetBoolArg(const std::string& strArg, bool fDefault);
 
 /**
- * Set an argument if it doesn't already have a value                               Установить аргумент, если он еще не имеет значения
+ * Set an argument if it doesn't already have a value
  *
  * @param strArg Argument to set (e.g. "-foo")
  * @param strValue Value (e.g. "1")
@@ -414,7 +405,7 @@ bool GetBoolArg(const std::string& strArg, bool fDefault);
 bool SoftSetArg(const std::string& strArg, const std::string& strValue);
 
 /**
- * Set a boolean argument if it doesn't already have a value                        Установить булевый аргумент, если он еще не имеет значения
+ * Set a boolean argument if it doesn't already have a value
  *
  * @param strArg Argument to set (e.g. "-foo")
  * @param fValue Value (e.g. false)
@@ -424,8 +415,8 @@ bool SoftSetBoolArg(const std::string& strArg, bool fValue);
 
 /**
  * MWC RNG of George Marsaglia
- * This is intended to be fast. It has a period of 2^59.3, though the               Это сделано для того, чтобы быть быстро. Он имеет период 2 | 59,3, хотя
- * least significant 16 bits only have a period of about 2^30.1.                    младшие 16 бит только в течение примерно 2 ^ 30.1.
+ * This is intended to be fast. It has a period of 2^59.3, though the
+ * least significant 16 bits only have a period of about 2^30.1.
  *
  * @return random value
  */
@@ -439,13 +430,13 @@ static inline uint32_t insecure_rand(void)
 }
 
 /**
- * Seed insecure_rand using the random pool.                                        Источник insecure_rand использованием случайного бассейна.
- * @param Deterministic Use a determinstic seed                                     @param детерминированные Используйте детерминированный источник
+ * Seed insecure_rand using the random pool.
+ * @param Deterministic Use a determinstic seed
  */
 void seed_insecure_rand(bool fDeterministic=false);
 
-/** Median filter over a stream of values.                                          Медианный фильтр для потока значений.
- * Returns the median of the last N numbers                                         Возвращает медиану последних N номеров
+/** Median filter over a stream of values.
+ * Returns the median of the last N numbers
  */
 template <typename T> class CMedianFilter
 {
@@ -479,11 +470,11 @@ public:
     {
         int size = vSorted.size();
         assert(size>0);
-        if(size & 1) // Odd number of elements                                      Нечетное число элементов
+        if(size & 1) // Odd number of elements
         {
             return vSorted[size/2];
         }
-        else // Even number of elements                                             Четное количество элементов
+        else // Even number of elements
         {
             return (vSorted[size/2-1] + vSorted[size/2]) / 2;
         }
@@ -514,8 +505,8 @@ inline void SetThreadPriority(int nPriority)
 
 inline void SetThreadPriority(int nPriority)
 {
-    // It's unclear if it's even possible to change thread priorities on Linux,     Непонятно, если это еще возможно изменить приоритеты потоков на Linux,
-    // but we really and truly need it for the generation threads.                  но мы и в самом деле нужно для генерации потоков.
+    // It's unclear if it's even possible to change thread priorities on Linux,
+    // but we really and truly need it for the generation threads.
 #ifdef PRIO_THREAD
     setpriority(PRIO_THREAD, 0, nPriority);
 #else
@@ -532,16 +523,16 @@ inline uint32_t ByteReverse(uint32_t value)
     return (value<<16) | (value>>16);
 }
 
-// Standard wrapper for do-something-forever thread functions.                      Стандартная оболочка для сделай что-то вечно-функции потока.
-// "Forever" really means until the thread is interrupted.                          "Forever" на самом деле означает, пока поток не будет прерван.
-// Use it like:                                                                     Используйте его так:
+// Standard wrapper for do-something-forever thread functions.
+// "Forever" really means until the thread is interrupted.
+// Use it like:
 //   new boost::thread(boost::bind(&LoopForever<void (*)()>, "dumpaddr", &DumpAddresses, 900000));
-// or maybe:                                                                        или, может быть:
+// or maybe:
 //    boost::function<void()> f = boost::bind(&FunctionWithArg, argument);
 //    threadGroup.create_thread(boost::bind(&LoopForever<boost::function<void()> >, "nothing", f, milliseconds));
 template <typename Callable> void LoopForever(const char* name,  Callable func, int64 msecs)
 {
-    std::string s = strprintf("---TTC---%s", name);
+    std::string s = strprintf("bitcoin-%s", name);
     RenameThread(s.c_str());
     printf("%s thread start\n", name);
     try
@@ -564,10 +555,10 @@ template <typename Callable> void LoopForever(const char* name,  Callable func, 
         PrintException(NULL, name);
     }
 }
-// .. and a wrapper that just calls func once                                       и оболочку, которая просто вызывает функцию один раз
+// .. and a wrapper that just calls func once
 template <typename Callable> void TraceThread(const char* name,  Callable func)
 {
-    std::string s = strprintf("---TTC---%s", name);
+    std::string s = strprintf("bitcoin-%s", name);
     RenameThread(s.c_str());
     try
     {

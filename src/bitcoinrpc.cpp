@@ -33,7 +33,7 @@ using namespace json_spirit;
 
 static std::string strRPCUserColonPass;
 
-// These are created by StartRPCThreads, destroyed in StopRPCThreads            Они создаются для StartRPCThreads, уничтожаются в StopRPCThreads
+// These are created by StartRPCThreads, destroyed in StopRPCThreads
 static asio::io_service* rpc_io_service = NULL;
 static map<string, boost::shared_ptr<deadline_timer> > deadlineTimers;
 static ssl::context* rpc_ssl_context = NULL;
@@ -116,7 +116,7 @@ std::string HexBits(unsigned int nBits)
 
 
 ///
-/// Note: This interface may still be subject to change.                        Примечание: этот интерфейс может по-прежнему быть изменены
+/// Note: This interface may still be subject to change.
 ///
 
 string CRPCTable::help(string strCommand) const
@@ -127,7 +127,7 @@ string CRPCTable::help(string strCommand) const
     {
         const CRPCCommand *pcmd = mi->second;
         string strMethod = mi->first;
-        // We already filter duplicates, but these deprecated screw up the sort order   Мы уже фильтровали дубликаты, но они протестовали укреплению порядка сортировки
+        // We already filter duplicates, but these deprecated screw up the sort order
         if (strMethod.find("label") != string::npos)
             continue;
         if (strCommand != "" && strMethod != strCommand)
@@ -141,7 +141,7 @@ string CRPCTable::help(string strCommand) const
         }
         catch (std::exception& e)
         {
-            // Help text is returned in an exception                            текст помощи возвращается в виде исключения
+            // Help text is returned in an exception
             string strHelp = string(e.what());
             if (strCommand == "")
                 if (strHelp.find('\n') != string::npos)
@@ -172,20 +172,20 @@ Value help(const Array& params, bool fHelp)
 
 Value stop(const Array& params, bool fHelp)
 {
-    // Accept the deprecated and ignored 'detach' boolean argument              Принимаем устаревшее и игнорируем логический аргумент 'отсоединения'
+    // Accept the deprecated and ignored 'detach' boolean argument
     if (fHelp || params.size() > 1)
         throw runtime_error(
             "stop\n"
-            "Stop ---TTC--- server.");
-    // Shutdown will take long enough that the response should get back         Выключения будет происходить достаточно долго, чтобы должный ответ был получен обратно
+            "Stop Bitcoin server.");
+    // Shutdown will take long enough that the response should get back
     StartShutdown();
-    return "---TTC--- server stopping";
+    return "Bitcoin server stopping";
 }
 
 
 
 //
-// Call Table                                                                   Таблица вызова
+// Call Table
 //
 
 
@@ -285,14 +285,13 @@ const CRPCCommand *CRPCTable::operator[](string name) const
 //
 // This ain't Apache.  We're just using HTTP header for the length field
 // and to be compatible with other JSON-RPC implementations.
-//                          Это не Apache. Мы просто используем HTTP заголовок для поля длины
-//                          и чтобы была совместисость с другими JSON-RPC реализациями.
+//
 
 string HTTPPost(const string& strMsg, const map<string,string>& mapRequestHeaders)
 {
     ostringstream s;
     s << "POST / HTTP/1.1\r\n"
-      << "User-Agent: ---TTC---json-rpc/" << FormatFullVersion() << "\r\n"
+      << "User-Agent: bitcoin-json-rpc/" << FormatFullVersion() << "\r\n"
       << "Host: 127.0.0.1\r\n"
       << "Content-Type: application/json\r\n"
       << "Content-Length: " << strMsg.size() << "\r\n"
@@ -323,7 +322,7 @@ static string HTTPReply(int nStatus, const string& strMsg, bool keepalive)
     if (nStatus == HTTP_UNAUTHORIZED)
         return strprintf("HTTP/1.0 401 Authorization Required\r\n"
             "Date: %s\r\n"
-            "Server: ---TTC---json-rpc/%s\r\n"
+            "Server: bitcoin-json-rpc/%s\r\n"
             "WWW-Authenticate: Basic realm=\"jsonrpc\"\r\n"
             "Content-Type: text/html\r\n"
             "Content-Length: 296\r\n"
@@ -350,7 +349,7 @@ static string HTTPReply(int nStatus, const string& strMsg, bool keepalive)
             "Connection: %s\r\n"
             "Content-Length: %"PRIszu"\r\n"
             "Content-Type: application/json\r\n"
-            "Server: ---TTC---json-rpc/%s\r\n"
+            "Server: bitcoin-json-rpc/%s\r\n"
             "\r\n"
             "%s",
         nStatus,
@@ -368,23 +367,23 @@ bool ReadHTTPRequestLine(std::basic_istream<char>& stream, int &proto,
     string str;
     getline(stream, str);
 
-    // HTTP request line is space-delimited                                         строка HTTP-запроса разделенная пробелами
+    // HTTP request line is space-delimited
     vector<string> vWords;
     boost::split(vWords, str, boost::is_any_of(" "));
     if (vWords.size() < 2)
         return false;
 
-    // HTTP methods permitted: GET, POST                                            HTTP методы работы позволяют: GET, POST
+    // HTTP methods permitted: GET, POST
     http_method = vWords[0];
     if (http_method != "GET" && http_method != "POST")
         return false;
 
-    // HTTP URI must be an absolute path, relative to current host                  HTTP URI должен быть абсолютным путём, относительно текущего узла
+    // HTTP URI must be an absolute path, relative to current host
     http_uri = vWords[1];
     if (http_uri.size() == 0 || http_uri[0] != '/')
         return false;
 
-    // parse proto, if present                                                      разбор прото(протопипов?), если присутствует
+    // parse proto, if present
     string strProto = "";
     if (vWords.size() > 2)
         strProto = vWords[2];
@@ -444,12 +443,12 @@ int ReadHTTPMessage(std::basic_istream<char>& stream, map<string,
     mapHeadersRet.clear();
     strMessageRet = "";
 
-    // Read header                                                                  чтение заголовка
+    // Read header
     int nLen = ReadHTTPHeaders(stream, mapHeadersRet);
     if (nLen < 0 || nLen > (int)MAX_SIZE)
         return HTTP_INTERNAL_SERVER_ERROR;
 
-    // Read message                                                                 чтение сообщения
+    // Read message
     if (nLen > 0)
     {
         vector<char> vch(nLen);
@@ -484,9 +483,6 @@ bool HTTPAuthorized(map<string, string>& mapHeaders)
 // JSON-RPC protocol.  Bitcoin speaks version 1.0 for maximum compatibility,
 // but uses JSON-RPC 1.1/2.0 standards for parts of the 1.0 standard that were
 // unspecified (HTTP errors and contents of 'error').
-//                      JSON-RPC протокол.  Bitcoin оговорит на версии 1.0 для максимальной совместимости,
-//                      но использует JSON-RPC 1.1/2.0 стандарты для частей стандарта 1.0
-//                      которые были не определено (ошибки HTTP и содержимые «ошибки»)
 //
 // 1.0 spec: http://json-rpc.org/wiki/specification
 // 1.2 spec: http://groups.google.com/group/json-rpc/web/json-rpc-over-http
@@ -534,7 +530,6 @@ void ErrorReply(std::ostream& stream, const Object& objError, const Value& id)
 bool ClientAllowed(const boost::asio::ip::address& address)
 {
     // Make sure that IPv4-compatible and IPv4-mapped IPv6 addresses are treated as IPv4 addresses
-    //                      Убедитесь, что IPv4-совместимые и IPv4-отображенные IPv6 адреса, рассматриваются как IPv4-адреса
     if (address.is_v6()
      && (address.to_v6().is_v4_compatible()
       || address.to_v6().is_v4_mapped()))
@@ -543,7 +538,7 @@ bool ClientAllowed(const boost::asio::ip::address& address)
     if (address == asio::ip::address_v4::loopback()
      || address == asio::ip::address_v6::loopback()
      || (address.is_v4()
-         // Check whether IPv4 addresses match 127.0.0.0/8 (loopback subnet)        Проверьте, соответствуют ли IPv4-адреса 127.0.0.0/8 (кольцевой подсеть)
+         // Check whether IPv4 addresses match 127.0.0.0/8 (loopback subnet)
       && (address.to_v4().to_ulong() & 0xff000000) == 0x7f000000))
         return true;
 
@@ -556,7 +551,7 @@ bool ClientAllowed(const boost::asio::ip::address& address)
 }
 
 //
-// IOStream device that speaks SSL but can also speak non-SSL                       Устройство IOStream, которое говорит SSL, но может также говорить не-SSL
+// IOStream device that speaks SSL but can also speak non-SSL
 //
 template <typename Protocol>
 class SSLIOStreamDevice : public iostreams::device<iostreams::bidirectional> {
@@ -657,7 +652,7 @@ private:
 
 void ServiceConnection(AcceptedConnection *conn);
 
-// Forward declaration required for RPCListen                                       Отправьте декларацию, требуемую для RPCListen
+// Forward declaration required for RPCListen
 template <typename Protocol, typename SocketAcceptorService>
 static void RPCAcceptHandler(boost::shared_ptr< basic_socket_acceptor<Protocol, SocketAcceptorService> > acceptor,
                              ssl::context& context,
@@ -666,14 +661,14 @@ static void RPCAcceptHandler(boost::shared_ptr< basic_socket_acceptor<Protocol, 
                              const boost::system::error_code& error);
 
 /**
- * Sets up I/O resources to accept and handle a new connection.                     Устанавливает ресурсы ввода/вывода, чтобы принять и обработать новое подключение.
+ * Sets up I/O resources to accept and handle a new connection.
  */
 template <typename Protocol, typename SocketAcceptorService>
 static void RPCListen(boost::shared_ptr< basic_socket_acceptor<Protocol, SocketAcceptorService> > acceptor,
                    ssl::context& context,
                    const bool fUseSSL)
 {
-    // Accept connection                                                            принять подключение
+    // Accept connection
     AcceptedConnectionImpl<Protocol>* conn = new AcceptedConnectionImpl<Protocol>(acceptor->get_io_service(), context, fUseSSL);
 
     acceptor->async_accept(
@@ -698,25 +693,23 @@ static void RPCAcceptHandler(boost::shared_ptr< basic_socket_acceptor<Protocol, 
                              const boost::system::error_code& error)
 {
     // Immediately start accepting new connections, except when we're cancelled or our socket is closed.
-    //                      Сразу начать принимать новые подключения, кроме случаев, когда мы отменили или наш сокет закрыт.
     if (error != asio::error::operation_aborted && acceptor->is_open())
         RPCListen(acceptor, context, fUseSSL);
 
     AcceptedConnectionImpl<ip::tcp>* tcp_conn = dynamic_cast< AcceptedConnectionImpl<ip::tcp>* >(conn);
 
-    // TODO: Actually handle errors                                                 Фактические ошибки управления
+    // TODO: Actually handle errors
     if (error)
     {
         delete conn;
     }
 
-    // Restrict callers by IP.  It is important to                                  Ограничение абонентов по IP. Важно сделать это перед
-    // do this before starting client thread, to filter out                         началом клиентского потока, чтобы отфильтровать
-    // certain DoS and misbehaving clients.                                         определенные DoS и плохо себя ведущих клиентов.
+    // Restrict callers by IP.  It is important to
+    // do this before starting client thread, to filter out
+    // certain DoS and misbehaving clients.
     else if (tcp_conn && !ClientAllowed(tcp_conn->peer.address()))
     {
         // Only send a 403 if we're not using SSL to prevent a DoS during the SSL handshake.
-        //                  Только отправить 403, если мы не используем SSL для предотвращения DoS во время SSL подтверждения(рукопожатия).
         if (!fUseSSL)
             conn->stream() << HTTPReply(HTTP_FORBIDDEN, "", false) << std::flush;
         delete conn;
@@ -751,7 +744,7 @@ void StartRPCThreads()
               "The username and password MUST NOT be the same.\n"
               "If the file does not exist, create it with owner-readable-only file permissions.\n"
               "It is also recommended to set alertnotify so you are notified of problems;\n"
-              "for example: alertnotify=echo %%s | mail -s \"---TTC--- Alert\" admin@foo.com\n"),
+              "for example: alertnotify=echo %%s | mail -s \"Bitcoin Alert\" admin@foo.com\n"),
                 strWhatAmI.c_str(),
                 GetConfigFile().string().c_str(),
                 EncodeBase58(&rand_pwd[0],&rand_pwd[0]+32).c_str()),
@@ -785,7 +778,6 @@ void StartRPCThreads()
     }
 
     // Try a dual IPv6/IPv4 socket, falling back to separate IPv4 and IPv6 sockets
-    //                      Попробуйте двойной IPv6/IPv4 сокет, отступая назад для разделения IPv4 и IPv6 сокетов
     const bool loopback = !mapArgs.count("-rpcallowip");
     asio::ip::address bindAddress = loopback ? asio::ip::address_v6::loopback() : asio::ip::address_v6::any();
     ip::tcp::endpoint endpoint(bindAddress, GetArg("-rpcport", Params().RPCPort()));
@@ -800,7 +792,6 @@ void StartRPCThreads()
         acceptor->set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
 
         // Try making the socket dual IPv6/IPv4 (if listening on the "any" address)
-        //                  Попытка сделать двойной сокет IPv6/IPv4 (если слушать на «любой» адрес)
         acceptor->set_option(boost::asio::ip::v6_only(loopback), v6_only_error);
 
         acceptor->bind(endpoint);
@@ -817,7 +808,6 @@ void StartRPCThreads()
 
     try {
         // If dual IPv6/IPv4 failed (or we're opening loopback interfaces only), open IPv4 separately
-        //                  Если двойное IPv6/IPv4 неполучилось (или мы открываем только интерфейсы обратной связи), открываем IPv4 отдельно
         if (!fListening || loopback || v6_only_error)
         {
             bindAddress = loopback ? asio::ip::address_v4::loopback() : asio::ip::address_v4::any();
@@ -895,15 +885,15 @@ public:
 
 void JSONRequest::parse(const Value& valRequest)
 {
-    // Parse request                                                                парсим запроса
+    // Parse request
     if (valRequest.type() != obj_type)
         throw JSONRPCError(RPC_INVALID_REQUEST, "Invalid Request object");
     const Object& request = valRequest.get_obj();
 
-    // Parse id now so errors from here on will have the id                         парсим id сейчас так ошибки из этого будут иметь id
+    // Parse id now so errors from here on will have the id
     id = find_value(request, "id");
 
-    // Parse method                                                                 парсим метод
+    // Parse method
     Value valMethod = find_value(request, "method");
     if (valMethod.type() == null_type)
         throw JSONRPCError(RPC_INVALID_REQUEST, "Missing method");
@@ -913,7 +903,7 @@ void JSONRequest::parse(const Value& valRequest)
     if (strMethod != "getwork" && strMethod != "getblocktemplate")
         printf("ThreadRPCServer method=%s\n", strMethod.c_str());
 
-    // Parse params                                                                 парсим параметры
+    // Parse params
     Value valParams = find_value(request, "params");
     if (valParams.type() == array_type)
         params = valParams.get_array();
@@ -965,11 +955,11 @@ void ServiceConnection(AcceptedConnection *conn)
         map<string, string> mapHeaders;
         string strRequest, strMethod, strURI;
 
-        // Read HTTP request line                                                   чтение линии HTTP запроса
+        // Read HTTP request line
         if (!ReadHTTPRequestLine(conn->stream(), nProto, strMethod, strURI))
             break;
 
-        // Read HTTP message headers and body                                       чтение HTTP сообщения заголовков и тела
+        // Read HTTP message headers and body
         ReadHTTPMessage(conn->stream(), mapHeaders, strRequest, nProto);
 
         if (strURI != "/") {
@@ -977,7 +967,7 @@ void ServiceConnection(AcceptedConnection *conn)
             break;
         }
 
-        // Check authorization                                                      проверка аторизации
+        // Check authorization
         if (mapHeaders.count("authorization") == 0)
         {
             conn->stream() << HTTPReply(HTTP_UNAUTHORIZED, "", false) << std::flush;
@@ -986,9 +976,9 @@ void ServiceConnection(AcceptedConnection *conn)
         if (!HTTPAuthorized(mapHeaders))
         {
             printf("ThreadRPCServer incorrect password attempt from %s\n", conn->peer_address_to_string().c_str());
-            /* Deter brute-forcing short passwords.                                 Грубо-принудительно удерживать короткие пароли.
-               If this results in a DOS the user really                             Если это приводит к DOS пользователь действительно
-               shouldn't have their RPC port exposed.                               не должен иметь их RPC порт подтверждения. */
+            /* Deter brute-forcing short passwords.
+               If this results in a DOS the user really
+               shouldn't have their RPC port exposed.*/
             if (mapArgs["-rpcpassword"].size() < 20)
                 MilliSleep(250);
 
@@ -1001,23 +991,23 @@ void ServiceConnection(AcceptedConnection *conn)
         JSONRequest jreq;
         try
         {
-            // Parse request                                                        парсим запроса
+            // Parse request
             Value valRequest;
             if (!read_string(strRequest, valRequest))
                 throw JSONRPCError(RPC_PARSE_ERROR, "Parse error");
 
             string strReply;
 
-            // singleton request                                                    единичный запрос
+            // singleton request
             if (valRequest.type() == obj_type) {
                 jreq.parse(valRequest);
 
                 Value result = tableRPC.execute(jreq.strMethod, jreq.params);
 
-                // Send reply                                                       отправка ответа
+                // Send reply
                 strReply = JSONRPCReply(result, Value::null, jreq.id);
 
-            // array of requests                                                    массив запросов
+            // array of requests
             } else if (valRequest.type() == array_type)
                 strReply = JSONRPCExecBatch(valRequest.get_array());
             else
@@ -1040,12 +1030,12 @@ void ServiceConnection(AcceptedConnection *conn)
 
 json_spirit::Value CRPCTable::execute(const std::string &strMethod, const json_spirit::Array &params) const
 {
-    // Find method                                                                  найти метод
+    // Find method
     const CRPCCommand *pcmd = tableRPC[strMethod];
     if (!pcmd)
         throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Method not found");
 
-    // Observe safe mode                                                            Соблюдайте безопасный режим
+    // Observe safe mode
     string strWarning = GetWarnings("rpc");
     if (strWarning != "" && !GetBoolArg("-disablesafemode", false) &&
         !pcmd->okSafeMode)
@@ -1053,7 +1043,7 @@ json_spirit::Value CRPCTable::execute(const std::string &strMethod, const json_s
 
     try
     {
-        // Execute                                                                  выполнение
+        // Execute
         Value result;
         {
             if (pcmd->threadSafe)
@@ -1080,7 +1070,7 @@ Object CallRPC(const string& strMethod, const Array& params)
               "If the file does not exist, create it with owner-readable-only file permissions."),
                 GetConfigFile().string().c_str()));
 
-    // Connect to localhost                                                         соединение с localhost
+    // Connect to localhost
     bool fUseSSL = GetBoolArg("-rpcssl", false);
     asio::io_service io_service;
     ssl::context context(io_service, ssl::context::sslv23);
@@ -1091,21 +1081,21 @@ Object CallRPC(const string& strMethod, const Array& params)
     if (!d.connect(GetArg("-rpcconnect", "127.0.0.1"), GetArg("-rpcport", itostr(Params().RPCPort()))))
         throw runtime_error("couldn't connect to server");
 
-    // HTTP basic authentication                                                    HTTP базовая аутентификация(проверка подлинности)
+    // HTTP basic authentication
     string strUserPass64 = EncodeBase64(mapArgs["-rpcuser"] + ":" + mapArgs["-rpcpassword"]);
     map<string, string> mapRequestHeaders;
     mapRequestHeaders["Authorization"] = string("Basic ") + strUserPass64;
 
-    // Send request                                                                 отправка запроса
+    // Send request
     string strRequest = JSONRPCRequest(strMethod, params, 1);
     string strPost = HTTPPost(strRequest, mapRequestHeaders);
     stream << strPost << std::flush;
 
-    // Receive HTTP reply status                                                    получение HTTP статуса ответа
+    // Receive HTTP reply status
     int nProto = 0;
     int nStatus = ReadHTTPStatus(stream, nProto);
 
-    // Receive HTTP reply message headers and body                                  получение HTTP сообщения заголовков и тела
+    // Receive HTTP reply message headers and body
     map<string, string> mapHeaders;
     string strReply;
     ReadHTTPMessage(stream, mapHeaders, strReply, nProto);
@@ -1117,7 +1107,7 @@ Object CallRPC(const string& strMethod, const Array& params)
     else if (strReply.empty())
         throw runtime_error("no response from server");
 
-    // Parse reply                                                                  парсим ответ
+    // Parse reply
     Value valReply;
     if (!read_string(strReply, valReply))
         throw runtime_error("couldn't parse reply from server");
@@ -1138,7 +1128,7 @@ void ConvertTo(Value& value, bool fAllowNull=false)
         return;
     if (value.type() == str_type)
     {
-        // reinterpret string as unquoted json value                                интерпретировать строку как без кавычек json значение
+        // reinterpret string as unquoted json value
         Value value2;
         string strJSON = value.get_str();
         if (!read_string(strJSON, value2))
@@ -1152,7 +1142,7 @@ void ConvertTo(Value& value, bool fAllowNull=false)
     }
 }
 
-// Convert strings to command-specific RPC representation                           Преобразование строк в специфичную-команду RPC представления
+// Convert strings to command-specific RPC representation
 Array RPCConvertValues(const std::string &strMethod, const std::vector<std::string> &strParams)
 {
     Array params;
@@ -1162,7 +1152,7 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     int n = params.size();
 
     //
-    // Special case non-string parameter types                                      Особый случай типов нестроковых параметров
+    // Special case non-string parameter types
     //
     if (strMethod == "stop"                   && n > 0) ConvertTo<bool>(params[0]);
     if (strMethod == "getaddednodeinfo"       && n > 0) ConvertTo<bool>(params[0]);
@@ -1220,39 +1210,39 @@ int CommandLineRPC(int argc, char *argv[])
     int nRet = 0;
     try
     {
-        // Skip switches                                                            передёргивание(пропустить) переключателей
+        // Skip switches
         while (argc > 1 && IsSwitchChar(argv[1][0]))
         {
             argc--;
             argv++;
         }
 
-        // Method                                                                   метод
+        // Method
         if (argc < 2)
             throw runtime_error("too few parameters");
         string strMethod = argv[1];
 
-        // Parameters default to strings                                            Параметры по умолчанию для строк
+        // Parameters default to strings
         std::vector<std::string> strParams(&argv[2], &argv[argc]);
         Array params = RPCConvertValues(strMethod, strParams);
 
-        // Execute                                                                  выполнение
+        // Execute
         Object reply = CallRPC(strMethod, params);
 
-        // Parse reply                                                              парсим ответ
+        // Parse reply
         const Value& result = find_value(reply, "result");
         const Value& error  = find_value(reply, "error");
 
         if (error.type() != null_type)
         {
-            // Error                                                                ошибка
+            // Error
             strPrint = "error: " + write_string(error, false);
             int code = find_value(error.get_obj(), "code").get_int();
             nRet = abs(code);
         }
         else
         {
-            // Result                                                               результат
+            // Result
             if (result.type() == null_type)
                 strPrint = "";
             else if (result.type() == str_type)
@@ -1286,7 +1276,7 @@ int CommandLineRPC(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 #ifdef _MSC_VER
-    // Turn off Microsoft heap dump noise                                           Выключить шум дампа кучи Microsoft
+    // Turn off Microsoft heap dump noise
     _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
     _CrtSetReportFile(_CRT_WARN, CreateFile("NUL", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0));
 #endif

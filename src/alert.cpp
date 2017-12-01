@@ -104,13 +104,13 @@ bool CAlert::IsInEffect() const
 bool CAlert::Cancels(const CAlert& alert) const
 {
     if (!IsInEffect())
-        return false; // this was a no-op before 31403                              это была (no operation пустаяя инструкция) прежде 31403
+        return false; // this was a no-op before 31403
     return (alert.nID <= nCancel || setCancel.count(alert.nID));
 }
 
 bool CAlert::AppliesTo(int nVersion, std::string strSubVerIn) const
 {
-    // TODO: rework for client-version-embedded-in-strSubVer ?                      переделка для клиента-версии-встроенной-в-strSubVer ?
+    // TODO: rework for client-version-embedded-in-strSubVer ?
     return (IsInEffect() &&
             nMinVer <= nVersion && nVersion <= nMaxVer &&
             (setSubVer.empty() || setSubVer.count(strSubVerIn)));
@@ -125,7 +125,7 @@ bool CAlert::RelayTo(CNode* pnode) const
 {
     if (!IsInEffect())
         return false;
-    // returns true if wasn't already contained in the set                          возвращает true, если уже не содержится в наборе
+    // returns true if wasn't already contained in the set
     if (pnode->setKnown.insert(GetHash()).second)
     {
         if (AppliesTo(pnode->nVersion, pnode->strSubVer) ||
@@ -145,7 +145,7 @@ bool CAlert::CheckSignature() const
     if (!key.Verify(Hash(vchMsg.begin(), vchMsg.end()), vchSig))
         return error("CAlert::CheckSignature() : verify signature failed");
 
-    // Now unserialize the data                                                     Теперь ансериализируем данных
+    // Now unserialize the data
     CDataStream sMsg(vchMsg, SER_NETWORK, PROTOCOL_VERSION);
     sMsg >> *(CUnsignedAlert*)this;
     return true;
@@ -170,13 +170,13 @@ bool CAlert::ProcessAlert(bool fThread)
     if (!IsInEffect())
         return false;
 
-    // alert.nID=max is reserved for if the alert key is                            alert.nID=max зарезервирован для того что если ключ предупреждения
-    // compromised. It must have a pre-defined message,                             скомпрометирован. Он должен иметь предварительно определенные сообщения,
-    // must never expire, must apply to all versions,                               не должен никогда терять силу, необходимость применения ко всем версиям
-    // and must cancel all previous                                                 и необходимо отменить все предыдущие предупреждения
-    // alerts or it will be ignored (so an attacker can't                           или он будет игнорироваться (таким образом злоумышленник
-    // send an "everything is OK, don't panic" version that                         не может послать версию 'все в порядке, не паникуйте',
-    // cannot be overridden):                                                       которая не может быть отвергнута):
+    // alert.nID=max is reserved for if the alert key is
+    // compromised. It must have a pre-defined message,
+    // must never expire, must apply to all versions,
+    // and must cancel all previous
+    // alerts or it will be ignored (so an attacker can't
+    // send an "everything is OK, don't panic" version that
+    // cannot be overridden):
     int maxInt = std::numeric_limits<int>::max();
     if (nID == maxInt)
     {
@@ -194,7 +194,7 @@ bool CAlert::ProcessAlert(bool fThread)
 
     {
         LOCK(cs_mapAlerts);
-        // Cancel previous alerts                                                   Отмена предыдущих предупреждений
+        // Cancel previous alerts
         for (map<uint256, CAlert>::iterator mi = mapAlerts.begin(); mi != mapAlerts.end();)
         {
             const CAlert& alert = (*mi).second;
@@ -214,7 +214,7 @@ bool CAlert::ProcessAlert(bool fThread)
                 mi++;
         }
 
-        // Check if this alert has been cancelled                                   Убедитесь, что это предупреждение было отменено
+        // Check if this alert has been cancelled
         BOOST_FOREACH(PAIRTYPE(const uint256, CAlert)& item, mapAlerts)
         {
             const CAlert& alert = item.second;
@@ -225,7 +225,7 @@ bool CAlert::ProcessAlert(bool fThread)
             }
         }
 
-        // Add to mapAlerts                                                         добавить в  mapAlerts
+        // Add to mapAlerts
         mapAlerts.insert(make_pair(GetHash(), *this));
         // Notify UI and -alertnotify if it applies to me
         if(AppliesToMe())
@@ -237,14 +237,9 @@ bool CAlert::ProcessAlert(bool fThread)
                 // Alert text should be plain ascii coming from a trusted source, but to
                 // be safe we first strip anything not in safeChars, then add single quotes around
                 // the whole string before passing it to the shell:
-                //                  Текст оповещения должен быть простым ASCII и идти из доверенного источника,
-                //                  но для обеспечения безопасности мы сначала разделяем чтолибо не из safeChars,
-                //                  затем заключаем в одиночные кавычки всю строку перед её передачей в оболочку
                 std::string singleQuote("'");
                 // safeChars chosen to allow simple messages/URLs/email addresses, but avoid anything
                 // even possibly remotely dangerous like & or >
-                //                  safeChars выбран для разрешения простые сообщения/URL/адресов электронной почты, но избегать всего другого,
-                //                  даже, возможно, дистанционно опасный, как & иди >
                 std::string safeChars("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890 .,;_/:?@");
                 std::string safeStatus;
                 for (std::string::size_type i = 0; i < strStatusBar.size(); i++)

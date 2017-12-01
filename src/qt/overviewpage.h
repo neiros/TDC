@@ -45,8 +45,6 @@ private:
     TxViewDelegate *txdelegate;
     TransactionFilterProxy *filter;
 
-    bool miner;
-
 private slots:
     void updateDisplayUnit();
     void handleTransactionClicked(const QModelIndex &index);

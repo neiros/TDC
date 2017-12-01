@@ -8,7 +8,7 @@
 
 #include <boost/filesystem.hpp>
 
-/* Minimum free space (in bytes) needed for data directory (Минимальное свободное пространство (в байтах), необходимых для каталога данных )*/
+/* Minimum free space (in bytes) needed for data directory */
 static const uint64 GB_BYTES = 1000000000LL;
 static const uint64 BLOCK_CHAIN_SIZE = 10LL * GB_BYTES;
 
@@ -21,17 +21,6 @@ static const uint64 BLOCK_CHAIN_SIZE = 10LL * GB_BYTES;
    This ensures that no queue of checking requests is built up while the user is
    still entering the path, and that always the most recently entered path is checked as
    soon as the thread becomes available.
-
-
-   Проверка свободного пространства асинхронно для предотвращения висящих в пользовательский интерфейс поток.
-
-   Один запрос на обратный путь находится в полете в данной ветви; когда check()
-   функция работает, то ток из связанного с ней - введение объекта.
-   Ответ будет отправлен обратно через сигнал.
-
-   Это гарантирует, что никто не очереди проверка просит не в то время как пользователь
-   по-прежнему в путь, и что всегда последнее введенное путь проверяется как
-   только поток становится доступным.
 */
 class FreespaceChecker : public QObject
 {
@@ -183,7 +172,7 @@ void Intro::pickDataDirectory()
                 fs::create_directory(dataDir.toStdString());
                 break;
             } catch(fs::filesystem_error &e) {
-                QMessageBox::critical(0, QObject::tr("---TTC---"),
+                QMessageBox::critical(0, QObject::tr("Bitcoin"),
                                       QObject::tr("Error: Specified data directory \"%1\" can not be created.").arg(dataDir));
                 /* fall through, back to choosing screen */
             }

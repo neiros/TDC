@@ -53,17 +53,17 @@ public:
     friend bool operator<(const CNoDestination &a, const CNoDestination &b) { return true; }
 };
 
-/** A txout script template with a specific destination. It is either:          Шаблон сценария txout с определенным назначения. Это либо:
- *  * CNoDestination: no destination set                                        CNoDestination: не установленно назначение
- *  * CKeyID: TX_PUBKEYHASH destination                                         CKeyID: TX_PUBKEYHASH назначение
- *  * CScriptID: TX_SCRIPTHASH destination                                      CScriptID: TX_SCRIPTHASH назначение
- *  A CTxDestination is the internal data type encoded in a CBitcoinAddress     внутренний тип данных CTxDestination кодируются в CBitcoinAddress
+/** A txout script template with a specific destination. It is either:
+ *  * CNoDestination: no destination set
+ *  * CKeyID: TX_PUBKEYHASH destination
+ *  * CScriptID: TX_SCRIPTHASH destination
+ *  A CTxDestination is the internal data type encoded in a CBitcoinAddress
  */
 typedef boost::variant<CNoDestination, CKeyID, CScriptID> CTxDestination;
 
 const char* GetTxnOutputType(txnouttype t);
 
-/** Script opcodes(op_коды) */
+/** Script opcodes */
 enum opcodetype
 {
     // push value
@@ -240,7 +240,7 @@ inline std::string StackString(const std::vector<std::vector<unsigned char> >& v
 
 
 
-/** Serialized script, used inside transaction inputs and outputs       Сериализованный сценарий, использующий внутри транзакции входы и выходы   */
+/** Serialized script, used inside transaction inputs and outputs */
 class CScript : public std::vector<unsigned char>
 {
 protected:
@@ -294,8 +294,8 @@ public:
     }
 
 
-    //explicit CScript(char b) is not portable.  Use 'signed char' or 'unsigned char'.          не портабелен
-    explicit CScript(signed char b)    { operator<<(b); }                                    // Ключевое слово explicit запрещает автоматическое создание конвертирующего конструктора
+    //explicit CScript(char b) is not portable.  Use 'signed char' or 'unsigned char'.
+    explicit CScript(signed char b)    { operator<<(b); }
     explicit CScript(short b)          { operator<<(b); }
     explicit CScript(int b)            { operator<<(b); }
     explicit CScript(long b)           { operator<<(b); }
@@ -312,7 +312,7 @@ public:
     explicit CScript(const std::vector<unsigned char>& b) { operator<<(b); }
 
 
-    //CScript& operator<<(char b) is not portable.  Use 'signed char' or 'unsigned char'.       не портабелен
+    //CScript& operator<<(char b) is not portable.  Use 'signed char' or 'unsigned char'.
     CScript& operator<<(signed char b)    { return push_int64(b); }
     CScript& operator<<(short b)          { return push_int64(b); }
     CScript& operator<<(int b)            { return push_int64(b); }
@@ -391,8 +391,6 @@ public:
     {
         // I'm not sure if this should push the script or concatenate scripts.
         // If there's ever a use for pushing a script onto a script, delete this member fn
-        //      Я не уверен если это должно подтолкнуть сценарий или объединить сценарии.
-        //      Если когда-либо использовать для толкания сценарий на сценарий, удалите этот член fn
         assert(!"Warning: Pushing a CScript onto a CScript with << is probably not intended, use + to concatenate!");
         return *this;
     }
@@ -400,7 +398,7 @@ public:
 
     bool GetOp(iterator& pc, opcodetype& opcodeRet, std::vector<unsigned char>& vchRet)
     {
-         // Wrapper so it can be called with either iterator or const_iterator     Обрамление таким образом, что может быть либо итератор либо const_iterator
+         // Wrapper so it can be called with either iterator or const_iterator
          const_iterator pc2 = pc;
          bool fRet = GetOp2(pc2, opcodeRet, &vchRet);
          pc = begin() + (pc2 - begin());
@@ -433,12 +431,12 @@ public:
         if (pc >= end())
             return false;
 
-        // Read instruction                     Чтение инструкции
+        // Read instruction
         if (end() - pc < 1)
             return false;
         unsigned int opcode = *pc++;
 
-        // Immediate operand                    Непосредственный операнд(аргумент операции; данные, которые обрабатываются командой)
+        // Immediate operand
         if (opcode <= OP_PUSHDATA4)
         {
             unsigned int nSize = 0;
@@ -478,7 +476,7 @@ public:
         return true;
     }
 
-    // Encode/decode small integers:                        Кодирование/декодирование малых целых чисел
+    // Encode/decode small integers:
     static int DecodeOP_N(opcodetype opcode)
     {
         if (opcode == OP_0)
@@ -522,20 +520,20 @@ public:
         return nFound;
     }
 
-    // Pre-version-0.6, Bitcoin always counted CHECKMULTISIGs           Pre-version-0.6, Bitcoin всегда рассчитывал CHECKMULTISIGs
-    // as 20 sigops. With pay-to-script-hash, that changed:             как 20 sigops. С pay-to-script-hash, произошли изменения:
-    // CHECKMULTISIGs serialized in scriptSigs are                      CHECKMULTISIGs преобразовывается в scriptSigs считаются
-    // counted more accurately, assuming they are of the form           более точно, при условии, что они имеют форму
-    //  ... OP_N CHECKMULTISIG ...                                         ... OP_N CHECKMULTISIG ...
+    // Pre-version-0.6, Bitcoin always counted CHECKMULTISIGs
+    // as 20 sigops. With pay-to-script-hash, that changed:
+    // CHECKMULTISIGs serialized in scriptSigs are
+    // counted more accurately, assuming they are of the form
+    //  ... OP_N CHECKMULTISIG ...
     unsigned int GetSigOpCount(bool fAccurate) const;
 
-    // Accurately count sigOps, including sigOps in                     Точно рассчитывает sigOps, содержащийся sigOps в
-    // pay-to-script-hash transactions:                                 pay-to-script-hash транзакциях:
+    // Accurately count sigOps, including sigOps in
+    // pay-to-script-hash transactions:
     unsigned int GetSigOpCount(const CScript& scriptSig) const;
 
     bool IsPayToScriptHash() const;
 
-    // Called by IsStandardTx                                           Вызывается для IsStandardTx
+    // Called by IsStandardTx
     bool IsPushOnly() const
     {
         const_iterator pc = begin();
@@ -594,33 +592,33 @@ public:
     }
 };
 
-/** Compact serializer for scripts.                                                             Компактная сериализация для скриптов
+/** Compact serializer for scripts.
  *
- *  It detects common cases and encodes them much more efficiently.                             Он определяет общие случаи и кодирует их гораздо более эффективно
- *  3 special cases are defined:                                                                3 специальных случаях определяются:
- *  * Pay to pubkey hash (encoded as 21 bytes)                                                  * Плата за pubkey хеш (кодировать как 21 байт)
- *  * Pay to script hash (encoded as 21 bytes)                                                  * Плата за script хеш (кодировать как 21 байт)
- *  * Pay to pubkey starting with 0x02, 0x03 or 0x04 (encoded as 33 bytes)                      * Плата за pubkey начиная с 0x02, 0x03 или 0x04 (кодировать как 33 байт)
+ *  It detects common cases and encodes them much more efficiently.
+ *  3 special cases are defined:
+ *  * Pay to pubkey hash (encoded as 21 bytes)
+ *  * Pay to script hash (encoded as 21 bytes)
+ *  * Pay to pubkey starting with 0x02, 0x03 or 0x04 (encoded as 33 bytes)
  *
- *  Other scripts up to 121 bytes require 1 byte + script length. Above                         Другие скрипты до 121 байт требует 1 байт + длина скрипта.
- *  that, scripts up to 16505 bytes require 2 bytes + script length.                            Выше этого, скрипты до 16505 байт требует 2 байта + длина скрипта.
+ *  Other scripts up to 121 bytes require 1 byte + script length. Above
+ *  that, scripts up to 16505 bytes require 2 bytes + script length.
  */
 class CScriptCompressor
 {
 private:
-    // make this static for now (there are only 6 special scripts defined)                      Сделать этот статическим (есть только 6 специальные сценариев определены)
-    // this can potentially be extended together with a new nVersion for                        это потенциально может быть продлен вместе с новым nVersion по транзакциям,
-    // transactions, in which case this value becomes dependent on nVersion                     в этом случае эта величина становится зависимым от nVersion
-    // and nHeight of the enclosing transaction.                                                и nHeight содержащихся в транзакциях.
+    // make this static for now (there are only 6 special scripts defined)
+    // this can potentially be extended together with a new nVersion for
+    // transactions, in which case this value becomes dependent on nVersion
+    // and nHeight of the enclosing transaction.
     static const unsigned int nSpecialScripts = 6;
 
     CScript &script;
 protected:
-    // These check for scripts for which a special case with a shorter encoding is defined.     Эта проверка для сценариев, для которых особый случай с более коротким кодированием
-    // They are implemented separately from the CScript test, as these test for exact byte      определена. Они осуществляются отдельно от CScript проверки, так как эти испытания
-    // sequence correspondences, and are more strict. For example, IsToPubKey also verifies     для точной последовательности байтов графикам, и являются более строгими.
-    // whether the public key is valid (as invalid ones cannot be represented in compressed     Например, IsToPubKey также проверяет, является ли открытый ключ действителен
-    // form).                                                                                   (недействительными те, которые не могут быть представлены в сжатом виде)
+    // These check for scripts for which a special case with a shorter encoding is defined.
+    // They are implemented separately from the CScript test, as these test for exact byte
+    // sequence correspondences, and are more strict. For example, IsToPubKey also verifies
+    // whether the public key is valid (as invalid ones cannot be represented in compressed
+    // form).
     bool IsToKeyID(CKeyID &hash) const;
     bool IsToScriptID(CScriptID &hash) const;
     bool IsToPubKey(CPubKey &pubkey) const;
@@ -683,8 +681,8 @@ bool SignSignature(const CKeyStore& keystore, const CScript& fromPubKey, CTransa
 bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CTransaction& txTo, unsigned int nIn, int nHashType=SIGHASH_ALL);
 bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CTransaction& txTo, unsigned int nIn, unsigned int flags, int nHashType);
 
-// Given two sets of signatures for scriptPubKey, possibly with OP_0 placeholders,  Учитывая два набора подписей для scriptPubKey, возможно, с OP_0 заполнителей,
-// combine them intelligently and return the result.                                сочетать их разумно и возвращать результат.
+// Given two sets of signatures for scriptPubKey, possibly with OP_0 placeholders,
+// combine them intelligently and return the result.
 CScript CombineSignatures(CScript scriptPubKey, const CTransaction& txTo, unsigned int nIn, const CScript& scriptSig1, const CScript& scriptSig2);
 
 #endif
