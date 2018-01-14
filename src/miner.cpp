@@ -339,6 +339,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
             ReadBlockFromDisk(ReadBlock, vBlockIndexByHeight[GetHeightPartChain(pindexPrev->nHeight + 1)]);
 
             CTransaction txAdd;
+            int64 nvTxFees = 0;
 
             BOOST_FOREACH(CTransaction& tx, ReadBlock.vtx)
             {
@@ -363,9 +364,13 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                                 out.nValue -= rate;
                                 txAdd.vout.push_back(out);
                                 nFees += rate;
+                                nvTxFees += rate;               // для getblocktemplate
                             }
                             else
+                            {
                                 nFees += out.nValue;
+                                nvTxFees += out.nValue;         // для getblocktemplate
+                            }
                             txAdd.vin.push_back(CTxIn(COutPoint(txHash, i), CScript() << OP_0 << OP_0));
                         }
                     }
@@ -373,7 +378,13 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
             }
 
             if (!txAdd.IsNull())
+            {
                 pblock->vtx.push_back(txAdd);       // появилась новая транзакция c большой комиссией(RATE_PART_CHAIN) на эту комиссию так же возможен кратный возврат
+                pblocktemplate->vTxFees.push_back(nvTxFees);                        // для getblocktemplate
+                pblocktemplate->vTxSigOps.push_back(GetLegacySigOpCount(txAdd));    // эти SigOp не учитываются (MAX_BLOCK_SIGOPS) [майнер тоже их не должен учитывать] GetP2SHSigOpCount(tx, view) добавлять?
+
+//printf("=!!!==>> GetLegacySigOpCount   nvTxFees: %"PRI64d"  GetLegacySigOpCount: %i\n", nvTxFees, GetLegacySigOpCount(txAdd));
+            }
         }
 //************************* Transfer TX ***************************
 //*****************************************************************
