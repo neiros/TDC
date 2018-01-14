@@ -73,7 +73,6 @@ Value usetxinblock(const Array& params, bool fHelp)
         }
     }
 
-
     Object obj;
     obj.push_back(Pair("block",             block.GetHash().GetHex()));
     obj.push_back(Pair("tx",                (boost::int64_t)block.vtx.size() - 1));
@@ -95,10 +94,8 @@ Value usetxinblock(const Array& params, bool fHelp)
             CBlock rBlock;
             ReadBlockFromDisk(rBlock, vBlockIndexByHeight[pblockindex->nHeight - BLOCK_TX_FEE - i - 1]);             // -5, -6, -7, -8, -9 блоки
 
-
             obj.push_back(Pair("block",     rBlock.GetHash().GetHex()));
             obj.push_back(Pair("tx",        (boost::int64_t)rBlock.vtx.size() - 1));
-
 
             if (i == 0)
                 useHashBack = rBlock.GetHash();                                 // хэш(uint256) блока для определения случайных позиций
@@ -157,7 +154,6 @@ Value usetxinblock(const Array& params, bool fHelp)
             TxHashPriorityCompare comparerHash(true);
             std::sort(vecTxHashPriority.begin(), vecTxHashPriority.end(), comparerHash);
 
-
             double powsqrt = (useHashBack & CBigNum(uint256(65535)).getuint256()).getdouble() * 0.00001 + 1.2;  // получаем число от 1,2 до 1,85535
             unsigned int stepTr = pow((double)vecTxHashPriority.size(), 1.0 / powsqrt);                         // величина промежутка
             unsigned int numPosition = vecTxHashPriority.size() / stepTr;                                       // количество промежутков
@@ -167,7 +163,6 @@ Value usetxinblock(const Array& params, bool fHelp)
             powsqrt = (useHashBack & CBigNum(uint256(262143)).getuint256()).getdouble() * 0.000001;             // число от 0 до 0,262143
             obj.push_back(Pair("random two",         0.4 + powsqrt));
             unsigned int retFeesTr = (stepTr + 1) * (0.4 + powsqrt);    // во сколько раз нужно умножить возвращаемую комиссию (+1 чтобы не было 0)
-
 
             unsigned int pos = 0;
             unsigned int nextInt = 0;
