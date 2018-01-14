@@ -22,6 +22,11 @@ void InitRPCMining()
     pMiningKey = new CReserveKey(pwalletMain);
 }
 
+void ShutdownRPCMining()
+{
+    delete pMiningKey; pMiningKey = NULL;
+}
+
 
 Value usetxinblock(const Array& params, bool fHelp)
 {
@@ -208,12 +213,6 @@ Value usetxinblock(const Array& params, bool fHelp)
 }
 
 
-void ShutdownRPCMining()
-{
-    delete pMiningKey; pMiningKey = NULL;
-}
-
-
 Value usetxinblock(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
@@ -231,9 +230,7 @@ Value usetxinblock(const Array& params, bool fHelp)
     CBlockIndex* pblockindex = mapBlockIndex[hash];
     ReadBlockFromDisk(block, pblockindex);
 
-
     int64 txFees = 0;
-
     BOOST_FOREACH(CTransaction& tx, block.vtx)
     {
         if (!tx.IsCoinBase())
@@ -259,7 +256,6 @@ Value usetxinblock(const Array& params, bool fHelp)
         }
     }
 
-
     Object obj;
     obj.push_back(Pair("block",             block.GetHash().GetHex()));
     obj.push_back(Pair("tx",                (boost::int64_t)block.vtx.size() - 1));
@@ -281,10 +277,8 @@ Value usetxinblock(const Array& params, bool fHelp)
             CBlock rBlock;
             ReadBlockFromDisk(rBlock, vBlockIndexByHeight[pblockindex->nHeight - BLOCK_TX_FEE - i - 1]);             // -5, -6, -7, -8, -9 блоки
 
-
             obj.push_back(Pair("block",     rBlock.GetHash().GetHex()));
             obj.push_back(Pair("tx",        (boost::int64_t)rBlock.vtx.size() - 1));
-
 
             if (i == 0)
                 useHashBack = rBlock.GetHash();                                 // хэш(uint256) блока для определения случайных позиций
