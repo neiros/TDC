@@ -27,6 +27,193 @@ void ShutdownRPCMining()
     delete pMiningKey; pMiningKey = NULL;
 }
 
+
+
+Value usetxinblock(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "usetxinblock <hash>\n"
+            "Returns an object containing block and transaction hashes related information.");
+
+    std::string strHash = params[0].get_str();
+    uint256 hash(strHash);
+
+    if (mapBlockIndex.count(hash) == 0)
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+
+    CBlock block;
+    CBlockIndex* pblockindex = mapBlockIndex[hash];
+    ReadBlockFromDisk(block, pblockindex);
+
+
+    int64 txFees = 0;
+
+    BOOST_FOREACH(CTransaction& tx, block.vtx)
+    {
+        if (!tx.IsCoinBase())
+        {
+            int64 nIn = 0;
+            BOOST_FOREACH(const CTxIn& txin, tx.vin)
+            {
+                CTransaction getTx;
+                const uint256 txHash = txin.prevout.hash;
+                uint256 hashBlock = 0;
+                if (GetTransaction(txHash, getTx, hashBlock, false))
+                    nIn += getTx.vout[txin.prevout.n].nValue;
+                //else проверка ошибок, если нужно
+            }
+
+            int64 nOut = 0;
+            BOOST_FOREACH (CTxOut& out, tx.vout)
+            {
+                nOut += out.nValue;
+            }
+
+            txFees = nIn - nOut;
+        }
+    }
+
+
+    Object obj;
+    obj.push_back(Pair("block",             block.GetHash().GetHex()));
+    obj.push_back(Pair("tx",                (boost::int64_t)block.vtx.size() - 1));
+    obj.push_back(Pair("txFees",            ValueFromAmount(txFees)));
+    obj.push_back(Pair("subsidy block",     ValueFromAmount(GetBlockValue(pblockindex->nHeight, txFees))));
+
+    for (int i = 0; i < (int)BLOCK_TX_FEE; i++)
+        obj.push_back(Pair(" - block", vBlockIndexByHeight[pblockindex->nHeight - i - 1]->GetBlockHash().GetHex()));
+
+
+    vector<TxHashPriority> vecTxHashPriority;
+    std::map<uint256, uint256> mapTxHashes;
+
+    if (pblockindex->nHeight > int(BLOCK_TX_FEE + NUMBER_BLOCK_TX))
+    {
+        uint256 useHashBack;
+        for (unsigned int i = 0; i < NUMBER_BLOCK_TX; i++)                      // получение транзакций которым возможен возврат комиссий
+        {
+            CBlock rBlock;
+            ReadBlockFromDisk(rBlock, vBlockIndexByHeight[pblockindex->nHeight - BLOCK_TX_FEE - i - 1]);             // -5, -6, -7, -8, -9 блоки
+
+
+            obj.push_back(Pair("block",     rBlock.GetHash().GetHex()));
+            obj.push_back(Pair("tx",        (boost::int64_t)rBlock.vtx.size() - 1));
+
+
+            if (i == 0)
+                useHashBack = rBlock.GetHash();                                 // хэш(uint256) блока для определения случайных позиций
+
+            BOOST_FOREACH(CTransaction& tx, rBlock.vtx)
+            {
+                if (!tx.IsCoinBase())
+                {
+                    TransM trM;
+
+                    int64 nIn = 0;
+                    BOOST_FOREACH(const CTxIn& txin, tx.vin)
+                    {
+                        trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
+
+                        CTransaction getTx;
+                        const uint256 txHash = txin.prevout.hash;
+                        uint256 hashBlock = 0;
+                        if (GetTransaction(txHash, getTx, hashBlock, false))
+                            nIn += getTx.vout[txin.prevout.n].nValue;
+                        //else проверка ошибок, если нужно
+                    }
+
+                    int64 nOut = 0;
+                    BOOST_FOREACH (CTxOut& out, tx.vout)
+                    {
+                        trM.voutM.push_back(CTxOut(out.nValue, CScript()));
+                        nOut += out.nValue;
+                    }
+
+                    int64 nTxFees = nIn - nOut;
+
+                    trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
+
+                    uint256 HashTrM = SerializeHash(trM);
+                    lyra2re2_hashTX(BEGIN(HashTrM), BEGIN(HashTrM), 32);
+
+                    CTransaction getTx;
+                    const uint256 txHash = tx.vin[0].prevout.hash;
+                    uint256 hashBlock = 0;
+                    if (GetTransaction(txHash, getTx, hashBlock, false))
+                        vecTxHashPriority.push_back(TxHashPriority(HashTrM, CTxOut(nTxFees, getTx.vout[tx.vin[0].prevout.n].scriptPubKey)));
+
+                    mapTxHashes[HashTrM] = tx.GetHash();
+                }
+            }
+
+            if (vecTxHashPriority.size() > QUANTITY_TX)
+                break;
+        }
+
+        obj.push_back(Pair("total tx",     (boost::int64_t)vecTxHashPriority.size()));
+
+        TxHashPriorityCompare comparerHash(true);
+        std::sort(vecTxHashPriority.begin(), vecTxHashPriority.end(), comparerHash);
+
+
+        double powsqrt = (useHashBack & CBigNum(uint256(65535)).getuint256()).getdouble() * 0.00001 + 1.2;  // получаем число от 1,2 до 1,85535
+        unsigned int stepTr = pow((double)vecTxHashPriority.size(), 1.0 / powsqrt);                         // величина промежутка
+        unsigned int numPosition = vecTxHashPriority.size() / stepTr;                                       // количество промежутков
+        unsigned int arProgression = stepTr / numPosition;          // аргумент арифметической прогрессии при котором последний промежуток почти равен первым двум
+
+        obj.push_back(Pair("random one",         powsqrt));
+        powsqrt = (useHashBack & CBigNum(uint256(262143)).getuint256()).getdouble() * 0.000001;             // число от 0 до 0,262143
+        obj.push_back(Pair("random two",         0.4 + powsqrt));
+        unsigned int retFeesTr = (stepTr + 1) * (0.4 + powsqrt);    // во сколько раз нужно умножить возвращаемую комиссию (+1 чтобы не было 0)
+
+
+        unsigned int pos = 0;
+        unsigned int nextInt = 0;
+        unsigned int ntx = 0;
+        unsigned int www = 0;
+        unsigned int iii = 0;
+        BOOST_FOREACH(const TxHashPriority& tx, vecTxHashPriority)
+        {
+            if (nextInt == iii)
+            {
+                useHashBack = Hash(BEGIN(useHashBack),  END(useHashBack));
+                unsigned int interval = stepTr + www * arProgression;                     // разбивка vecTxHashPriority на промежутки
+                pos = nextInt + interval * (useHashBack & CBigNum(uint256(1048575)).getuint256()).getdouble() / 1048575.0;   // получаем число от 0 до 1
+                nextInt = iii + interval + 1;
+                www++;
+
+                obj.push_back(Pair("interval",              (boost::int64_t)interval));
+                obj.push_back(Pair("start next interval",   (boost::int64_t)nextInt));
+            }
+
+            if (iii == pos)
+            {
+                ntx++;
+                obj.push_back(Pair("this",                  "tx"));
+                obj.push_back(Pair(tx.get<0>().GetHex(),    mapTxHashes[tx.get<0>()].GetHex()));
+                obj.push_back(Pair("fee",                   ValueFromAmount(tx.get<1>().nValue)));
+                obj.push_back(Pair("fee return",            ValueFromAmount(tx.get<1>().nValue * retFeesTr)));
+
+                CTxDestination address;
+                if (ExtractDestination(tx.get<1>().scriptPubKey, address))
+                    obj.push_back(Pair("address",           CBitcoinAddress(address).ToString()));
+            }
+            else
+                obj.push_back(Pair(tx.get<0>().GetHex(),    mapTxHashes[tx.get<0>()].GetHex()));
+            iii++;
+        }
+        obj.push_back(Pair("selected transactions",         (boost::int64_t)ntx));
+        obj.push_back(Pair("increase fee in",               (boost::int64_t)retFeesTr));
+
+    }
+
+    return obj;
+}
+
+
+
+
 // Return average network hashes per second based on the last 'lookup' blocks,
 // or from the last difficulty change if 'lookup' is nonpositive.
 // If 'height' is nonnegative, compute the estimate at the time when a given block was found.
