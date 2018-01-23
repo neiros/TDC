@@ -1308,7 +1308,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                         lyra2re2_hashTX(BEGIN(hashTr), BEGIN(hashTr), 32);
                         if (nMinerTransFee > 0)
                         {
-                            for (int n = 0; n < nMinerTransFee; n++)
+                            for (int n = 1; n < nMinerTransFee; n++)
                             {
                                 trM.voutM[pos].nValue += 1;
                                 uint256 hT = SerializeHash(trM);
