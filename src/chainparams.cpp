@@ -29,7 +29,8 @@ public:
         pchMessageStart[1] = 0xbe;
         pchMessageStart[2] = 0xb4;
         pchMessageStart[3] = 0xd9;
-        vAlertPubKey = ParseHex("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
+     //   vAlertPubKey = ParseHex("04fc9702847840aaf195de8442ebecedf5b095cdbb9bc716bda9110971b28a49e0ead8564ff0db22209e0374782c093bb899692d524e9d6a6956e7c5ecbcd68284");
+        vAlertPubKey = ParseHex("04c6aecbbb870ab01777444e1c25f70ac4f77d2b4ecb9122a2a871b915834ce1d127df50d1d0eb89a6e4230878cd16fbe923002bc9499af7581400ea3796a70531");
         nDefaultPort = 17511;   // 8333
         nRPCPort = 17510;       // 8332
         bnProofOfWorkLimit = CBigNum(~uint256(0) >> 24);    // 32 // лимит оставить
