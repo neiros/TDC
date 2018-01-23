@@ -90,7 +90,10 @@ Value usetxinblock(const Array& params, bool fHelp)
         for (unsigned int i = 0; i < NUMBER_BLOCK_TX; i++)                      // получение транзакций которым возможен возврат комиссий
         {
             CBlock rBlock;
-            ReadBlockFromDisk(rBlock, vBlockIndexByHeight[pblockindex->nHeight - BLOCK_TX_FEE - i - 1]);             // -5, -6, -7, -8, -9 блоки
+            int bHeight = pblockindex->nHeight - BLOCK_TX_FEE - i - 1;
+
+            ReadBlockFromDisk(rBlock, vBlockIndexByHeight[bHeight]);             // -5, -6, -7, -8, -9 блоки
+//            ReadBlockFromDisk(rBlock, vBlockIndexByHeight[pblockindex->nHeight - BLOCK_TX_FEE - i - 1]);
 
 
             obj.push_back(Pair("block",     rBlock.GetHash().GetHex()));
@@ -128,7 +131,11 @@ Value usetxinblock(const Array& params, bool fHelp)
 
                     int64 nTxFees = nIn - nOut;
 
-                    trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
+                    int txBl = abs(tx.tBlock);
+                    if (txBl >= bHeight)
+                        txBl = bHeight - 1;         // -1 от pindexBest (bool CWallet::CreateTransaction)
+
+                    trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 
                     uint256 HashTrM = SerializeHash(trM);
                     lyra2re2_hashTX(BEGIN(HashTrM), BEGIN(HashTrM), 32);
@@ -451,23 +458,26 @@ Value getwork(const Array& params, bool fHelp)
 
         BOOST_FOREACH(CTransaction& tx, pblock->vtx)
         {
-            TransM trM;
+            if (!tx.IsCoinBase())
+            {
+                TransM trM;
+                BOOST_FOREACH(const CTxIn& txin, tx.vin)
+                    trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
 
-//            trM.vinM = tx.vin;    // почемуто в wallet.cpp подобное работает, а здесь нет
-            BOOST_FOREACH(const CTxIn& txin, tx.vin)
-                trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
+                BOOST_FOREACH (const CTxOut& out, tx.vout)
+                    trM.voutM.push_back(CTxOut(out.nValue, CScript()));
 
-            BOOST_FOREACH (const CTxOut& out, tx.vout)
-                trM.voutM.push_back(CTxOut(out.nValue, CScript()));
+                int txBl = abs(tx.tBlock);
+                if (txBl >= pindexBest->nHeight)
+                    txBl = pindexBest->nHeight - 1;         // -1 от pindexBest (bool CWallet::CreateTransaction)
 
-            trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
+                trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 
-            uint256 hashTr = SerializeHash(trM);
-            lyra2re2_hashTX(BEGIN(hashTr), BEGIN(hashTr), 32);
-            CBigNum bntx = CBigNum(hashTr);
-            sumTrDif += maxBigNum / bntx;
-
-//printf(">>>>> BOOST_FOREACH pblock->vtx    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", hashTr.GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), pblocktemplate->sumTrDif.ToString().c_str());
+                uint256 hashTr = SerializeHash(trM);
+                lyra2re2_hashTX(BEGIN(hashTr), BEGIN(hashTr), 32);
+                CBigNum bntx = CBigNum(hashTr);
+                sumTrDif += maxBigNum / bntx;
+            }
         }
 
         return CheckWork(pblock, *pwalletMain, *pMiningKey, sumTrDif);

@@ -238,6 +238,72 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
         uint64 nBlockSize = 1000;
         uint64 nBlockTx = 0;
         int nBlockSigOps = 100;
+
+
+//*****************************************************************
+//************************* Transfer TX ***************************
+        if (GetHeightPartChain(pindexPrev->nHeight + 1) != -1)
+        {
+
+            CBlock ReadBlock;
+            ReadBlockFromDisk(ReadBlock, vBlockIndexByHeight[GetHeightPartChain(pindexPrev->nHeight + 1)]);
+
+            CTransaction transferTX;
+            int64 ttxFee = 0;
+
+            BOOST_FOREACH(CTransaction& tx, ReadBlock.vtx)
+            {
+                uint256 txHash = tx.GetHash();
+
+                double RPC = RATE_PART_CHAIN;
+                if (tx.vin[0].scriptSig == CScript() << OP_0 << OP_0)
+                    if (!tx.IsCoinBase())
+                        RPC *= 10.0;        // десятикратное увеличение комиссии второго и последующих переносов
+
+                if (view.HaveCoins(txHash))
+                {
+                    const CCoins &coinsOut = view.GetCoins(txHash);
+                    for (unsigned int i = 0; i < tx.vout.size(); i++)
+                    {
+                        if (coinsOut.IsAvailable(i))
+                        {
+                            CTxOut out = coinsOut.vout[i];
+                            int64 rate = out.nValue * RPC;
+                            if (out.nValue - rate > MIN_FEE_PART_CHAIN)
+                            {
+                                out.nValue -= rate;
+                                transferTX.vout.push_back(out);
+                                nFees += rate;
+                                ttxFee += rate;               // для getblocktemplate
+                            }
+                            else
+                            {
+                                nFees += out.nValue;
+                                ttxFee += out.nValue;         // для getblocktemplate
+                            }
+                            transferTX.vin.push_back(CTxIn(COutPoint(txHash, i), CScript() << OP_0 << OP_0));
+                            transferTX.tBlock = pindexPrev->nHeight - 1;
+                        }
+                    }
+                }
+            }
+
+            if (!transferTX.IsNull())
+            {
+                int ttxSigOps = GetLegacySigOpCount(transferTX) + GetP2SHSigOpCount(transferTX, view);
+                nBlockSigOps += ttxSigOps;
+
+                pblock->vtx.push_back(transferTX);       // появилась новая транзакция c большой комиссией(RATE_PART_CHAIN) на эту комиссию так же возможен кратный возврат
+                pblocktemplate->vTxFees.push_back(ttxFee);                        // для getblocktemplate
+                pblocktemplate->vTxSigOps.push_back(ttxSigOps);
+//printf("=!!!==>> if (!transferTX.IsNull())   ttxFee: %"PRI64d"  ttxSigOps: %i\n", ttxFee, ttxSigOps);
+            }
+        }
+
+//************************* Transfer TX ***************************
+//*****************************************************************
+
+
         bool fSortedByFee = (nBlockPrioritySize <= 0);
 
         TxPriorityCompare comparer(fSortedByFee);
@@ -327,78 +393,19 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                 }
             }
         }
-
-
-
 //*****************************************************************
-//************************* Transfer TX ***************************
-
-        if (GetHeightPartChain(pindexPrev->nHeight + 1) != -1)
-        {
-            CBlock ReadBlock;
-            ReadBlockFromDisk(ReadBlock, vBlockIndexByHeight[GetHeightPartChain(pindexPrev->nHeight + 1)]);
-
-            CTransaction txAdd;
-            int64 nvTxFees = 0;
-
-            BOOST_FOREACH(CTransaction& tx, ReadBlock.vtx)
-            {
-                uint256 txHash = tx.GetHash();
-
-                double RPC = RATE_PART_CHAIN;
-                if (tx.vin[0].scriptSig == CScript() << OP_0 << OP_0)
-                    if (!tx.IsCoinBase())
-                        RPC *= 10.0;        // десятикратное увеличение комиссии второго и последующих переносов
-
-                if (view.HaveCoins(txHash))
-                {
-                    const CCoins &coinsOut = view.GetCoins(txHash);
-                    for (unsigned int i = 0; i < tx.vout.size(); i++)
-                    {
-                        if (coinsOut.IsAvailable(i))
-                        {
-                            CTxOut out = coinsOut.vout[i];
-                            int64 rate = out.nValue * RPC;
-                            if (out.nValue - rate > MIN_FEE_PART_CHAIN)
-                            {
-                                out.nValue -= rate;
-                                txAdd.vout.push_back(out);
-                                nFees += rate;
-                                nvTxFees += rate;               // для getblocktemplate
-                            }
-                            else
-                            {
-                                nFees += out.nValue;
-                                nvTxFees += out.nValue;         // для getblocktemplate
-                            }
-                            txAdd.vin.push_back(CTxIn(COutPoint(txHash, i), CScript() << OP_0 << OP_0));
-                        }
-                    }
-                }
-            }
-
-            if (!txAdd.IsNull())
-            {
-                pblock->vtx.push_back(txAdd);       // появилась новая транзакция c большой комиссией(RATE_PART_CHAIN) на эту комиссию так же возможен кратный возврат
-                pblocktemplate->vTxFees.push_back(nvTxFees);                        // для getblocktemplate
-                pblocktemplate->vTxSigOps.push_back(GetLegacySigOpCount(txAdd));    // эти SigOp не учитываются (MAX_BLOCK_SIGOPS) [майнер тоже их не должен учитывать] GetP2SHSigOpCount(tx, view) добавлять?
-
-//printf("=!!!==>> GetLegacySigOpCount   nvTxFees: %"PRI64d"  GetLegacySigOpCount: %i\n", nvTxFees, GetLegacySigOpCount(txAdd));
-            }
-        }
-//************************* Transfer TX ***************************
-//*****************************************************************
-
 
         int64 NewCoin = GetBlockValue(pindexPrev->nHeight+1, nFees) - 10 * COIN;    // 10 * COIN гарантированное вознаграждение майнерам блоков
 
-        if (pindexBest->nHeight > int(BLOCK_TX_FEE + NUMBER_BLOCK_TX))
+        if (pindexBest->nHeight > int(BLOCK_TX_FEE + NUMBER_BLOCK_TX))  // pindexPrev = pindexBest
         {
             uint256 useHashBack;
             for (unsigned int i = 0; i < NUMBER_BLOCK_TX; i++)                      // получение транзакций которым возможен возврат комиссий
             {
                 CBlock rBlock;
-                ReadBlockFromDisk(rBlock, vBlockIndexByHeight[pindexPrev->nHeight - BLOCK_TX_FEE - i]);             // -5, -6, -7, -8, -9 блоки
+                int bHeight = pindexBest->nHeight - BLOCK_TX_FEE - i;
+
+                ReadBlockFromDisk(rBlock, vBlockIndexByHeight[bHeight]);             // -5, -6, -7, -8, -9 блоки
 
                 if (i == 0)
                     useHashBack = rBlock.GetHash();                                 // хэш(uint256) блока для определения случайных позиций
@@ -431,7 +438,11 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
 
                         int64 nTxFees = nIn - nOut;
 
-                        trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
+                        int txBl = abs(tx.tBlock);
+                        if (txBl >= bHeight)            // здесь pindexPrev = pindexBest
+                            txBl = bHeight - 1;         // -1 от pindexBest (bool CWallet::CreateTransaction)
+
+                        trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 
                         uint256 HashTrM = SerializeHash(trM);
                         lyra2re2_hashTX(BEGIN(HashTrM), BEGIN(HashTrM), 32);
@@ -537,7 +548,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
         printf("\nCreateNewBlock(): total size %"PRI64u"\n", nBlockSize);
 
         pblock->vtx[0].vout[0].nValue = NewCoin + 10 * COIN;                // 10 * COIN минимально возможное вознаграждение за найденный блок
-        pblock->vtx[0].tBlock = pindexPrev->nHeight;                    ////////// новое ////////// можно здесь и 0 оставить
+        pblock->vtx[0].tBlock = 0;                                          // как и у генезисной, должен быть 0
 
         pblocktemplate->vTxFees[0] = -nFees;
 
@@ -554,21 +565,28 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
         CBigNum maxBigNum = CBigNum(~uint256(0));
         BOOST_FOREACH(CTransaction& tx, pblock->vtx)
         {
-            TransM trM;
-//            trM.vinM = tx.vin;    // почему в wallet.cpp подобное работает, а здесь нет?
-            BOOST_FOREACH(const CTxIn& txin, tx.vin)
-                trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
+            if (!tx.IsCoinBase())
+            {
+                TransM trM;
+                BOOST_FOREACH(const CTxIn& txin, tx.vin)
+                    trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
 
-            BOOST_FOREACH (const CTxOut& out, tx.vout)
-                trM.voutM.push_back(CTxOut(out.nValue, CScript()));
+                BOOST_FOREACH (const CTxOut& out, tx.vout)
+                    trM.voutM.push_back(CTxOut(out.nValue, CScript()));
 
-            trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
+                int txBl = abs(tx.tBlock);
+                if (txBl >= pindexPrev->nHeight)            // здесь pindexPrev = pindexBest
+                    txBl = pindexPrev->nHeight - 1;         // -1 от pindexBest (bool CWallet::CreateTransaction)
 
-            uint256 HashTr = SerializeHash(trM);
-            lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
-            CBigNum bntx = CBigNum(HashTr);
-            pblocktemplate->sumTrDif += maxBigNum / bntx;
-//printf(">>>>> BOOST_FOREACH pblock->vtx    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", HashTr.GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), pblocktemplate->sumTrDif.ToString().c_str());
+                trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
+
+                uint256 HashTr = SerializeHash(trM);
+                lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
+                CBigNum bntx = CBigNum(HashTr);
+                pblocktemplate->sumTrDif += (maxBigNum / bntx) / (pindexPrev->nHeight - txBl);   // защита от 51% с использованием майнингхешей транзакций ссылающихся на более старые блоки
+                //printf(">>>>> BOOST_FOREACH pblock->vtx    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", HashTr.GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), pblocktemplate->sumTrDif.ToString().c_str());
+            }
+//printf(">>>>> pindexPrev->nHeight - txBl: %i\n", pindexPrev->nHeight - txBl);
         }
 //printf(">>>>> pblocktemplate->sumTrDif: %s\n %s\n", pblocktemplate->sumTrDif.ToString().c_str(), maxBigNum.ToString().c_str());
 
@@ -659,7 +677,7 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey, CBigNum
     CBigNum divideTarget = (maxBigNum / CBigNum().SetCompact(pblock->nBits)) - 1;
 
     int precision = 1000;
-    double snowfox = 2.0;
+    double snowfox = 1.05;
     double CDFtrdt = 1 - exp(- (snowfox * psumTrDif.getuint256().getdouble()) / divideTarget.getuint256().getdouble());
     double CDFsize = 1 - exp(- (double)pblock->vtx.size() / (double)QUANTITY_TX);
 
@@ -760,7 +778,7 @@ void static TTCminer(CWallet *pwallet)
         CBigNum divideTarget = (maxBigNum / CBigNum().SetCompact(pblock->nBits)) - 1;                               // 1 это защита от возможного / на 0
 
         int precision = 1000; // точность коректировки сложности (0.0001)
-        double snowfox = 2.0; // повышающий коэффициент суммы сложностей транзакций (чем больше значение, тем больший вес хешей транзакций при расчёте хеша блока)
+        double snowfox = 1.05;// повышающий коэффициент суммы сложностей транзакций (чем больше значение, тем больший вес хешей транзакций при расчёте хеша блока)
         double CDFtrdt = 1 - exp(- (snowfox * psumTrDif.getuint256().getdouble()) / divideTarget.getuint256().getdouble()); // от 0 до 1
         double CDFsize = 1 - exp(- (double)pblock->vtx.size() / (double)QUANTITY_TX);  // от 0 до 1 тем меньше, чем меньше size() относительно QUANTITY_TX
 

@@ -1382,29 +1382,32 @@ bool CheckProofOfWorkNEW(std::vector<CTransaction> vtx, uint256 hash, unsigned i
         CBigNum sumTrDif = 0;
         BOOST_FOREACH(CTransaction& tx, vtx)
         {
-            TransM trM;
+            if (!tx.IsCoinBase())
+            {
+                TransM trM;
+                BOOST_FOREACH(const CTxIn& txin, tx.vin)
+                    trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
 
-            BOOST_FOREACH(const CTxIn& txin, tx.vin)
-                trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
+                BOOST_FOREACH (const CTxOut& out, tx.vout)
+                    trM.voutM.push_back(CTxOut(out.nValue, CScript()));
 
-            BOOST_FOREACH (const CTxOut& out, tx.vout)
-                trM.voutM.push_back(CTxOut(out.nValue, CScript()));
+                int txBl = abs(tx.tBlock);
+                if (txBl >= pindexBest->nHeight)
+                    txBl = pindexBest->nHeight - 1;         // -1 от pindexBest (bool CWallet::CreateTransaction)
 
-            trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
+                trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 
-            uint256 HashTr = SerializeHash(trM);
-            lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
-            CBigNum bntx = CBigNum(HashTr);
-            sumTrDif += maxBigNum / bntx;
-
-//printf(">>>>> CheckProofOfWorkNEW    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", HashTr.GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), sumTrDif.ToString().c_str());
+                uint256 HashTr = SerializeHash(trM);
+                lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
+                CBigNum bntx = CBigNum(HashTr);
+                sumTrDif += maxBigNum / bntx;
+            }
         }
-//printf(">>>>> sumTrDif: %s\n\n", sumTrDif.ToString().c_str());
 
         CBigNum divideTarget = (maxBigNum / CBigNum().SetCompact(nBits)) - 1;
 
         int precision = 1000;
-        double snowfox = 2.0;
+        double snowfox = 1.05;
         double CDFtrdt = 1 - exp(- (snowfox * sumTrDif.getuint256().getdouble()) / divideTarget.getuint256().getdouble());
         double CDFsize = 1 - exp(- (double)vtx.size() / (double)QUANTITY_TX);   // от 0 до 1
 
@@ -1882,11 +1885,11 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
 //*****************************************************************
 //************************* Transfer TX ***************************
-            bool txAddScriptCheck = true;
+            bool ttxScriptCheck = true;
 
             if (tx.vin[0].scriptSig ==  CScript() << OP_0 << OP_0)
             {
-                CTransaction txAdd;
+                CTransaction transferTX;
 
                 if (GetHeightPartChain(pindex->nHeight) != -1)
                 {
@@ -1914,23 +1917,27 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                                     if (out.nValue - rate > MIN_FEE_PART_CHAIN)
                                     {
                                         out.nValue -= rate;
-                                        txAdd.vout.push_back(out);
+                                        transferTX.vout.push_back(out);
                                     }
-                                    txAdd.vin.push_back(CTxIn(COutPoint(txHash, i), CScript() << OP_0 << OP_0));
+
+                                    transferTX.vin.push_back(CTxIn(COutPoint(txHash, i), CScript() << OP_0 << OP_0));
+
+                                    if (tx.tBlock != 0)             // заплатка из-за того, что забыл про tBlock в данных транзакциях
+                                        transferTX.tBlock = pindex->nHeight - 2;
                                 }
                             }
                         }
                     }
                 }
 
-                if (tx == txAdd)
-                    txAddScriptCheck = false;
+                if (tx == transferTX)
+                    ttxScriptCheck = false;
             }
 
 //************************* Transfer TX ***************************
 //*****************************************************************
 
-            if (txAddScriptCheck)                                   ////////// новое //////////  пройдёт только одна txAdd из-за CheckBlock, что выше и UpdateCoins, что ниже
+            if (ttxScriptCheck)                                   ////////// новое //////////  пройдёт только одна transferTX из-за CheckBlock, что выше и UpdateCoins, что ниже
             {
                 std::vector<CScriptCheck> vChecks;
                 if (!CheckInputs(tx, state, view, fScriptChecks, flags, nScriptCheckThreads ? &vChecks : NULL))
@@ -1948,17 +1955,21 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
         pos.nTxOffset += ::GetSerializeSize(tx, SER_DISK, CLIENT_VERSION);
     }
 
-
 /*************************** новое ******************************/
 
-    if (pindexBest->nHeight > int(BLOCK_TX_FEE + NUMBER_BLOCK_TX))
+    // in miner.cpp        pindex->nHeight = pindexPrev->nHeight + 1;
+
+    int64 NewCoin = GetBlockValue(pindex->nHeight, nFees) - 10 * COIN;    // 10 * COIN гарантированное вознаграждение майнерам блоков
+
+    if (pindex->nHeight - 1 > int(BLOCK_TX_FEE + NUMBER_BLOCK_TX))
     {
         uint256 useHashBack;
         for (unsigned int i = 0; i < NUMBER_BLOCK_TX; i++)
         {
             CBlock rBlock;
-            ReadBlockFromDisk(rBlock, vBlockIndexByHeight[pindexBest->nHeight - BLOCK_TX_FEE - i]);
-//printf("\n>>>>> ReadBlockFromDisk(rBlock, pindexPrev)  vtx.size() = %i i = %i\n\n", rBlock.vtx.size(), i);
+            int bHeight = pindex->nHeight - 1 - BLOCK_TX_FEE - i;
+
+            ReadBlockFromDisk(rBlock, vBlockIndexByHeight[bHeight]);
 
             if (i == 0)
                 useHashBack = rBlock.GetHash();      // получаем хэш(uint256) первого блока для определения случайной позиции транзакции
@@ -1991,7 +2002,12 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
                     int64 nTxFees = nIn - nOut;
 
-                    trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
+                    int txBl = abs(tx.tBlock);
+                    if (txBl >= bHeight)
+                        txBl = bHeight - 1;         // -1 от pindexBest (bool CWallet::CreateTransaction)
+
+                    trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
+//                    trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
 
                     uint256 HashTrM = SerializeHash(trM);
                     lyra2re2_hashTX(BEGIN(HashTrM), BEGIN(HashTrM), 32);
@@ -2037,14 +2053,17 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                 unsigned int cp = cSizeVecTx + position * interval;
 
                 if (vecTxHashPriority.size() > cp)
-    //            if (vecTxHashPriority.size() > cSizeVecTx + interval)
                 {
                     int64 ret = vecTxHashPriority[cp].get<1>().nValue * retFeesTt;     // величина возврата
-                    if (ret > CTransaction::nMinTxFee)             // главное что бы нужный CTxOut присутствовол в vout. Соблюдение последовательности необязательно.
+
+                    if (ret <= NewCoin && ret > CTransaction::nMinTxFee)
                     {
                         if (block.vtx[0].vout[cVoutSize] != CTxOut(ret, vecTxHashPriority[cp].get<1>().scriptPubKey))
+                        {
                             printf("!!! - ERROR 1 - !!!\n");
-
+//                           return state.Abort(_("!!! - ERROR 1 - !!!"));
+                        }
+                        NewCoin -= ret;
                         cVoutSize++;
                     }
                 }
@@ -2054,10 +2073,15 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                 cSizeVecTx += interval + 1;  // +1 что бы не произошло наложения соседних интервалов (максимума и 0), т.е. не происходило выбора одной и той же транзакции дважды
                 w++;
             }
+
+            if (block.vtx[0].vout.size() != cVoutSize)
+                printf("!!! - vecTxHashPriority ERROR - !!!   block.vtx[0].vout.size() = %i !=  cVoutSize = %i\n", block.vtx[0].vout.size(), cVoutSize);
+
         }
 
-        if (GetValueOut(block.vtx[0]) != GetBlockValue(pindexBest->nHeight + 1, nFees))
-            printf("!!! - NewCoin ERROR - !!!   GetValueOut(block.vtx[0]) = %"PRI64d"   GetBlockValue = %"PRI64d"\n", GetValueOut(block.vtx[0]) , GetBlockValue(pindexBest->nHeight + 1, nFees) );
+        if (block.vtx[0].vout[0].nValue != NewCoin + 10 * COIN)
+            printf("!!! - NewCoin ERROR - !!!   block.vtx[0].vout[0].nValue = %"PRI64d" !=  NewCoin + 10 * COIN = %"PRI64d"\n", block.vtx[0].vout[0].nValue , NewCoin + 10 * COIN);
+
     }
 
 
@@ -2160,6 +2184,10 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
         CBlock block;
         if (!ReadBlockFromDisk(block, pindex))
             return state.Abort(_("Failed to read block 1"));
+
+//printf("\n\nОтключение короткой ветви\n");
+//block.print();
+
         int64 nStart = GetTimeMicros();
         if (!DisconnectBlock(block, state, pindex, view))
             return error("SetBestBlock() : DisconnectBlock %s failed", pindex->GetBlockHash().ToString().c_str());
@@ -2180,6 +2208,10 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
         CBlock block;
         if (!ReadBlockFromDisk(block, pindex))
             return state.Abort(_("Failed to read block 2"));
+
+//printf("\n\nПодключение длинной ветви\n");
+//block.print();
+
         int64 nStart = GetTimeMicros();
         if (!ConnectBlock(block, state, pindex, view)) {
             if (state.IsInvalid()) {
