@@ -128,7 +128,8 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
     pblocktemplate->vTxSigOps.push_back(-1); // updated at end                      обновить в конце
 
     // Largest block you're willing to create:                                      Крупнейший блок вы готовы создавать:
-    unsigned int nBlockMaxSize = GetArg("-blockmaxsize", MAX_BLOCK_SIZE_GEN/2);
+//    unsigned int nBlockMaxSize = GetArg("-blockmaxsize", MAX_BLOCK_SIZE_GEN/2);
+    unsigned int nBlockMaxSize = GetArg("-blockmaxsize", MAX_BLOCK_SIZE);
     // Limit to betweeen 1K and MAX_BLOCK_SIZE-1K for sanity:                       Ограничения в диапазоне от 1K и MAX_BLOCK_SIZE-1K для здравого смысла.
     nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MAX_BLOCK_SIZE-1000), nBlockMaxSize));
 
@@ -282,7 +283,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                                 ttxFee += out.nValue;         // для getblocktemplate
                             }
                             transferTX.vin.push_back(CTxIn(COutPoint(txHash, i), CScript() << OP_0 << OP_0));
-                            transferTX.tBlock = pindexPrev->nHeight - 1;
+                            transferTX.tBlock = pindexPrev->nHeight - TX_TBLOCK;
                         }
                     }
                 }
@@ -296,7 +297,6 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                 pblock->vtx.push_back(transferTX);       // появилась новая транзакция c большой комиссией(RATE_PART_CHAIN) на эту комиссию так же возможен кратный возврат
                 pblocktemplate->vTxFees.push_back(ttxFee);                        // для getblocktemplate
                 pblocktemplate->vTxSigOps.push_back(ttxSigOps);
-//printf("=!!!==>> if (!transferTX.IsNull())   ttxFee: %"PRI64d"  ttxSigOps: %i\n", ttxFee, ttxSigOps);
             }
         }
 
@@ -395,7 +395,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
         }
 //*****************************************************************
 
-        int64 NewCoin = GetBlockValue(pindexPrev->nHeight+1, nFees) - 10 * COIN;    // 10 * COIN гарантированное вознаграждение майнерам блоков
+        int64 NewCoin = GetBlockValue(pindexPrev->nHeight + 1, nFees) - 10 * COIN;  // 10 * COIN гарантированное вознаграждение майнерам блоков
 
         if (pindexBest->nHeight > int(BLOCK_TX_FEE + NUMBER_BLOCK_TX))  // pindexPrev = pindexBest
         {
@@ -439,8 +439,8 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                         int64 nTxFees = nIn - nOut;
 
                         int txBl = abs(tx.tBlock);
-                        if (txBl >= bHeight)            // здесь pindexPrev = pindexBest
-                            txBl = bHeight - 1;         // -1 от pindexBest (bool CWallet::CreateTransaction)
+                        if (txBl >= bHeight)
+                            txBl = bHeight - TX_TBLOCK;
 
                         trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 
@@ -465,9 +465,6 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                 TxHashPriorityCompare comparerHash(true);
                 std::sort(vecTxHashPriority.begin(), vecTxHashPriority.end(), comparerHash);
 
-// для арифметической прогрессии (a1 + n * d где d = arProgression) определяем a1 как корень powsqrt степени из количества транцакций
-//                                a1 = stepTr       (n - номер промежутка от 0 и более)
-
                 double powsqrt = (useHashBack & CBigNum(uint256(65535)).getuint256()).getdouble() * 0.00001 + 1.2;  // получаем число от 1,2 до 1,85535
                 unsigned int stepTr = pow((double)vecTxHashPriority.size(), 1.0 / powsqrt);                         // величина промежутка
                 unsigned int numPosition = vecTxHashPriority.size() / stepTr;                                       // количество промежутков
@@ -475,10 +472,6 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
 
                 powsqrt = (useHashBack & CBigNum(uint256(262143)).getuint256()).getdouble() * 0.000001;             // число от 0 до 0,262143
                 unsigned int retFeesTr = (stepTr + 1) * (0.4 + powsqrt);    // во сколько раз нужно умножить возвращаемую комиссию (+1 чтобы не было 0)
-
-
-//                uint256 useHashBack2 = useHashBack;     // для debug.log
-
 
                 unsigned int w = 0;
                 unsigned int cSizeVecTx = 0;
@@ -492,8 +485,6 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                     if (vecTxHashPriority.size() > cp)  // только >, без =
                     {
                         int64 ret = vecTxHashPriority[cp].get<1>().nValue * retFeesTr;                              // величина возврата
-//printf("=!!!==>> while   hashTr: %s  nValue: %"PRI64d" * %i = ret: %"PRI64d"  NewCoin - ret: %"PRI64d"  cp: %i\n",
-//       vecTxHashPriority[cp].get<0>().GetHex().c_str(), vecTxHashPriority[cp].get<1>().nValue, retFeesTr, ret, NewCoin - ret, cp);
 
                         if (ret <= NewCoin && ret > CTransaction::nMinTxFee)                                        // пылесос
                         {
@@ -506,39 +497,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
 
                     cSizeVecTx += interval + 1;  // +1 что бы не произошло наложения соседних интервалов (максимума и 0), т.е. не происходило выбора одной и той же транзакции дважды
                     w++;
-//printf("=!!!==>> while   cSizeVecTx += interval + 1: %i\n", cSizeVecTx);
                 }
-
-//printf("\nvecTxHashPriority.size() %i\n         stepTr          %i\n         numPosition     %i\n         arProgression   %i\n         retFeesTr       %i\n         NewCoin + 10    %"PRI64d"\n",
-//       vecTxHashPriority.size(), stepTr, numPosition, arProgression, retFeesTr, NewCoin + 10 * COIN);
-
-
-//**********************************************************************************
-//*******************************  для debug.log  **********************************
-//                unsigned int pos = 0;
-//                unsigned int nextInt = 0;
-//                unsigned int www = 0;
-//                unsigned int iii = 0;
-//                BOOST_FOREACH(const TxHashPriority& tx, vecTxHashPriority)
-//                {
-//                    if (nextInt == iii)
-//                    {
-//                        useHashBack2 = Hash(BEGIN(useHashBack2),  END(useHashBack2));
-//                        unsigned int interval = stepTr + www * arProgression;                     // разбивка vecTxHashPriority на промежутки
-//                        pos = nextInt + interval * (useHashBack2 & CBigNum(uint256(1048575)).getuint256()).getdouble() / 1048575.0;   // получаем число от 0 до 1
-//                        nextInt = iii + interval + 1;
-//                        www++;
-//                        printf("=!!!==>>   interval: %i   iii: %i   nextInt: %i\n", interval, iii, nextInt);
-//                    }
-
-//                    if (iii == pos)
-//                        printf(">>  hashTr: %s   pos: %i   fees: %"PRI64d" * %i = ret: %"PRI64d"\n", tx.get<0>().GetHex().c_str(), pos, tx.get<1>().nValue, retFeesTr, tx.get<1>().nValue * retFeesTr);
-//                    else
-//                        printf(">>    hashTr: %s   iii: %i   fees: %"PRI64d"\n", tx.get<0>().GetHex().c_str(), iii, tx.get<1>().nValue);
-//                    iii++;
-//                }
-//*******************************  для debug.log  **********************************
-//**********************************************************************************
             }
         }
 
@@ -561,7 +520,6 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
         pblocktemplate->vTxSigOps[0] = GetLegacySigOpCount(pblock->vtx[0]);
 
 
-
         CBigNum maxBigNum = CBigNum(~uint256(0));
         BOOST_FOREACH(CTransaction& tx, pblock->vtx)
         {
@@ -576,7 +534,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
 
                 int txBl = abs(tx.tBlock);
                 if (txBl >= pindexPrev->nHeight)            // здесь pindexPrev = pindexBest
-                    txBl = pindexPrev->nHeight - 1;         // -1 от pindexBest (bool CWallet::CreateTransaction)
+                    txBl = pindexPrev->nHeight - TX_TBLOCK; // TX_TBLOCK от pindexBest (bool CWallet::CreateTransaction)
 
                 trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 
@@ -584,12 +542,8 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                 lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
                 CBigNum bntx = CBigNum(HashTr);
                 pblocktemplate->sumTrDif += (maxBigNum / bntx) / (pindexPrev->nHeight - txBl);   // защита от 51% с использованием майнингхешей транзакций ссылающихся на более старые блоки
-                //printf(">>>>> BOOST_FOREACH pblock->vtx    hashTr: %s    maxBigNum / bntx: %s   sumTrDif: %s\n", HashTr.GetHex().c_str(), (maxBigNum / bntx).ToString().c_str(), pblocktemplate->sumTrDif.ToString().c_str());
             }
-//printf(">>>>> pindexPrev->nHeight - txBl: %i\n", pindexPrev->nHeight - txBl);
         }
-//printf(">>>>> pblocktemplate->sumTrDif: %s\n %s\n", pblocktemplate->sumTrDif.ToString().c_str(), maxBigNum.ToString().c_str());
-
 
 
         CBlockIndex indexDummy(*pblock);
@@ -785,9 +739,6 @@ void static TTCminer(CWallet *pwallet)
         int backlash = precision * CDFtrdt * CDFsize;   // люфт, смещение
 
         uint256 hashTarget = (maxBigNum / (1 + divideTarget - (divideTarget / precision) * backlash)).getuint256(); // 1 это защита от возможного / на 0
-
-//printf(">>>>> Calculation target\n divideTarget: %s\n      CDFtrdt: %f\n      CDFsize: %f\n     backlash: %i\n   hashTarget: %s\n",
-//               divideTarget.ToString().c_str(), CDFtrdt, CDFsize, backlash, hashTarget.ToString().c_str());
 
 
         while (true)

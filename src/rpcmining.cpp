@@ -133,7 +133,7 @@ Value usetxinblock(const Array& params, bool fHelp)
 
                     int txBl = abs(tx.tBlock);
                     if (txBl >= bHeight)
-                        txBl = bHeight - 1;         // -1 от pindexBest (bool CWallet::CreateTransaction)
+                        txBl = bHeight - TX_TBLOCK;         // TX_TBLOCK от pindexBest (bool CWallet::CreateTransaction)
 
                     trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 

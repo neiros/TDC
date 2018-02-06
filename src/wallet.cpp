@@ -1182,7 +1182,7 @@ bool CWallet::SelectCoins(int64 nTargetValue, set<pair<const CWalletTx*,unsigned
 bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                                 CWalletTx& wtx, CReserveKey& reservekey, int64& nFeeRet, std::string& strFailReason)
 {
-    int linkingTr = pindexBest->nHeight - 1;  // привязка тр. к блоку(любому существующему???)
+    int linkingTr = pindexBest->nHeight - TX_TBLOCK;  // привязка тр. к блоку(любому существующему???)
     wtx.tBlock = linkingTr;
 
 

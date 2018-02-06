@@ -43,7 +43,9 @@ static const unsigned int NUMBER_BLOCK_TX = 5;              ////////// ново�
 /**
  *                  Менее такого количества транзакций добавляется очередной блок транзакций*/
 static const unsigned int QUANTITY_TX = 105;                ////////// новое //////////
-
+/**
+ *                  Смещение по высоте блока в влокчейне для переменной tBlock транзакции */
+static const unsigned int TX_TBLOCK = 1;                    ////////// новое //////////
 
 
 /** The maximum allowed size for a serialized block, in bytes (network rule)
@@ -60,7 +62,7 @@ static const unsigned int MAX_STANDARD_TX_SIZE = MAX_BLOCK_SIZE_GEN/5;
 static const unsigned int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE/50;
 /** The maximum number of orphan transactions kept in memory
  *                  Максимальное количество сиротских транзакций сохраняемых в памяти*/
-static const unsigned int MAX_ORPHAN_TRANSACTIONS = MAX_BLOCK_SIZE/100;
+static const unsigned int MAX_ORPHAN_TRANSACTIONS = MAX_BLOCK_SIZE/200;     // было 100
 /** The maximum size of a blk?????.dat file (since 0.8)
  *                  Максимальный размер BLK???. DAT файлов (с 0,8)*/
 static const unsigned int MAX_BLOCKFILE_SIZE = 0x8000000; // 128 MiB
@@ -89,7 +91,7 @@ static const unsigned int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20
 static const int MAX_SCRIPTCHECK_THREADS = 16;
 /** Default amount of block size reserved for high-priority transactions (in bytes)
  *                  по умолчанию количество от размера блока зарезервировано для приоритетных транзакций (в байтах)*/
-static const int DEFAULT_BLOCK_PRIORITY_SIZE = 27000;
+static const int DEFAULT_BLOCK_PRIORITY_SIZE = 105000;   // было 27000
 #ifdef USE_UPNP
 static const int fHaveUPnP = true;
 #else

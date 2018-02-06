@@ -1923,7 +1923,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                                     transferTX.vin.push_back(CTxIn(COutPoint(txHash, i), CScript() << OP_0 << OP_0));
 
                                     if (tx.tBlock != 0)             // заплатка из-за того, что забыл про tBlock в данных транзакциях
-                                        transferTX.tBlock = pindex->nHeight - 2;
+                                        transferTX.tBlock = pindex->nHeight - 1 - TX_TBLOCK; // -1 здесь компенсирует (+1) других мест
                                 }
                             }
                         }
@@ -1937,7 +1937,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 //************************* Transfer TX ***************************
 //*****************************************************************
 
-            if (ttxScriptCheck)                                   ////////// новое //////////  пройдёт только одна transferTX из-за CheckBlock, что выше и UpdateCoins, что ниже
+            if (ttxScriptCheck)                     //  пройдёт только одна transferTX из-за CheckBlock, что выше и UpdateCoins, что ниже
             {
                 std::vector<CScriptCheck> vChecks;
                 if (!CheckInputs(tx, state, view, fScriptChecks, flags, nScriptCheckThreads ? &vChecks : NULL))
@@ -1957,19 +1957,26 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
 /*************************** новое ******************************/
 
-    // in miner.cpp        pindex->nHeight = pindexPrev->nHeight + 1;
+    // in miner.cpp        pindex->nHeight = pindexPrev->nHeight + 1; где pindexPrev = pindexBest
 
     int64 NewCoin = GetBlockValue(pindex->nHeight, nFees) - 10 * COIN;    // 10 * COIN гарантированное вознаграждение майнерам блоков
 
     if (pindex->nHeight - 1 > int(BLOCK_TX_FEE + NUMBER_BLOCK_TX))
     {
         uint256 useHashBack;
+
+        CBlockIndex* needBlock = pindex->pprev;
+        for (unsigned int i = 0; i < BLOCK_TX_FEE; i++)
+            needBlock = needBlock->pprev;
+
+
         for (unsigned int i = 0; i < NUMBER_BLOCK_TX; i++)
         {
             CBlock rBlock;
-            int bHeight = pindex->nHeight - 1 - BLOCK_TX_FEE - i;
+            ReadBlockFromDisk(rBlock, needBlock);
 
-            ReadBlockFromDisk(rBlock, vBlockIndexByHeight[bHeight]);
+            needBlock = needBlock->pprev;
+            int bHeight = pindex->nHeight - 1 - BLOCK_TX_FEE - i;
 
             if (i == 0)
                 useHashBack = rBlock.GetHash();      // получаем хэш(uint256) первого блока для определения случайной позиции транзакции
@@ -2004,10 +2011,14 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
                     int txBl = abs(tx.tBlock);
                     if (txBl >= bHeight)
-                        txBl = bHeight - 1;         // -1 от pindexBest (bool CWallet::CreateTransaction)
+                        txBl = bHeight - TX_TBLOCK;         // TX_TBLOCK от pindexBest (bool CWallet::CreateTransaction)
 
-                    trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
-//                    trM.hashBlock = vBlockIndexByHeight[tx.tBlock]->GetBlockHash();
+                    CBlockIndex* HeightForTX = needBlock;
+                    while (txBl < HeightForTX->nHeight) {
+                        HeightForTX = HeightForTX->pprev;
+                    }
+
+                    trM.hashBlock = HeightForTX->GetBlockHash();
 
                     uint256 HashTrM = SerializeHash(trM);
                     lyra2re2_hashTX(BEGIN(HashTrM), BEGIN(HashTrM), 32);
@@ -2030,9 +2041,6 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
             std::sort(vecTxHashPriority.begin(), vecTxHashPriority.end(), comparerHash);
 
             double powsqrt = (useHashBack & CBigNum(uint256(65535)).getuint256()).getdouble() * 0.00001 + 1.2;    // получаем число от 1,2 до 1,85535
-
-// для арифметической прогрессии (a1 + n * d где d = arProgression) определяем a1 как корень powsqrt степени из количества транцакций
-//                                a1 = stepTr       (n - номер промежутка от 0 и более)
 
             unsigned int stepTr = pow((double)vecTxHashPriority.size(), 1.0 / powsqrt); // величина промежутка
             unsigned int numPosition = vecTxHashPriority.size() / stepTr;               // количество промежутков
@@ -2059,10 +2067,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                     if (ret <= NewCoin && ret > CTransaction::nMinTxFee)
                     {
                         if (block.vtx[0].vout[cVoutSize] != CTxOut(ret, vecTxHashPriority[cp].get<1>().scriptPubKey))
-                        {
-                            printf("!!! - ERROR 1 - !!!\n");
-//                           return state.Abort(_("!!! - ERROR 1 - !!!"));
-                        }
+                            return state.DoS(100, error("ConnectBlock() : ERROR vecTxHashPriority"));
                         NewCoin -= ret;
                         cVoutSize++;
                     }
@@ -2075,26 +2080,22 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
             }
 
             if (block.vtx[0].vout.size() != cVoutSize)
-                printf("!!! - vecTxHashPriority ERROR - !!!   block.vtx[0].vout.size() = %i !=  cVoutSize = %i\n", block.vtx[0].vout.size(), cVoutSize);
+                return state.DoS(100, error("ConnectBlock() : ERROR cVoutSize (%u != %u)", block.vtx[0].vout.size(), cVoutSize));
 
         }
 
         if (block.vtx[0].vout[0].nValue != NewCoin + 10 * COIN)
-            printf("!!! - NewCoin ERROR - !!!   block.vtx[0].vout[0].nValue = %"PRI64d" !=  NewCoin + 10 * COIN = %"PRI64d"\n", block.vtx[0].vout[0].nValue , NewCoin + 10 * COIN);
+            return state.DoS(100, error("ConnectBlock() : coinbase ERROR fee return (%"PRI64d" != %"PRI64d")", block.vtx[0].vout[0].nValue , NewCoin + 10 * COIN));
 
     }
-
-
 /*************************** новое ******************************/
-
 
     int64 nTime = GetTimeMicros() - nStart;
     if (fBenchmark)
         printf("- Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin)\n", (unsigned)block.vtx.size(), 0.001 * nTime, 0.001 * nTime / block.vtx.size(), nInputs <= 1 ? 0 : 0.001 * nTime / (nInputs-1));
 
     if (GetValueOut(block.vtx[0]) > GetBlockValue(pindex->nHeight, nFees))
-        return state.DoS(100, error("ConnectBlock() : coinbase pays non-standard (actual=%"PRI64d" vs standard=%"PRI64d")", GetValueOut(block.vtx[0]), GetBlockValue(pindex->nHeight, nFees)));
-//        return state.DoS(100, error("ConnectBlock() : coinbase pays too much (actual=%"PRI64d" vs limit=%"PRI64d")", GetValueOut(block.vtx[0]), GetBlockValue(pindex->nHeight, nFees)));
+        return state.DoS(100, error("ConnectBlock() : coinbase pays too much (actual=%"PRI64d" vs limit=%"PRI64d")", GetValueOut(block.vtx[0]), GetBlockValue(pindex->nHeight, nFees)));
 
     if (!control.Wait())
         return state.DoS(100, false);
@@ -2184,10 +2185,6 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
         CBlock block;
         if (!ReadBlockFromDisk(block, pindex))
             return state.Abort(_("Failed to read block 1"));
-
-//printf("\n\nОтключение короткой ветви\n");
-//block.print();
-
         int64 nStart = GetTimeMicros();
         if (!DisconnectBlock(block, state, pindex, view))
             return error("SetBestBlock() : DisconnectBlock %s failed", pindex->GetBlockHash().ToString().c_str());
@@ -2208,10 +2205,6 @@ bool SetBestChain(CValidationState &state, CBlockIndex* pindexNew)
         CBlock block;
         if (!ReadBlockFromDisk(block, pindex))
             return state.Abort(_("Failed to read block 2"));
-
-//printf("\n\nПодключение длинной ветви\n");
-//block.print();
-
         int64 nStart = GetTimeMicros();
         if (!ConnectBlock(block, state, pindex, view)) {
             if (state.IsInvalid()) {
