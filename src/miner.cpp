@@ -250,11 +250,15 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
             ReadBlockFromDisk(ReadBlock, vBlockIndexByHeight[GetHeightPartChain(pindexPrev->nHeight + 1)]);
 
             CTransaction transferTX;
-            int64 ttxFee = 0;
+            CScript empty;
+            int64 emptyOut = 0;
 
             BOOST_FOREACH(CTransaction& tx, ReadBlock.vtx)
             {
                 uint256 txHash = tx.GetHash();
+
+                if (tx.IsCoinBase())
+                    empty = tx.vout[0].scriptPubKey;
 
                 double RPC = RATE_PART_CHAIN;
                 if (tx.vin[0].scriptSig == CScript() << OP_0 << OP_0)
@@ -275,12 +279,11 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                                 out.nValue -= rate;
                                 transferTX.vout.push_back(out);
                                 nFees += rate;
-                                ttxFee += rate;               // для getblocktemplate
                             }
                             else
                             {
                                 nFees += out.nValue;
-                                ttxFee += out.nValue;         // для getblocktemplate
+                                emptyOut += out.nValue;
                             }
                             transferTX.vin.push_back(CTxIn(COutPoint(txHash, i), CScript() << OP_0 << OP_0));
                             transferTX.tBlock = pindexPrev->nHeight - TX_TBLOCK;
@@ -294,9 +297,17 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                 int ttxSigOps = GetLegacySigOpCount(transferTX) + GetP2SHSigOpCount(transferTX, view);
                 nBlockSigOps += ttxSigOps;
 
+                if (transferTX.vout.empty())
+                {
+                    int64 addOut = MIN_FEE_PART_CHAIN;
+                    if (emptyOut < addOut)
+                        addOut = emptyOut;
+
+                    transferTX.vout.push_back(CTxOut(addOut, empty));
+                    nFees -= addOut;
+                }
+
                 pblock->vtx.push_back(transferTX);       // появилась новая транзакция c большой комиссией(RATE_PART_CHAIN) на эту комиссию так же возможен кратный возврат
-                pblocktemplate->vTxFees.push_back(ttxFee);                        // для getblocktemplate
-                pblocktemplate->vTxSigOps.push_back(ttxSigOps);
             }
         }
 

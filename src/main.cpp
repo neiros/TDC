@@ -1890,6 +1890,8 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
             if (tx.vin[0].scriptSig ==  CScript() << OP_0 << OP_0)
             {
                 CTransaction transferTX;
+                CScript empty;
+                int64 emptyOut = 0;
 
                 if (GetHeightPartChain(pindex->nHeight) != -1)
                 {
@@ -1899,6 +1901,9 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                     BOOST_FOREACH(const CTransaction& txRB, ReadBlock.vtx)
                     {
                         uint256 txHash = txRB.GetHash();
+
+                        if (txRB.IsCoinBase())
+                            empty = txRB.vout[0].scriptPubKey;
 
                         double RPC = RATE_PART_CHAIN;
                         if (txRB.vin[0].scriptSig == CScript() << OP_0 << OP_0)
@@ -1919,6 +1924,8 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                                         out.nValue -= rate;
                                         transferTX.vout.push_back(out);
                                     }
+                                    else
+                                        emptyOut += out.nValue;
 
                                     transferTX.vin.push_back(CTxIn(COutPoint(txHash, i), CScript() << OP_0 << OP_0));
 
@@ -1930,8 +1937,18 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                     }
                 }
 
+                if (transferTX.vout.empty())
+                {
+                    int64 addOut = MIN_FEE_PART_CHAIN;
+                    if (emptyOut < addOut)
+                        addOut = emptyOut;
+
+                    transferTX.vout.push_back(CTxOut(addOut, empty));
+                }
+
                 if (tx == transferTX)
                     ttxScriptCheck = false;
+
             }
 
 //************************* Transfer TX ***************************
