@@ -28,6 +28,77 @@ void ShutdownRPCMining()
 }
 
 
+Value getblocktarget(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "getblocktarget <hash>\n"
+            "Returns block target.");
+
+    std::string strHash = params[0].get_str();
+    uint256 hash(strHash);
+
+    if (mapBlockIndex.count(hash) == 0)
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+
+    CBlock block;
+    CBlockIndex* pblockindex = mapBlockIndex[hash];
+    ReadBlockFromDisk(block, pblockindex);
+
+    CBigNum sumTrDif = 0;
+    CBigNum maxBigNum = CBigNum(~uint256(0));
+    BOOST_FOREACH(CTransaction& tx, block.vtx)
+    {
+        if (!tx.IsCoinBase())
+        {
+            TransM trM;
+            BOOST_FOREACH(const CTxIn& txin, tx.vin)
+                trM.vinM.push_back(CTxIn(txin.prevout.hash, txin.prevout.n));
+
+            BOOST_FOREACH (const CTxOut& out, tx.vout)
+                trM.voutM.push_back(CTxOut(out.nValue, CScript()));
+
+            int txBl = abs(tx.tBlock);
+            if (txBl >= pblockindex->nHeight - 1)
+                txBl = pblockindex->nHeight - 1 - TX_TBLOCK;
+
+            trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
+
+            uint256 HashTr = SerializeHash(trM);
+            lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
+            CBigNum bntx = CBigNum(HashTr);
+            sumTrDif += (maxBigNum / bntx) / (pblockindex->nHeight - 1 - txBl);
+        }
+    }
+
+    CBigNum divideTarget = (maxBigNum / CBigNum().SetCompact(block.nBits)) - 1;
+
+    int precision = 1000;
+    double snowfox = 1.05;
+    double CDFtrdt = 1 - exp(- (snowfox * sumTrDif.getuint256().getdouble()) / divideTarget.getuint256().getdouble());
+    double CDFsize = 1 - exp(- (double)block.vtx.size() / (double)QUANTITY_TX);
+
+    int backlash = precision * CDFtrdt * CDFsize;
+
+    uint256 hashTarget = (maxBigNum / (1 + divideTarget - (divideTarget / precision) * backlash)).getuint256();
+
+    Object obj;
+    obj.push_back(Pair("block ",            block.GetHash().GetHex()));
+    obj.push_back(Pair("target",            hashTarget.GetHex()));
+    obj.push_back(Pair("old tar",           CBigNum().SetCompact(block.nBits).getuint256().GetHex()));
+    obj.push_back(Pair("total tx",          (boost::int64_t)block.vtx.size()));
+    obj.push_back(Pair("CDFtrdt",           CDFtrdt));
+    obj.push_back(Pair("CDFsize",           CDFsize));
+    obj.push_back(Pair("backlash",          backlash));
+    obj.push_back(Pair("decrease ~ %",      ((divideTarget / precision) * backlash).getuint256().getdouble() / divideTarget.getuint256().getdouble()));
+    obj.push_back(Pair("maxBigNum",         maxBigNum.getuint256().getdouble()));
+    obj.push_back(Pair("divideTarget",      divideTarget.getuint256().getdouble()));
+    obj.push_back(Pair("- sumTrDif -",      sumTrDif.getuint256().getdouble()));
+
+    return obj;
+}
+
+
 Value usetxinblock(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)

@@ -260,6 +260,7 @@ static const CRPCCommand vRPCCommands[] =
     { "listlockunspent",        &listlockunspent,        false,     false },
     { "verifychain",            &verifychain,            true,      false },
     { "usetxinblock",           &usetxinblock,           false,     false },
+    { "getblocktarget",         &getblocktarget,         false,     false },
 };
 
 CRPCTable::CRPCTable()
@@ -1215,6 +1216,7 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
     if (strMethod == "verifychain"            && n > 0) ConvertTo<boost::int64_t>(params[0]);
     if (strMethod == "verifychain"            && n > 1) ConvertTo<boost::int64_t>(params[1]);
     if (strMethod == "usetxinblock"           && n > 1) ConvertTo<bool>(params[1]);
+    if (strMethod == "getblocktarget"         && n > 1) ConvertTo<bool>(params[1]);
 
     return params;
 }
