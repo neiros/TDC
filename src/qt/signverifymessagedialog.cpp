@@ -24,10 +24,10 @@ SignVerifyMessageDialog::SignVerifyMessageDialog(QWidget *parent) :
 
 #if (QT_VERSION >= 0x040700)
     /* Do not move this to the XML file, Qt before 4.7 will choke on it */
-    ui->addressIn_SM->setPlaceholderText(tr("Enter a TTC address (e.g. 1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)"));
+    ui->addressIn_SM->setPlaceholderText(tr("Enter a TTC address (e.g. TYw4sTfrcA5Bk8nh5Rx2bwTTSqDPgKZUqK)"));
     ui->signatureOut_SM->setPlaceholderText(tr("Click \"Sign Message\" to generate signature"));
 
-    ui->addressIn_VM->setPlaceholderText(tr("Enter a TTC address (e.g. 1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L)"));
+    ui->addressIn_VM->setPlaceholderText(tr("Enter a TTC address (e.g. TYw4sTfrcA5Bk8nh5Rx2bwTTSqDPgKZUqK)"));
     ui->signatureIn_VM->setPlaceholderText(tr("Enter TTC signature"));
 #endif
 
