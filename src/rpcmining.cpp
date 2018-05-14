@@ -540,14 +540,14 @@ Value getwork(const Array& params, bool fHelp)
 
                 int txBl = abs(tx.tBlock);
                 if (txBl >= pindexBest->nHeight)
-                    txBl = pindexBest->nHeight - 1;         // -1 от pindexBest (bool CWallet::CreateTransaction)
+                    txBl = pindexBest->nHeight - TX_TBLOCK; // TX_TBLOCK от pindexBest (bool CWallet::CreateTransaction)
 
                 trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 
                 uint256 hashTr = SerializeHash(trM);
                 lyra2re2_hashTX(BEGIN(hashTr), BEGIN(hashTr), 32);
                 CBigNum bntx = CBigNum(hashTr);
-                sumTrDif += maxBigNum / bntx;
+                sumTrDif += (maxBigNum / bntx) / (pindexBest->nHeight - txBl);   // защита от 51% с использованием майнингхешей транзакций ссылающихся на более старые блоки
             }
         }
 
