@@ -26,7 +26,7 @@
 #include <ifaddrs.h>
 #endif
 
-//typedef u_int SOCKET;
+typedef u_int SOCKET;   // для ubuntu build
 #ifdef WIN32
 #define MSG_NOSIGNAL        0
 #define MSG_DONTWAIT        0
