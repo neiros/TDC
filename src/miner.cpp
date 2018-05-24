@@ -306,6 +306,8 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                     transferTX.vout.push_back(CTxOut(addOut, empty));
                     nFees -= addOut;
                 }
+                pblocktemplate->vTxFees.push_back(nFees);// nFees - как переменная не совсем корректно здесь находится(на работу не влияет)
+                pblocktemplate->vTxSigOps.push_back(ttxSigOps);
 
                 pblock->vtx.push_back(transferTX);       // появилась новая транзакция c большой комиссией(RATE_PART_CHAIN) на эту комиссию так же возможен кратный возврат
             }
