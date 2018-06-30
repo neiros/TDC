@@ -1386,6 +1386,7 @@ struct CBlockTemplate
     std::vector<int64_t> vTxFees;
     std::vector<int64_t> vTxSigOps;
     CBigNum sumTrDif;
+    std::vector<CTxOut> vBackWhither;  // сколько куда
 };
 
 

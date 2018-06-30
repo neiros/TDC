@@ -704,6 +704,19 @@ Value getblocktemplate(const Array& params, bool fHelp)
     result.push_back(Pair("bits", HexBits(pblock->nBits)));
     result.push_back(Pair("height", (int64_t)(pindexPrev->nHeight+1)));
 
+    Array FeeBack;
+    for (unsigned int i = 0; pblocktemplate->vBackWhither.size() > i; i++)
+    {
+        Object entry;
+
+        CDataStream TxOut(SER_NETWORK, PROTOCOL_VERSION);
+        TxOut << pblocktemplate->vBackWhither[i];
+
+        entry.push_back(Pair("BackWhither", HexStr(TxOut.begin(), TxOut.end())));
+        FeeBack.push_back(entry);
+    }
+    result.push_back(Pair("FeeBack", FeeBack));
+
     return result;
 }
 

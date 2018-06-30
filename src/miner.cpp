@@ -503,6 +503,8 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                         {
                             pblock->vtx[0].vout.push_back(CTxOut(ret, vecTxHashPriority[cp].get<1>().scriptPubKey));
                             NewCoin -= ret;
+
+                            pblocktemplate->vBackWhither.push_back(CTxOut(ret, vecTxHashPriority[cp].get<1>().scriptPubKey)); // сколько куда
                         }
                     }
                     else
