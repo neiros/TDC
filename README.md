@@ -1,5 +1,5 @@
 
----TTC---
+---TDC---
 ----------------
 
-Two solutions to the big bitcoin problem, where transaction commissions do not compensate for the costs of mining.
+Two solutions to the big bitcoin problem, where transaction fees do not compensate for the costs of mining.
