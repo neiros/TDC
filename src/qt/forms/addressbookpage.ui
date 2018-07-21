@@ -96,7 +96,7 @@
      <item>
       <widget class="QPushButton" name="signMessage">
        <property name="toolTip">
-        <string>Sign a message to prove you own a TTC address</string>
+        <string>Sign a message to prove you own a TDC address</string>
        </property>
        <property name="text">
         <string>Sign &amp;Message</string>
@@ -110,7 +110,7 @@
      <item>
       <widget class="QPushButton" name="verifyMessage">
        <property name="toolTip">
-        <string>Verify a message to ensure it was signed with a specified TTC address</string>
+        <string>Verify a message to ensure it was signed with a specified TDC address</string>
        </property>
        <property name="text">
         <string>&amp;Verify Message</string>

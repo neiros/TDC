@@ -21,7 +21,7 @@ public:
 
     enum ColumnIndex {
         Label = 0,   /**< User specified label */
-        Address = 1  /**< ---TTC--- address */
+        Address = 1  /**< ---TDC--- address */
     };
 
     enum RoleIndex {

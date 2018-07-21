@@ -68,7 +68,7 @@ map<uint256, map<uint256, CDataStream*> > mapOrphanTransactionsByPrev;
 // Constant stuff for coinbase transactions we create: (Константные переменные для coinbase сделок мы создаем)
 CScript COINBASE_FLAGS;
 
-const string strMessageMagic = "TTC Signed Message:\n";
+const string strMessageMagic = "TDC Signed Message:\n";
 
 double dHashesPerSec = 0.0;
 int64 nHPSTimerStart = 0;
@@ -1808,7 +1808,7 @@ bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigne
 static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
 void ThreadScriptCheck() {
-    RenameThread("TTC-scriptch");
+    RenameThread("TDC-scriptch");
     scriptcheckqueue.Thread();
 }
 

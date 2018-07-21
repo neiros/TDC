@@ -11,7 +11,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// TTC-Miner
+// TDC-Miner
 //
 
 int static FormatHashBlocks(void* pbuffer, unsigned int len)
@@ -659,7 +659,7 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey, CBigNum
         return false;
 
     //// debug print
-    printf("TTC-Miner:\n");
+    printf("TDC-Miner:\n");
 //    printf("proof-of-work found  \n     hash: %s  \n   target: %s\n", hash.GetHex().c_str(), hashTarget.GetHex().c_str());
     printf("proof-of-work found  \n      hash: %s  \nnew target: %s\nold target: %s\n", hash.GetHex().c_str(), hashTarget.ToString().c_str(), CBigNum().SetCompact(pblock->nBits).getuint256().GetHex().c_str());
     pblock->print();
@@ -669,7 +669,7 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey, CBigNum
     {
         LOCK(cs_main);
         if (pblock->hashPrevBlock != hashBestChain)
-            return error("TTC-Miner : generated block is stale");
+            return error("TDC-Miner : generated block is stale");
 
         // Remove key from key pool                                                 Удаление ключа из пула ключей
         reservekey.KeepKey();
@@ -683,15 +683,15 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey, CBigNum
         // Process this block the same as if we had received it from another node   Обработать этот блок такой же, как если бы мы получили ее от другого узла
         CValidationState state;
         if (!ProcessBlock(state, NULL, pblock))
-            return error("TTC-Miner : ProcessBlock, block not accepted");
+            return error("TDC-Miner : ProcessBlock, block not accepted");
     }
 
     return true;
 }
 
-void static TTCminer(CWallet *pwallet)
+void static TDCminer(CWallet *pwallet)
 {
-    printf("TTC-Miner started\n");
+    printf("TDC-Miner started\n");
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
     RenameThread("Transib-miner");
 
@@ -721,7 +721,7 @@ void static TTCminer(CWallet *pwallet)
         IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
 
 
-        printf("Running TTC-Miner with %"PRIszu" transactions in block (%u bytes)\n", pblock->vtx.size(),
+        printf("Running TDC-Miner with %"PRIszu" transactions in block (%u bytes)\n", pblock->vtx.size(),
                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
 
         //
@@ -841,7 +841,7 @@ void static TTCminer(CWallet *pwallet)
     } }
     catch (boost::thread_interrupted)
     {
-        printf("TTC-Miner terminated\n");
+        printf("TDC-Miner terminated\n");
         throw;
     }
 }
@@ -870,5 +870,5 @@ void GenerateCoins(bool fGenerate, CWallet* pwallet)
 
     minerThreads = new boost::thread_group();
     for (int i = 0; i < nThreads; i++)
-        minerThreads->create_thread(boost::bind(&TTCminer, pwallet));
+        minerThreads->create_thread(boost::bind(&TDCminer, pwallet));
 }

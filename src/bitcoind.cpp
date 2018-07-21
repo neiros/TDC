@@ -46,13 +46,13 @@ bool AppInit(int argc, char* argv[])
 
         if (mapArgs.count("-?") || mapArgs.count("--help"))
         {
-            // First part of help message is specific to ttcoind / RPC client
-            std::string strUsage = _("TTC version") + " " + FormatFullVersion() + "\n\n" +
+            // First part of help message is specific to tdcoind / RPC client
+            std::string strUsage = _("TDC version") + " " + FormatFullVersion() + "\n\n" +
                 _("Usage:") + "\n" +
-                  "  ttcoind [options]                     " + "\n" +
-                  "  ttcoind [options] <command> [params]  " + _("Send command to -server or ttcoind") + "\n" +
-                  "  ttcoind [options] help                " + _("List commands") + "\n" +
-                  "  ttcoind [options] help <command>      " + _("Get help for a command") + "\n";
+                  "  tdcoind [options]                     " + "\n" +
+                  "  tdcoind [options] <command> [params]  " + _("Send command to -server or tdcoind") + "\n" +
+                  "  tdcoind [options] help                " + _("List commands") + "\n" +
+                  "  tdcoind [options] help <command>      " + _("Get help for a command") + "\n";
 
             strUsage += "\n" + HelpMessage();
 
@@ -62,7 +62,7 @@ bool AppInit(int argc, char* argv[])
 
         // Command-line RPC
         for (int i = 1; i < argc; i++)
-            if (!IsSwitchChar(argv[i][0]) && !boost::algorithm::istarts_with(argv[i], "TTC:"))
+            if (!IsSwitchChar(argv[i][0]) && !boost::algorithm::istarts_with(argv[i], "TDC:"))
                 fCommandLine = true;
 
         if (fCommandLine)

@@ -20,7 +20,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tabSignMessage">
       <attribute name="title">
@@ -155,7 +155,7 @@
          <item>
           <widget class="QPushButton" name="signMessageButton_SM">
            <property name="toolTip">
-            <string>Sign the message to prove you own this TTC address</string>
+            <string>Sign the message to prove you own this TDC address</string>
            </property>
            <property name="text">
             <string>Sign &amp;Message</string>
@@ -301,7 +301,7 @@
          <item>
           <widget class="QPushButton" name="verifyMessageButton_VM">
            <property name="toolTip">
-            <string>Verify the message to ensure it was signed with the specified TTC address</string>
+            <string>Verify the message to ensure it was signed with the specified TDC address</string>
            </property>
            <property name="text">
             <string>Verify &amp;Message</string>
