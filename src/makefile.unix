@@ -161,7 +161,7 @@ OBJS= \
 all: tdcoind
 
 test check: test_tdcoin FORCE
-        ./test_tdcoin
+	./test_tdcoin
 
 #
 # LevelDB support
@@ -205,7 +205,7 @@ test_tdcoin: $(TESTOBJS) $(filter-out obj/init.o obj/tdcoind.o,$(OBJS:obj/%=obj/
 	$(LINK) $(xCXXFLAGS) -o $@ $(LIBPATHS) $^ $(TESTLIBS) $(xLDFLAGS) $(LIBS)
 
 clean:
-        -rm -f tdcoind test_tdcoin
+	-rm -f tdcoind test_tdcoin
 	-rm -f obj/*.o
 	-rm -f obj-test/*.o
 	-rm -f obj/*.P
