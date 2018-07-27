@@ -65,7 +65,11 @@ Value getblocktarget(const Array& params, bool fHelp)
             trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 
             uint256 HashTr = SerializeHash(trM);
-            lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
+            if (txBl > HEIGHT_OTHER_ALGO)
+                lyra2TDC(BEGIN(HashTr), BEGIN(HashTr), 32);
+            else
+                lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
+
             CBigNum bntx = CBigNum(HashTr);
             sumTrDif += (maxBigNum / bntx) / (pblockindex->nHeight - 1 - txBl);
         }
@@ -208,16 +212,19 @@ Value usetxinblock(const Array& params, bool fHelp)
 
                     trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 
-                    uint256 HashTrM = SerializeHash(trM);
-                    lyra2re2_hashTX(BEGIN(HashTrM), BEGIN(HashTrM), 32);
+                    uint256 HashTr = SerializeHash(trM);
+                    if (txBl > HEIGHT_OTHER_ALGO)
+                        lyra2TDC(BEGIN(HashTr), BEGIN(HashTr), 32);
+                    else
+                        lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
 
                     CTransaction getTx;
                     const uint256 txHash = tx.vin[0].prevout.hash;
                     uint256 hashBlock = 0;
                     if (GetTransaction(txHash, getTx, hashBlock, false))
-                        vecTxHashPriority.push_back(TxHashPriority(HashTrM, CTxOut(nTxFees, getTx.vout[tx.vin[0].prevout.n].scriptPubKey)));
+                        vecTxHashPriority.push_back(TxHashPriority(HashTr, CTxOut(nTxFees, getTx.vout[tx.vin[0].prevout.n].scriptPubKey)));
 
-                    mapTxHashes[HashTrM] = tx.GetHash();
+                    mapTxHashes[HashTr] = tx.GetHash();
                 }
             }
 
@@ -544,9 +551,13 @@ Value getwork(const Array& params, bool fHelp)
 
                 trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 
-                uint256 hashTr = SerializeHash(trM);
-                lyra2re2_hashTX(BEGIN(hashTr), BEGIN(hashTr), 32);
-                CBigNum bntx = CBigNum(hashTr);
+                uint256 HashTr = SerializeHash(trM);
+                if (txBl > HEIGHT_OTHER_ALGO)
+                    lyra2TDC(BEGIN(HashTr), BEGIN(HashTr), 32);
+                else
+                    lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
+
+                CBigNum bntx = CBigNum(HashTr);
                 sumTrDif += (maxBigNum / bntx) / (pindexBest->nHeight - txBl);   // защита от 51% с использованием майнингхешей транзакций ссылающихся на более старые блоки
             }
         }

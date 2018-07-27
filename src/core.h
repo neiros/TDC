@@ -605,6 +605,8 @@ public:
         return (nBits == 0);
     }
 
+    uint256 GetHashFork(int tHeight) const;
+
     uint256 GetHash() const;
 
     int64 GetBlockTime() const

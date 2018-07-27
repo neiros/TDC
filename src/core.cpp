@@ -5,6 +5,7 @@
 
 #include "core.h"
 #include "util.h"
+#include "main.h"
 
 std::string COutPoint::ToString() const
 {
@@ -226,12 +227,33 @@ bool CCoins::Spend(int nPos) {
     return Spend(out, undo);
 }
 
+uint256 CBlockHeader::GetHashFork(int tHeight) const
+{
+    uint256 thash;
+    if (tHeight > HEIGHT_OTHER_ALGO)
+        lyra2TDC(BEGIN(nVersion), BEGIN(thash), 80);
+    else
+        lyra2re2_hashTX(BEGIN(nVersion), BEGIN(thash), 80);
+    return thash;
+}
+
 uint256 CBlockHeader::GetHash() const
 {
     uint256 thash;
-    lyra2re2_hashTX(BEGIN(nVersion), BEGIN(thash), 80);
+    if (mapBlockIndex.count(hashPrevBlock))
+    {
+        CBlockIndex* pindexPrev = mapBlockIndex[hashPrevBlock];
+        if (pindexPrev->nHeight + 1 > HEIGHT_OTHER_ALGO)
+            lyra2TDC(BEGIN(nVersion), BEGIN(thash), 80);
+        else
+            lyra2re2_hashTX(BEGIN(nVersion), BEGIN(thash), 80);
+    }
+    else if (mapBlockIndex.size() <= (unsigned int)HEIGHT_OTHER_ALGO)
+        lyra2re2_hashTX(BEGIN(nVersion), BEGIN(thash), 80);
+    else
+        lyra2TDC(BEGIN(nVersion), BEGIN(thash), 80);
+
     return thash;
-//    return Hash(BEGIN(nVersion), END(nNonce));
 }
 
 uint256 CBlock::BuildMerkleTree() const

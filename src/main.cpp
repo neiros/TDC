@@ -1398,7 +1398,11 @@ bool CheckProofOfWorkNEW(std::vector<CTransaction> vtx, uint256 hash, unsigned i
                 trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 
                 uint256 HashTr = SerializeHash(trM);
-                lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
+                if (txBl > HEIGHT_OTHER_ALGO)
+                    lyra2TDC(BEGIN(HashTr), BEGIN(HashTr), 32);
+                else
+                    lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
+
                 CBigNum bntx = CBigNum(HashTr);
                 sumTrDif += maxBigNum / bntx;
             }
@@ -2037,14 +2041,17 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
                     trM.hashBlock = HeightForTX->GetBlockHash();
 
-                    uint256 HashTrM = SerializeHash(trM);
-                    lyra2re2_hashTX(BEGIN(HashTrM), BEGIN(HashTrM), 32);
+                    uint256 HashTr = SerializeHash(trM);
+                    if (txBl > HEIGHT_OTHER_ALGO)
+                        lyra2TDC(BEGIN(HashTr), BEGIN(HashTr), 32);
+                    else
+                        lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
 
                     CTransaction getTx;
                     const uint256 txHash = tx.vin[0].prevout.hash;
                     uint256 hashBlock = 0;
                     if (GetTransaction(txHash, getTx, hashBlock, false))
-                        vecTxHashPriority.push_back(TxHashPriority(HashTrM, CTxOut(nTxFees, getTx.vout[tx.vin[0].prevout.n].scriptPubKey)));
+                        vecTxHashPriority.push_back(TxHashPriority(HashTr, CTxOut(nTxFees, getTx.vout[tx.vin[0].prevout.n].scriptPubKey)));
                 }
             }
             if (vecTxHashPriority.size() > QUANTITY_TX)
@@ -3969,6 +3976,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else if (strCommand == "block" && !fImporting && !fReindex) // Ignore blocks received while importing
     {
+        printf("received block\n");
         CBlock block;
         vRecv >> block;
 

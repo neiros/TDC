@@ -457,14 +457,17 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
 
                         trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 
-                        uint256 HashTrM = SerializeHash(trM);
-                        lyra2re2_hashTX(BEGIN(HashTrM), BEGIN(HashTrM), 32);
+                        uint256 HashTr = SerializeHash(trM);
+                        if (txBl > HEIGHT_OTHER_ALGO)
+                            lyra2TDC(BEGIN(HashTr), BEGIN(HashTr), 32);
+                        else
+                            lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
 
                         CTransaction getTx;
                         const uint256 txHash = tx.vin[0].prevout.hash;
                         uint256 hashBlock = 0;
                         if (GetTransaction(txHash, getTx, hashBlock, false))
-                            vecTxHashPriority.push_back(TxHashPriority(HashTrM, CTxOut(nTxFees, getTx.vout[tx.vin[0].prevout.n].scriptPubKey)));
+                            vecTxHashPriority.push_back(TxHashPriority(HashTr, CTxOut(nTxFees, getTx.vout[tx.vin[0].prevout.n].scriptPubKey)));
                     }
                 }
 
@@ -554,7 +557,11 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
                 trM.hashBlock = vBlockIndexByHeight[txBl]->GetBlockHash();
 
                 uint256 HashTr = SerializeHash(trM);
-                lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
+                if (txBl > HEIGHT_OTHER_ALGO)
+                    lyra2TDC(BEGIN(HashTr), BEGIN(HashTr), 32);
+                else
+                    lyra2re2_hashTX(BEGIN(HashTr), BEGIN(HashTr), 32);
+
                 CBigNum bntx = CBigNum(HashTr);
                 pblocktemplate->sumTrDif += (maxBigNum / bntx) / (pindexPrev->nHeight - txBl);   // защита от 51% с использованием майнингхешей транзакций ссылающихся на более старые блоки
             }
@@ -764,7 +771,10 @@ void static TDCminer(CWallet *pwallet)
 
             for (;;)
             {
-                lyra2re2_hashTX(BEGIN(pblock->nVersion), BEGIN(thash), 80);
+                if (pindexPrev->nHeight + 1 > HEIGHT_OTHER_ALGO)
+                    lyra2TDC(BEGIN(pblock->nVersion), BEGIN(thash), 80);
+                else
+                    lyra2re2_hashTX(BEGIN(pblock->nVersion), BEGIN(thash), 80);
 
                 if (thash <= hashTarget)
                 {

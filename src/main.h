@@ -48,6 +48,12 @@ static const unsigned int QUANTITY_TX = 105;                ////////// ново�
 static const unsigned int TX_TBLOCK = 1;                    ////////// новое //////////
 
 
+/**
+ *                  Переход на другой алгоритм будет после этой высоты блокчейна */
+static const int HEIGHT_OTHER_ALGO = 75000;                        ////////// новое //////////
+
+
+
 /** The maximum allowed size for a serialized block, in bytes (network rule)
  *                  Максимально допустимый размер сериализованную блока в байтах (сетевое правило)*/
 static const unsigned int MAX_BLOCK_SIZE = 5000000;         ////////// новое ////////// было 1000000
@@ -1080,7 +1086,8 @@ public:
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
-        return block.GetHash();
+//        return block.GetHash();
+        return block.GetHashFork(nHeight);
     }
 
 
