@@ -9,7 +9,7 @@
 #define CLIENT_VERSION_MAJOR       0
 #define CLIENT_VERSION_MINOR       10
 #define CLIENT_VERSION_REVISION    17    // 99
-#define CLIENT_VERSION_BUILD       7
+#define CLIENT_VERSION_BUILD       8
 
 // Set to true for release, false for prerelease or test build                          Установите true для релиза, false для предварительной или тестовой сборки
 #define CLIENT_VERSION_IS_RELEASE  true     // false

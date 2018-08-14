@@ -248,7 +248,8 @@ uint256 CBlockHeader::GetHash() const
         else
             lyra2re2_hashTX(BEGIN(nVersion), BEGIN(thash), 80);
     }
-    else if (mapBlockIndex.size() <= (unsigned int)HEIGHT_OTHER_ALGO)
+//    else if (mapBlockIndex.size() <= (unsigned int)HEIGHT_OTHER_ALGO)
+    else if (mapBlockIndex.size() <= (unsigned int)HEIGHT_OTHER_ALGO && nTime < 1534063443)
         lyra2re2_hashTX(BEGIN(nVersion), BEGIN(thash), 80);
     else
         lyra2TDC(BEGIN(nVersion), BEGIN(thash), 80);
