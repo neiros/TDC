@@ -1255,7 +1255,7 @@ uint256 static GetOrphanRoot(const CBlockHeader* pblock)
 
 int GetHeightPartChain(int nHeight)                                 ////////// новое //////////
 {
-    int ret =  nHeight / 2 > PART_CHAIN ? PART_CHAIN : nHeight / 2;
+    int ret =  nHeight / 2 > PART_CHAIN ? nHeight - PART_CHAIN : nHeight / 2;
     if (ret < COINBASE_MATURITY * 2)
         return -1;
     return ret - COINBASE_MATURITY * 2;
