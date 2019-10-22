@@ -61,7 +61,7 @@ public:
         assert(hashGenesisBlock == uint256("0x00000009efba3f88db6f03373c7ff6f6be1b6f9ad21306b4eb26f65dfdffac8d"));
 
         vSeeds.push_back(CDNSSeedData("90.188.88.19", "90.188.88.19"));
-        vSeeds.push_back(CDNSSeedData("52.14.204.148", "52.14.204.148"));
+        vSeeds.push_back(CDNSSeedData("95.181.198.113", "95.181.198.113"));
 
         base58Prefixes[PUBKEY_ADDRESS] = 65;    // T https://en.bitcoin.it/wiki/List_of_address_prefixes
         base58Prefixes[SCRIPT_ADDRESS] = 5;
