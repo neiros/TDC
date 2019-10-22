@@ -166,6 +166,11 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         return SendCoinsReturn(AmountWithFeeExceedsBalance, nTransactionFee);
     }
 
+    if (vNodes.empty())
+    {
+        return notConnected;
+    }
+
     {
         LOCK2(cs_main, wallet->cs_wallet);
 

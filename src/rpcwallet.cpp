@@ -653,6 +653,9 @@ Value sendmany(const Array& params, bool fHelp)
             "amounts are double-precision floating point numbers"
             + HelpRequiringPassphrase());
 
+    if (vNodes.empty())
+        throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "Send coins impossibly. TDC is not connected.");
+
     string strAccount = AccountFromValue(params[0]);
     Object sendTo = params[1].get_obj();
     int nMinDepth = 1;
