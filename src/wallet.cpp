@@ -999,6 +999,11 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed) const
 
     {
         LOCK(cs_wallet);
+
+        int limit104000 = 1000;
+        if (GetNumBlocksOfPeers() > PART_CHAIN)
+            limit104000 = GetNumBlocksOfPeers() - PART_CHAIN + limit104000;
+
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it)
         {
             const CWalletTx* pcoin = &(*it).second;
@@ -1014,7 +1019,7 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed) const
 
             for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
                 if (!(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) &&
-                    !IsLockedCoin((*it).first, i) && pcoin->vout[i].nValue > 0)
+                    !IsLockedCoin((*it).first, i) && pcoin->vout[i].nValue > 0 && pcoin->GetDepthInMainChain() > limit104000)
                     vCoins.push_back(COutput(pcoin, i, pcoin->GetDepthInMainChain()));
             }
         }
