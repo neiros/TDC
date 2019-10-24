@@ -1019,7 +1019,7 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed) const
 
             for (unsigned int i = 0; i < pcoin->vout.size(); i++) {
                 if (!(pcoin->IsSpent(i)) && IsMine(pcoin->vout[i]) &&
-                    !IsLockedCoin((*it).first, i) && pcoin->vout[i].nValue > 0 && pcoin->GetDepthInMainChain() > limit104000)
+                    !IsLockedCoin((*it).first, i) && pcoin->vout[i].nValue > 0 && pindexBest->nHeight - pcoin->GetDepthInMainChain() > limit104000)
                     vCoins.push_back(COutput(pcoin, i, pcoin->GetDepthInMainChain()));
             }
         }
@@ -1137,7 +1137,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                 int64 nValueIn = 0;
                 if (!SelectCoins(nTotalValue, setCoins, nValueIn))
                 {
-                    strFailReason = _("Insufficient funds");
+                    strFailReason = _("Insufficient available funds");
                     return false;
                 }
                 BOOST_FOREACH(PAIRTYPE(const CWalletTx*, unsigned int) pcoin, setCoins)

@@ -479,14 +479,15 @@ public:
     {
         int size = vSorted.size();
         assert(size>0);
-        if(size & 1) // Odd number of elements                                      Нечетное число элементов
-        {
-            return vSorted[size/2];
-        }
-        else // Even number of elements                                             Четное количество элементов
-        {
-            return (vSorted[size/2-1] + vSorted[size/2]) / 2;
-        }
+        return vSorted[size/2];
+//        if(size & 1) // Odd number of elements                                      Нечетное число элементов
+//        {
+//            return vSorted[size/2];
+//        }
+//        else // Even number of elements                                             Четное количество элементов
+//        {
+//            return (vSorted[size/2-1] + vSorted[size/2]) / 2;
+//        }
     }
 
     int size() const
