@@ -2104,7 +2104,8 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
             }
 
             if (block.vtx[0].vout.size() != cVoutSize)
-                return state.DoS(100, error("ConnectBlock() : ERROR cVoutSize (%u != %u)", block.vtx[0].vout.size(), cVoutSize));
+//                return state.DoS(100, error("ConnectBlock() : ERROR cVoutSize (%u != %u)", block.vtx[0].vout.size(), cVoutSize));
+                return state.DoS(100, error("ConnectBlock() : ERROR block.vtx[0].vout.size() != cVoutSize)"));
 
         }
 

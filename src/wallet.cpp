@@ -931,7 +931,16 @@ void CWallet::ResendWalletTransactions()
         BOOST_FOREACH(PAIRTYPE(const unsigned int, CWalletTx*)& item, mapSorted)
         {
             CWalletTx& wtx = *item.second;
-            wtx.RelayWalletTransaction();
+            if (!pcoinsTip->HaveInputs(wtx) && wtx.GetDepthInMainChain() == 0)
+            {
+                uint256 hash = wtx.GetHash();
+                if (mapWallet.erase(hash))
+                    CWalletDB(strWalletFile).EraseTx(hash);
+
+                printf("Erase from wallet orphan tx: %s\n", hash.ToString().c_str());
+            }
+            else
+                wtx.RelayWalletTransaction();
         }
     }
 }
