@@ -65,4 +65,4 @@ The TDC consensus algorithm stimulates the use of cryptocurrency for its direct 
 
 
 
-[Русский перевод](https://github.com/neiros/neiros.github.io/blob/master/README.md)
+[Сибирский перевод](https://github.com/neiros/neiros.github.io/blob/master/README.md)
