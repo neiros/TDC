@@ -9,9 +9,9 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f) :
     QSplashScreen(pixmap, f)
 {
     // set reference point, paddings
-    int paddingRight            = 343;
-    int paddingTop              = 60;
-    int titleVersionVSpace      = 17;
+    int paddingRight            = 320;
+    int paddingTop              = 57;
+    int titleVersionVSpace      = 23;
     int titleCopyrightVSpace    = 40;
 
     float fontFactor            = 1.0;
@@ -19,25 +19,26 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f) :
     // define text to place
     QString titleText       = QString(QApplication::applicationName()).replace(QString("-testnet"), QString(""), Qt::CaseSensitive); // cut of testnet, place it as single object further down
     QString versionText     = QString("Version %1").arg(QString::fromStdString(FormatFullVersion()));
-    QString copyrightText   = QChar(0xA9)+QString(" 2009-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The TDC developer"));
+    QString copyrightText   = QChar(0xA9)+QString("2009-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The TDC developers"));
     QString testnetAddText  = QString(tr("[testnet]")); // define text to place as single text object
 
-    QString font            = "Arial";
+    QString font            = "Verdana";
 
     // load the bitmap for writing some text over it
     QPixmap newPixmap;
-    if(GetBoolArg("-testnet", false)) {
+    if(GetBoolArg("-testnet", false))
         newPixmap     = QPixmap(":/images/splash_testnet");
-    }
-    else {
+    else
         newPixmap     = QPixmap(":/images/splash");
-    }
 
     QPainter pixPaint(&newPixmap);
-    pixPaint.setPen(QColor(100,100,100));
+    if(GetBoolArg("-testnet", false))
+        pixPaint.setPen(QColor(100,100,100));
+    else
+        pixPaint.setPen(QColor(255,255,255));
 
     // check font size and drawing with
-    pixPaint.setFont(QFont(font, 33*fontFactor));
+    pixPaint.setFont(QFont(font, 30*fontFactor, 75));
     QFontMetrics fm = pixPaint.fontMetrics();
     int titleTextWidth  = fm.width(titleText);
     if(titleTextWidth > 160) {
@@ -45,12 +46,12 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f) :
         fontFactor = 0.75;
     }
 
-    pixPaint.setFont(QFont(font, 25*fontFactor));   // 33
+    pixPaint.setFont(QFont(font, 26*fontFactor, 75));
     fm = pixPaint.fontMetrics();
     titleTextWidth  = fm.width(titleText);
     pixPaint.drawText(newPixmap.width()-titleTextWidth-paddingRight,paddingTop,titleText);
 
-    pixPaint.setFont(QFont(font, 12*fontFactor));   // 15
+    pixPaint.setFont(QFont(font, 10*fontFactor));
 
     // if the version string is to long, reduce size
     fm = pixPaint.fontMetrics();
