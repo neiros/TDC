@@ -8,15 +8,15 @@
 // These need to be macros, as version.cpp's and bitcoin-qt.rc's voodoo requires it     Они должны быть макросами, поскольку version.cpp и bitcoin-qt.rc's voodoo требует этого
 #define CLIENT_VERSION_MAJOR       0
 #define CLIENT_VERSION_MINOR       10
-#define CLIENT_VERSION_REVISION    17    // 99
-#define CLIENT_VERSION_BUILD       11
+#define CLIENT_VERSION_REVISION    18    // 99
+#define CLIENT_VERSION_BUILD       1
 
 // Set to true for release, false for prerelease or test build                          Установите true для релиза, false для предварительной или тестовой сборки
 #define CLIENT_VERSION_IS_RELEASE  true     // false
 
 // Copyright year (2009-this)
 // Todo: update this when changing our copyright comments in the source                 обновите это при изменении наших авторских комментариев в исходниках
-#define COPYRIGHT_YEAR 2018     // 2013
+#define COPYRIGHT_YEAR 2020     // 2013
 
 // Converts the parameter X to a string after macro replacement on X has been performed.Преобразует значение параметра X в строку после макро замены на X которая была выполнена
 // Don't merge these into one macro!                                                    Не объединяйте их в один макрос!
