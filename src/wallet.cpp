@@ -1213,6 +1213,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
 
                         if (nMinerTransFee > 0)
                         {
+                            long int stoptime = time(NULL) + 5;
                             for (int n = 0; n < nMinerTransFee; n++)
                             {
                                 trM.voutM[pos].nValue += 1;
@@ -1227,6 +1228,9 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64> >& vecSend,
                                     HashTr = hT;
                                     newValue = trM.voutM[pos].nValue;
                                 }
+
+                                if (time(NULL) > stoptime)
+                                    break;
                             }
                             wtx.vout[pos].nValue = newValue;
                             trM.voutM[pos].nValue = newValue;
