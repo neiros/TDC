@@ -19,6 +19,7 @@ git clone https://github.com/neiros/TDC.git tdc
 
 - Build the source code:
 ```
+cd tdc
 qmake TDC-qt.pro USE_UPNP=-
 make
 ```
