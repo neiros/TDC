@@ -23,7 +23,7 @@ git clone https://github.com/neiros/TDC.git tdc
 
 - Build the source code:
 ```
-cd tdc/src/leveldb && chmod +x build_detect_platform && cd .. && make -f makefile.unix USE_UPNP=-
+cd tdc/src && cd .. && make -f makefile.unix USE_UPNP=-
 ```
 
 ## On Windows 10:
