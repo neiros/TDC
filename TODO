@@ -1,3 +1,6 @@
 1. Update leveldb versions accordingly to their release lifecycle.
 2. Find references to main.* in another files. If there is none - it is save to separate this file into apps/ 
 3. Ensure proper version control. Most likely with cmake.
+    1. Don't forget src/clientversion.h and src/version.*
+4. Document bitcoinrpc.h
+5. Move rpc to corresponding folder.
