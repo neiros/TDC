@@ -1,3 +1,6 @@
+# Visual Studio 2019
+.vs
+
 src/*.exe
 src/tdcoin
 src/tdcoind
