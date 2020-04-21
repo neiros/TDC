@@ -1,4 +1,4 @@
-file(GLOB LYRA2RE_LIB_SOURCES "*.cpp")
+file(GLOB LYRA2RE_LIB_SOURCES "*.c")
 file(GLOB LYRA2RE_LIB_HEADERS "*.h")
 
 add_library(Lyra2RE ${LYRA2RE_LIB_SOURCES})

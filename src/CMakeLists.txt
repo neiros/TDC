@@ -3,7 +3,7 @@ file(GLOB CORE_HEADERS "*.h")
 
 add_library(TDC_Core ${CORE_SOURCES})
 
-target_link_libraries(TDC-Core
-                                Json
-                                Lyra2RE
-                                LevelDB )
+target_link_libraries(TDC_Core
+                                ${Json}
+                                ${Lyra2RE} )
+#                                LevelDB )
