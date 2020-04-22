@@ -8,7 +8,7 @@
 #include "uint256.h"
 #include "serialize.h"
 #include "script.h"
-#include "Lyra2RE/Lyra2RE.h"
+#include "Lyra2RE.h"
 
 #include <stdio.h>
 
