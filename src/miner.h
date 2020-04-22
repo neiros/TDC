@@ -7,7 +7,7 @@
 
 #include "core.h"
 #include "wallet.h"
-#include "Lyra2RE/Lyra2RE.h"
+#include "Lyra2RE.h"
 
 /** Run the miner threads                                                           Запуск miner потоков */
 void GenerateCoins(bool fGenerate, CWallet* pwallet);
