@@ -23,9 +23,11 @@ git clone https://github.com/neiros/TDC.git tdc
 
 - Build the source code:
 ```
-cd tdc/src
-make -f makefile.unix USE_UPNP=-
+mkdir build && cs build
+cmake .. -G "Unix Makefiles" && make
 ```
+
+- Build files will be written to ```/build``` directory.
 
 ## On Windows 10:
 This section is under development. The easiest solution yet is to use WSL:
