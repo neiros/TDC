@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Boost REQUIRED COMPONENTS system filesystem program_options thread chrono )
-#include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # not sure if i need this
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # not sure if i need this. Maybe Json to build json lib in v
 
 find_package(OpenSSL)
 
