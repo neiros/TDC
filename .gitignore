@@ -1,5 +1,10 @@
-# Visual Studio 2019
+# Visual Studio 2019 specific
 .vs
+
+# Idea specific
+.idea
+
+cmake-build-debug
 
 src/*.exe
 src/tdcoin
