@@ -23,7 +23,7 @@ git clone https://github.com/neiros/TDC.git tdc
 
 - Build the source code:
 ```
-mkdir build && cs build
+mkdir build && cd build
 cmake .. -G "Unix Makefiles" && make
 ```
 
