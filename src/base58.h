@@ -58,7 +58,8 @@ inline std::string EncodeBase58(const unsigned char* pbegin, const unsigned char
             rem = bn%bn58;
         }
         catch (bignum_error) {
-            cout << "EncodeBase58 : BN_div failed";
+            //TODO: handle exceptins here.
+            //Ops. cout << "EncodeBase58 : BN_div failed";
         }
         bn = res;
         unsigned int c = rem.getulong();
