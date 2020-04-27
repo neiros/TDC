@@ -1109,7 +1109,7 @@ Object CallRPC(const string& strMethod, const Array& params)
 #if BOOST_VERSION > 106500
     ssl::context context(ssl::context::sslv23);
 #else
-    ssl::context context(io_service, ssl::context::sslv23);
+    ssl::context context(io_context, ssl::context::sslv23);
 #endif
     context.set_options(ssl::context::no_sslv2);
     asio::ssl::stream<asio::ip::tcp::socket> sslStream(io_context, context);
