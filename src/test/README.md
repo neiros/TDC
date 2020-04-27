@@ -15,7 +15,20 @@ their tests in a test suite called "<source_filename>_tests".  For an
 examples of this pattern, examine uint160_tests.cpp and
 uint256_tests.cpp.
 
-For further reading, I found the following website to be helpful in
-explaining how the boost unit test framework works:
 
-http://www.alittlemadness.com/2009/03/31/c-unit-testing-with-boosttest/
+Compiling/running tdcoind unit tests
+------------------------------------
+
+To compile and run the tests:
+
+	cd src
+	make -f makefile.unix test_tdcoin USE_UPNP=- # Replace makefile.unix if you're not on unix
+	./test_tdcoin   # Runs the unit tests
+
+If all tests succeed the last line of output will be:
+`*** No errors detected`
+
+To add more tests, add `BOOST_AUTO_TEST_CASE` functions to the existing
+.cpp files in the test/ directory or add new .cpp files that
+implement new BOOST_AUTO_TEST_SUITE sections (the makefiles are
+set up to add test/*.cpp to test_tdcoin automatically).
