@@ -28,9 +28,9 @@ BOOST_AUTO_TEST_CASE(rpc_addmultisig)
     rpcfn_type addmultisig = tableRPC["addmultisigaddress"]->actor;
 
     // old, 65-byte-long:
-    const char address1Hex[] = "0434e3e09f49ea168c5bbf53f877ff4206923858aab7c7e1df25bc263978107c95e35065a27ef6f1b27222db0ec97e0e895eaca603d3ee0d4c060ce3d8a00286c8";
+    const char address1Hex[] = "04668321C8F554D16327857D1E31A5DFC752A2AE297BBB457AACE01689F2CA03C5402B72AA310D0C14AC7AEFA76769EF6F528778315DBEA33348068A7919AD1D0D";
     // new, compressed:
-    const char address2Hex[] = "0388c2037017c62240b6b72ac1a2a5f94da790596ebd06177c8572752922165cb4";
+    const char address2Hex[] = "03668321C8F554D16327857D1E31A5DFC752A2AE297BBB457AACE01689F2CA03C5";
 
     Value v;
     CBitcoinAddress address;
@@ -128,10 +128,11 @@ BOOST_AUTO_TEST_CASE(rpc_rawparams)
     BOOST_CHECK_THROW(CallRPC("decoderawtransaction"), runtime_error);
     BOOST_CHECK_THROW(CallRPC("decoderawtransaction null"), runtime_error);
     BOOST_CHECK_THROW(CallRPC("decoderawtransaction DEADBEEF"), runtime_error);
-    string rawtx = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
+    string rawtx = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0c02204e0101062f503253482fffffffff02d05a187d0300000023210240901310778be02ae32621a82c3d59c13d098849b11ff1210762fb4de1093400ac307bf900000000002321037d823aba0748cfa8b3da2efdf26e80e2c92424ea5627e5945c18c7fae4503080ac1f4e000000000000";
     BOOST_CHECK_NO_THROW(r = CallRPC(string("decoderawtransaction ")+rawtx));
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "version").get_int(), 1);
     BOOST_CHECK_EQUAL(find_value(r.get_obj(), "locktime").get_int(), 0);
+    BOOST_CHECK_EQUAL(find_value(r.get_obj(), "tBlock").get_int(), 19999);
     BOOST_CHECK_THROW(r = CallRPC(string("decoderawtransaction ")+rawtx+" extra"), runtime_error);
 
     BOOST_CHECK_THROW(CallRPC("signrawtransaction"), runtime_error);
@@ -158,7 +159,7 @@ BOOST_AUTO_TEST_CASE(rpc_rawsign)
       "\"vout\":1,\"scriptPubKey\":\"a914b10c9df5f7edf436c697f02f1efdba4cf399615187\","
       "\"redeemScript\":\"512103debedc17b3df2badbcdd86d5feb4562b86fe182e5998abd8bcd4f122c6155b1b21027e940bb73ab8732bfdf7f9216ecefca5b94d6df834e77e108f68e66f126044c052ae\"}]";
     r = CallRPC(string("createrawtransaction ")+prevout+" "+
-      "{\"3HqAe9LtNBjnsfM4CyYaWTnvCaUYT7v4oZ\":11}");
+      "{\"TVVVjcdyVJF67hSXMg7aDGbHsx7mGoJgz7\":11}");
     string notsigned = r.get_str();
     string privkey1 = "\"KzsXybp9jX64P5ekX1KUxRQ79Jht9uzW7LorgwE65i5rWACL6LQe\"";
     string privkey2 = "\"Kyhdf5LuKTRx4ge69ybABsiUAWjVRK4XGxAKk2FQLp2HjGMy87Z4\"";
