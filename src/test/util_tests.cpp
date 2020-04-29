@@ -32,18 +32,18 @@ BOOST_AUTO_TEST_CASE(util_criticalsection)
 
 BOOST_AUTO_TEST_CASE(util_MedianFilter)
 {
-    CMedianFilter<int> filter(5, 15);
+    CMedianFilter<int> filter(5, 15);       //CMedianFilter was changed due to incorrect output of the number of blocks for a single connection
 
     BOOST_CHECK_EQUAL(filter.median(), 15);
 
     filter.input(20); // [15 20]
-    BOOST_CHECK_EQUAL(filter.median(), 17);
+    BOOST_CHECK_EQUAL(filter.median(), 20);
 
     filter.input(30); // [15 20 30]
     BOOST_CHECK_EQUAL(filter.median(), 20);
 
     filter.input(3); // [3 15 20 30]
-    BOOST_CHECK_EQUAL(filter.median(), 17);
+    BOOST_CHECK_EQUAL(filter.median(), 20);
 
     filter.input(7); // [3 7 15 20 30]
     BOOST_CHECK_EQUAL(filter.median(), 15);
