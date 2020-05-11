@@ -8,7 +8,10 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(Boost REQUIRED COMPONENTS system filesystem program_options thread chrono )
+# enable CTest testing
+enable_testing()
+
+find_package(Boost REQUIRED COMPONENTS system filesystem program_options thread chrono unit_test_framework )
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS}) # not sure if i need this. Maybe Json to build json lib in v
 
 find_package(OpenSSL)
@@ -26,3 +29,6 @@ add_subdirectory(libs/Lyra2RE)
 add_subdirectory(src)
 
 add_subdirectory(apps)
+
+
+add_subdirectory(tests)
