@@ -104,7 +104,6 @@ public:
 
     ~CBigNum()
     {
-        // TODO: According to the openSSL docs it's safe to BN_clear_free(NULL)
         BN_clear_free(value);
     }
 

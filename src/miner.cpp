@@ -522,7 +522,7 @@ CBlockTemplate* CreateNewBlock(CReserveKey& reservekey)
 
         nLastBlockTx = nBlockTx;
         nLastBlockSize = nBlockSize;
-        printf("\nCreateNewBlock(): total size %"PRI64u"\n", nBlockSize);
+        printf("\nCreateNewBlock(): total size %" PRI64u"\n", nBlockSize);
 
         pblock->vtx[0].vout[0].nValue = NewCoin + 10 * COIN;                // 10 * COIN минимально возможное вознаграждение за найденный блок
         pblock->vtx[0].tBlock = 0;                                          // как и у генезисной, должен быть 0
@@ -728,7 +728,7 @@ void static TDCminer(CWallet *pwallet)
         IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
 
 
-        printf("Running TDC-Miner with %"PRIszu" transactions in block (%u bytes)\n", pblock->vtx.size(),
+        printf("Running TDC-Miner with %" PRIszu" transactions in block (%u bytes)\n", pblock->vtx.size(),
                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
 
         //
