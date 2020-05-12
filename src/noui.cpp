@@ -5,7 +5,7 @@
 
 #include "ui_interface.h"
 #include "init.h"
-#include "bitcoinrpc.h"
+#include "RPC/bitcoinrpc.h"
 
 #include <string>
 

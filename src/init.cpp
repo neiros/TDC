@@ -9,7 +9,7 @@
 #include "chainparams.h"
 #include "txdb.h"
 #include "walletdb.h"
-#include "bitcoinrpc.h"
+#include "RPC/bitcoinrpc.h"
 #include "net.h"
 #include "util.h"
 #include "miner.h"
