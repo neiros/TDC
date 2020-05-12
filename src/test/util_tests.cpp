@@ -114,19 +114,25 @@ BOOST_AUTO_TEST_CASE(util_DateTimeStrFormat)
 
 BOOST_AUTO_TEST_CASE(util_ParseParameters)
 {
+    // Всегда и везде должны быть такие параметры
+    // mapArgs["-txindex"] = "1"
+    // mapMultiArgs["-txindex"] = "1"
     const char *argv_test[] = {"-ignored", "-a", "-b", "-ccc=argument", "-ccc=multiple", "f", "-d=e"};
 
     ParseParameters(0, (char**)argv_test);
-    BOOST_CHECK(mapArgs.empty() && mapMultiArgs.empty());
+    //BOOST_CHECK(mapArgs.empty() && mapMultiArgs.empty()); old
+    BOOST_CHECK(mapArgs.size() == 1 && mapMultiArgs.size() == 1); // new
 
     ParseParameters(1, (char**)argv_test);
-    BOOST_CHECK(mapArgs.empty() && mapMultiArgs.empty());
+    //BOOST_CHECK(mapArgs.empty() && mapMultiArgs.empty()); old
+    BOOST_CHECK(mapArgs.size() == 1 && mapMultiArgs.size() == 1); // new
 
     ParseParameters(5, (char**)argv_test);
     // expectation: -ignored is ignored (program name argument),
     // -a, -b and -ccc end up in map, -d ignored because it is after
     // a non-option argument (non-GNU option parsing)
-    BOOST_CHECK(mapArgs.size() == 3 && mapMultiArgs.size() == 3);
+    //BOOST_CHECK(mapArgs.size() == 3 && mapMultiArgs.size() == 3); old
+    BOOST_CHECK(mapArgs.size() == 4 && mapMultiArgs.size() == 4); // new
     BOOST_CHECK(mapArgs.count("-a") && mapArgs.count("-b") && mapArgs.count("-ccc")
                 && !mapArgs.count("f") && !mapArgs.count("-d"));
     BOOST_CHECK(mapMultiArgs.count("-a") && mapMultiArgs.count("-b") && mapMultiArgs.count("-ccc")
