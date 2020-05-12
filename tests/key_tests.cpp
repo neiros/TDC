@@ -63,13 +63,13 @@ BOOST_AUTO_TEST_CASE(key_test1)
     BOOST_CHECK(!baddress1.SetString(strAddressBad));
 
     CKey key1  = bsecret1.GetKey();
-    BOOST_CHECK(key1.IsCompressed() == false);
+    BOOST_CHECK(!key1.IsCompressed());
     CKey key2  = bsecret2.GetKey();
-    BOOST_CHECK(key2.IsCompressed() == false);
+    BOOST_CHECK(!key2.IsCompressed());
     CKey key1C = bsecret1C.GetKey();
-    BOOST_CHECK(key1C.IsCompressed() == true);
+    BOOST_CHECK(key1C.IsCompressed());
     CKey key2C = bsecret2C.GetKey();
-    BOOST_CHECK(key1C.IsCompressed() == true);
+    BOOST_CHECK(key2C.IsCompressed());
 
     CPubKey pubkey1  = key1. GetPubKey();
     CPubKey pubkey2  = key2. GetPubKey();

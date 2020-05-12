@@ -248,12 +248,10 @@ public:
             return false;
 
         ECDSA_SIG *sig = ECDSA_SIG_new();
-        BIGNUM *temp_r, *temp_s;
+        BIGNUM *temp_r = BN_new(), *temp_s = BN_new();
         BN_bin2bn(&p64[0],  32, temp_r);
         BN_bin2bn(&p64[32], 32, temp_s);
         ECDSA_SIG_set0(sig, temp_r, temp_s);
-        BN_free(temp_r);
-        BN_free(temp_s);
 
         bool ret = ECDSA_SIG_recover_key_GFp(pkey, sig, (unsigned char*)&hash, sizeof(hash), rec, 0) == 1;
         ECDSA_SIG_free(sig);
