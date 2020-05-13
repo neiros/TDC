@@ -2,7 +2,7 @@
 
 #include "init.h"
 #include "main.h"
-#include "uint256.h"
+#include "Utils/uint256.h"
 #include "util.h"
 #include "miner.h"
 #include "wallet.h"

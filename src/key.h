@@ -7,10 +7,10 @@
 
 #include <vector>
 
-#include "allocators.h"
-#include "serialize.h"
-#include "uint256.h"
-#include "hash.h"
+#include "Utils/allocators.h"
+#include "Utils/serialize.h"
+#include "Utils/uint256.h"
+#include "Crypto/hash.h"
 
 // secp256k1:
 // const unsigned int PRIVATE_KEY_SIZE = 279;

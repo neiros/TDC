@@ -5,8 +5,8 @@
 #ifndef BITCOIN_HASH_H
 #define BITCOIN_HASH_H
 
-#include "uint256.h"
-#include "serialize.h"
+#include "Utils/uint256.h"
+#include "Utils/serialize.h"
 
 #include <openssl/sha.h>
 #include <openssl/ripemd.h>

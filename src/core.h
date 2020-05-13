@@ -5,8 +5,8 @@
 #ifndef BITCOIN_CORE_H
 #define BITCOIN_CORE_H
 
-#include "uint256.h"
-#include "serialize.h"
+#include "Utils/uint256.h"
+#include "Utils/serialize.h"
 #include "script.h"
 #include "Lyra2RE.h"
 

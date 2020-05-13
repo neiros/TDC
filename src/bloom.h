@@ -6,8 +6,8 @@
 
 #include <vector>
 
-#include "uint256.h"
-#include "serialize.h"
+#include "Utils/uint256.h"
+#include "Utils/serialize.h"
 
 class COutPoint;
 class CTransaction;

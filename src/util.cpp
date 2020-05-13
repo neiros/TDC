@@ -16,7 +16,7 @@
 #include "chainparams.h"
 #include "util.h"
 #include "sync.h"
-#include "version.h"
+#include "Versioning/version.h"
 #include "ui_interface.h"
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()

@@ -22,7 +22,7 @@
 #include "bignum.h"
 #include "key.h"
 #include "script.h"
-#include "allocators.h"
+#include "Utils/allocators.h"
 
 static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 

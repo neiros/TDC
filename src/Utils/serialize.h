@@ -19,8 +19,8 @@
 #include <boost/tuple/tuple_comparison.hpp>
 #include <boost/tuple/tuple_io.hpp>
 
-#include "allocators.h"
-#include "version.h"
+#include "Utils/allocators.h"
+#include "Versioning/version.h"
 
 typedef long long  int64;
 typedef unsigned long long  uint64;

@@ -15,12 +15,12 @@
 #include <arpa/inet.h>
 #endif
 
-#include "mruset.h"
-#include "limitedmap.h"
+#include "Utils/mruset.h"
+#include "Utils/limitedmap.h"
 #include "netbase.h"
 #include "protocol.h"
 #include "addrman.h"
-#include "hash.h"
+#include "Crypto/hash.h"
 #include "bloom.h"
 
 /** The maximum number of entries in an 'inv' protocol message                  Максимальное количество записей в 'inv' протоколА сообщений */
