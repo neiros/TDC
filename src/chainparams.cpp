@@ -8,7 +8,6 @@
 #include "chainparams.h"
 #include "Models/block.h"
 #include "protocol.h"
-#include "util.h"
 
 //
 // Main network
