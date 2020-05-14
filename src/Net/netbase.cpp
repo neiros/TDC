@@ -6,7 +6,7 @@
 #include "netbase.h"
 #include "Helpers/util.h"
 #include "Helpers/sync.h"
-#include "Crypto/hash.h"
+#include "Helpers/hash.h"
 
 #ifndef WIN32
 #include <sys/fcntl.h>

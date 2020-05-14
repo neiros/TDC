@@ -20,7 +20,7 @@
 #include "netbase.h"
 #include "protocol.h"
 #include "addrman.h"
-#include "Crypto/hash.h"
+#include "Helpers/hash.h"
 #include "bloom.h"
 
 /** The maximum number of entries in an 'inv' protocol message                  Максимальное количество записей в 'inv' протоколА сообщений */

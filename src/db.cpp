@@ -6,7 +6,7 @@
 #include "Net/chainparams.h"
 #include "db.h"
 #include "Helpers/util.h"
-#include "Crypto/hash.h"
+#include "Helpers/hash.h"
 #include "Net/addrman.h"
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>

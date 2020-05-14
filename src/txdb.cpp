@@ -5,7 +5,7 @@
 
 #include "txdb.h"
 #include "main.h"
-#include "Crypto/hash.h"
+#include "Helpers/hash.h"
 #include "Net/chainparams.h"
 
 using namespace std;
