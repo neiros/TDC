@@ -2,8 +2,8 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/foreach.hpp>
 
-#include "script.h"
-#include "key.h"
+#include "Wallet/script.h"
+#include "Wallet/key.h"
 
 using namespace std;
 

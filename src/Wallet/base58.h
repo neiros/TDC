@@ -20,7 +20,7 @@
 
 #include "chainparams.h"
 #include "bignum.h"
-#include "key.h"
+#include "Wallet/key.h"
 #include "script.h"
 #include "Utils/allocators.h"
 

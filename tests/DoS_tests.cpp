@@ -10,7 +10,7 @@
 
 #include "chainparams.h"
 #include "main.h"
-#include "wallet.h"
+#include "Wallet/wallet.h"
 #include "net.h"
 #include "util.h"
 

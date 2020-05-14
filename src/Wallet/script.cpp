@@ -10,9 +10,9 @@ using namespace boost;
 
 #include "script.h"
 #include "Models/transaction.h"
-#include "keystore.h"
+#include "Wallet/keystore.h"
 #include "bignum.h"
-#include "key.h"
+#include "Wallet/key.h"
 #include "sync.h"
 #include "util.h"
 

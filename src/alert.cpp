@@ -9,7 +9,7 @@
 #include <map>
 
 #include "alert.h"
-#include "key.h"
+#include "Wallet/key.h"
 #include "net.h"
 #include "sync.h"
 #include "ui_interface.h"

@@ -9,7 +9,7 @@
 #include "Models/transaction.h"
 #include "addrman.h"
 #include "ui_interface.h"
-#include "script.h"
+#include "Wallet/script.h"
 
 #ifdef WIN32
 #include <string.h>

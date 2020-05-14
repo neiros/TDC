@@ -5,7 +5,7 @@
 #include "db.h"
 #include "txdb.h"
 #include "main.h"
-#include "wallet.h"
+#include "Wallet/wallet.h"
 #include "util.h"
 
 CWallet* pwalletMain;

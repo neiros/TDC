@@ -5,8 +5,8 @@
 #include <boost/test/unit_test.hpp>
 #include <openssl/ecdsa.h>
 
-#include "key.h"
-#include "script.h"
+#include "Wallet/key.h"
+#include "Wallet/script.h"
 #include "util.h"
 
 using namespace std;

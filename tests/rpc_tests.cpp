@@ -2,7 +2,7 @@
 #include <boost/foreach.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "base58.h"
+#include "Wallet/base58.h"
 #include "util.h"
 #include "RPC/bitcoinrpc.h"
 

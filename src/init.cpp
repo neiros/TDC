@@ -8,7 +8,7 @@
 #include "Models/transaction.h"
 #include "chainparams.h"
 #include "txdb.h"
-#include "walletdb.h"
+#include "Wallet/walletdb.h"
 #include "RPC/bitcoinrpc.h"
 #include "net.h"
 #include "util.h"

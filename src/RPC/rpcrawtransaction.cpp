@@ -5,12 +5,12 @@
 
 #include <boost/assign/list_of.hpp>
 
-#include "base58.h"
+#include "Wallet/base58.h"
 #include "bitcoinrpc.h"
 #include "db.h"
 #include "init.h"
 #include "net.h"
-#include "wallet.h"
+#include "Wallet/wallet.h"
 
 using namespace std;
 using namespace boost;

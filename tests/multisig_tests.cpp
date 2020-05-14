@@ -9,10 +9,10 @@
 #include <openssl/ec.h>
 #include <openssl/err.h>
 
-#include "keystore.h"
+#include "Wallet/keystore.h"
 #include "main.h"
-#include "script.h"
-#include "wallet.h"
+#include "Wallet/script.h"
+#include "Wallet/wallet.h"
 
 using namespace std;
 using namespace boost::assign;

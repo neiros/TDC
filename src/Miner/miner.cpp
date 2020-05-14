@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "Models/transaction.h"
-#include "wallet.h"
+#include "Wallet/wallet.h"
 #include "miner.h"
 #include "main.h"
 

@@ -9,7 +9,7 @@
 #include <boost/foreach.hpp>
 
 #include "main.h"
-#include "wallet.h"
+#include "Wallet/wallet.h"
 #include "net.h"
 #include "util.h"
 

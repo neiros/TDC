@@ -3,7 +3,7 @@
 #include "json_spirit_writer_template.h"
 #include "json_spirit_utils.h"
 
-#include "base58.h"
+#include "Wallet/base58.h"
 #include "util.h"
 
 using namespace json_spirit;

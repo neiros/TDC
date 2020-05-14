@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "key.h"
-#include "base58.h"
+#include "Wallet/key.h"
+#include "Wallet/base58.h"
 #include "Utils/uint256.h"
 #include "util.h"
 

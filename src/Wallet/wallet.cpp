@@ -5,9 +5,9 @@
 
 #include "wallet.h"
 #include "walletdb.h"
-#include "crypter.h"
+#include "Wallet/crypter.h"
 #include "ui_interface.h"
-#include "base58.h"
+#include "Wallet/base58.h"
 #include <boost/algorithm/string/replace.hpp>
 
 using namespace std;

@@ -5,7 +5,7 @@
 #ifndef BITCOIN_CORE_H
 #define BITCOIN_CORE_H
 
-#include "script.h"
+#include "Wallet/script.h"
 
 #include "Utils/uint256.h"
 #include "Utils/serialize.h"

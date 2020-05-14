@@ -6,7 +6,7 @@
 #define BITCOIN_MINER_H
 
 #include "Models/transaction.h"
-#include "wallet.h"
+#include "Wallet/wallet.h"
 #include "Lyra2RE.h"
 
 /** Run the miner threads                                                           Запуск miner потоков */

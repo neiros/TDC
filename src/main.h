@@ -9,7 +9,7 @@
 #include "bignum.h"
 #include "sync.h"
 #include "net.h"
-#include "script.h"
+#include "Wallet/script.h"
 
 #include <list>
 

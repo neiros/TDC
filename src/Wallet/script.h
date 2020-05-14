@@ -11,7 +11,7 @@
 #include <boost/foreach.hpp>
 #include <boost/variant.hpp>
 
-#include "keystore.h"
+#include "Wallet/keystore.h"
 #include "bignum.h"
 
 class CCoins;
