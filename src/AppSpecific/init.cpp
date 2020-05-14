@@ -13,7 +13,7 @@
 #include "net.h"
 #include "Helpers/util.h"
 #include "Miner/miner.h"
-#include "ui_interface.h"
+#include "AppSpecific/ui_interface.h"
 #include "checkpoints.h"
 
 #include <boost/filesystem.hpp>

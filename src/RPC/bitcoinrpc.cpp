@@ -4,10 +4,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chainparams.h"
-#include "init.h"
+#include "AppSpecific/init.h"
 #include "Helpers/util.h"
 #include "Helpers/sync.h"
-#include "ui_interface.h"
+#include "AppSpecific/ui_interface.h"
 #include "Wallet/base58.h"
 #include "bitcoinrpc.h"
 #include "db.h"

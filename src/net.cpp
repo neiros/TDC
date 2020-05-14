@@ -8,7 +8,7 @@
 #include "net.h"
 #include "Models/transaction.h"
 #include "addrman.h"
-#include "ui_interface.h"
+#include "AppSpecific/ui_interface.h"
 #include "Wallet/script.h"
 
 #ifdef WIN32

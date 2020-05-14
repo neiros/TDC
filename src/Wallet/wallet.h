@@ -16,7 +16,7 @@
 #include "Wallet/key.h"
 #include "Wallet/keystore.h"
 #include "script.h"
-#include "ui_interface.h"
+#include "AppSpecific/ui_interface.h"
 #include "Helpers/util.h"
 
 

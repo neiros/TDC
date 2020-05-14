@@ -6,7 +6,7 @@
 #include "wallet.h"
 #include "walletdb.h"
 #include "Wallet/crypter.h"
-#include "ui_interface.h"
+#include "AppSpecific/ui_interface.h"
 #include "Wallet/base58.h"
 #include <boost/algorithm/string/replace.hpp>
 

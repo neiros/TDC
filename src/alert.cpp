@@ -12,7 +12,7 @@
 #include "Wallet/key.h"
 #include "net.h"
 #include "Helpers/sync.h"
-#include "ui_interface.h"
+#include "AppSpecific/ui_interface.h"
 
 using namespace std;
 

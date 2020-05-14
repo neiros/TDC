@@ -5,9 +5,9 @@
 #include <iostream>
 #include <fstream>
 
-#include "init.h" // for pwalletMain
+#include "AppSpecific/init.h" // for pwalletMain
 #include "bitcoinrpc.h"
-#include "ui_interface.h"
+#include "AppSpecific/ui_interface.h"
 #include "Wallet/base58.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
