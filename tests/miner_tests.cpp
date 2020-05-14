@@ -4,7 +4,7 @@
 #include "main.h"
 #include "Utils/uint256.h"
 #include "util.h"
-#include "miner.h"
+#include "Miner/miner.h"
 #include "wallet.h"
 
 extern void SHA256Transform(void* pstate, void* pinput, const void* pinit);
