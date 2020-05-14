@@ -8,7 +8,7 @@
 #include "Wallet/base58.h"
 #include "bitcoinrpc.h"
 #include "db.h"
-#include "init.h"
+#include "AppSpecific/init.h"
 #include "net.h"
 #include "Wallet/wallet.h"
 
