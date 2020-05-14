@@ -11,10 +11,10 @@
 #define __INCLUDED_PROTOCOL_H__
 
 #include "chainparams.h"
-#include "Utils/serialize.h"
+#include "Helpers/serialize.h"
 #include "netbase.h"
 #include <string>
-#include "Utils/uint256.h"
+#include "Helpers/uint256.h"
 
 /** Message header.
  * (4) message start.

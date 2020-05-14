@@ -12,7 +12,7 @@
 #include <boost/variant.hpp>
 
 #include "Wallet/keystore.h"
-#include "bignum.h"
+#include "Helpers/bignum.h"
 
 class CCoins;
 class CTransaction;

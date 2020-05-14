@@ -7,7 +7,7 @@
 
 #include "Wallet/key.h"
 #include "Wallet/script.h"
-#include "util.h"
+#include "Helpers/util.h"
 
 using namespace std;
 using namespace json_spirit;

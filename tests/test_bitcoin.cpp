@@ -6,7 +6,7 @@
 #include "txdb.h"
 #include "main.h"
 #include "Wallet/wallet.h"
-#include "util.h"
+#include "Helpers/util.h"
 
 CWallet* pwalletMain;
 CClientUIInterface uiInterface;

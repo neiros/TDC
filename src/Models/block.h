@@ -5,8 +5,8 @@
 #ifndef TDC_CORE_BLOCK_H
 #define TDC_CORE_BLOCK_H
 
-#include "Utils/uint256.h"
-#include "Utils/serialize.h"
+#include "Helpers/uint256.h"
+#include "Helpers/serialize.h"
 #include "Lyra2RE.h"
 
 #include "transaction.h"

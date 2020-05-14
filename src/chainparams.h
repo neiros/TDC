@@ -6,8 +6,8 @@
 #ifndef BITCOIN_CHAIN_PARAMS_H
 #define BITCOIN_CHAIN_PARAMS_H
 
-#include "bignum.h"
-#include "Utils/uint256.h"
+#include "Helpers/bignum.h"
+#include "Helpers/uint256.h"
 
 #include <vector>
 

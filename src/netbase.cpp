@@ -4,8 +4,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "netbase.h"
-#include "util.h"
-#include "sync.h"
+#include "Helpers/util.h"
+#include "Helpers/sync.h"
 #include "Crypto/hash.h"
 
 #ifndef WIN32

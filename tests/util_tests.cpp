@@ -4,7 +4,7 @@
 
 #include "main.h"
 #include "Wallet/wallet.h"
-#include "util.h"
+#include "Helpers/util.h"
 
 using namespace std;
 

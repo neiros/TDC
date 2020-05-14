@@ -12,7 +12,7 @@
 #include "main.h"
 #include "Wallet/wallet.h"
 #include "net.h"
-#include "util.h"
+#include "Helpers/util.h"
 
 #include <stdint.h>
 

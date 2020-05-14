@@ -4,7 +4,7 @@
 #include "json_spirit_utils.h"
 
 #include "Wallet/base58.h"
-#include "util.h"
+#include "Helpers/util.h"
 
 using namespace json_spirit;
 extern Array read_json(const std::string& filename);

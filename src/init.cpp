@@ -11,7 +11,7 @@
 #include "Wallet/walletdb.h"
 #include "RPC/bitcoinrpc.h"
 #include "net.h"
-#include "util.h"
+#include "Helpers/util.h"
 #include "Miner/miner.h"
 #include "ui_interface.h"
 #include "checkpoints.h"

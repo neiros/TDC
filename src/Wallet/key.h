@@ -7,9 +7,9 @@
 
 #include <vector>
 
-#include "Utils/allocators.h"
-#include "Utils/serialize.h"
-#include "Utils/uint256.h"
+#include "Helpers/allocators.h"
+#include "Helpers/serialize.h"
+#include "Helpers/uint256.h"
 #include "Crypto/hash.h"
 
 // secp256k1:

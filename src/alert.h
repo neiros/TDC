@@ -9,8 +9,8 @@
 #include <set>
 #include <string>
 
-#include "Utils/uint256.h"
-#include "util.h"
+#include "Helpers/uint256.h"
+#include "Helpers/util.h"
 
 class CNode;
 

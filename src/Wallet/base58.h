@@ -19,10 +19,10 @@
 #include <vector>
 
 #include "chainparams.h"
-#include "bignum.h"
+#include "Helpers/bignum.h"
 #include "Wallet/key.h"
 #include "script.h"
-#include "Utils/allocators.h"
+#include "Helpers/allocators.h"
 
 static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 

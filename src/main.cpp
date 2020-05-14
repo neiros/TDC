@@ -9,7 +9,7 @@
 #include "txdb.h"
 #include "net.h"
 #include "init.h"
-#include "Utils/checkqueue.h"
+#include "Helpers/checkqueue.h"
 #include "chainparams.h"
 
 #include <boost/algorithm/string/replace.hpp>

@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Wallet/base58.h"
-#include "util.h"
+#include "Helpers/util.h"
 #include "RPC/bitcoinrpc.h"
 
 using namespace std;

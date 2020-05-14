@@ -17,7 +17,7 @@ class CReserveKey;
 #include "json_spirit_writer_template.h"
 #include "json_spirit_utils.h"
 
-#include "util.h"
+#include "Helpers/util.h"
 
 // HTTP status codes
 enum HTTPStatusCode

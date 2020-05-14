@@ -5,8 +5,8 @@
 
 #include "chainparams.h"
 #include "init.h"
-#include "util.h"
-#include "sync.h"
+#include "Helpers/util.h"
+#include "Helpers/sync.h"
 #include "ui_interface.h"
 #include "Wallet/base58.h"
 #include "bitcoinrpc.h"

@@ -6,7 +6,7 @@
 #include <boost/foreach.hpp>
 
 #include "checkpoints.h"
-#include "util.h"
+#include "Helpers/util.h"
 
 using namespace std;
 

@@ -11,7 +11,7 @@
 #include "main.h"
 #include "Wallet/wallet.h"
 #include "net.h"
-#include "util.h"
+#include "Helpers/util.h"
 
 BOOST_AUTO_TEST_SUITE(CheckBlock_tests)
 

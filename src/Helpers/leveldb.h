@@ -4,7 +4,7 @@
 #ifndef BITCOIN_LEVELDB_H
 #define BITCOIN_LEVELDB_H
 
-#include "Utils/serialize.h"
+#include "serialize.h"
 
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>

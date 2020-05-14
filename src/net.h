@@ -15,8 +15,8 @@
 #include <arpa/inet.h>
 #endif
 
-#include "Utils/mruset.h"
-#include "Utils/limitedmap.h"
+#include "Helpers/mruset.h"
+#include "Helpers/limitedmap.h"
 #include "netbase.h"
 #include "protocol.h"
 #include "addrman.h"

@@ -5,7 +5,7 @@
 
 #include "chainparams.h"
 #include "db.h"
-#include "util.h"
+#include "Helpers/util.h"
 #include "Crypto/hash.h"
 #include "addrman.h"
 #include <boost/filesystem.hpp>

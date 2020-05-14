@@ -17,7 +17,7 @@
 #include "Wallet/keystore.h"
 #include "script.h"
 #include "ui_interface.h"
-#include "util.h"
+#include "Helpers/util.h"
 
 
 class CAccountingEntry;

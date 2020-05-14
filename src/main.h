@@ -6,8 +6,8 @@
 #define BITCOIN_MAIN_H
 
 #include "Models/block.h"
-#include "bignum.h"
-#include "sync.h"
+#include "Helpers/bignum.h"
+#include "Helpers/sync.h"
 #include "net.h"
 #include "Wallet/script.h"
 

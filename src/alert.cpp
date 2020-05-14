@@ -11,7 +11,7 @@
 #include "alert.h"
 #include "Wallet/key.h"
 #include "net.h"
-#include "sync.h"
+#include "Helpers/sync.h"
 #include "ui_interface.h"
 
 using namespace std;

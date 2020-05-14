@@ -5,8 +5,8 @@
 
 #include "Wallet/key.h"
 #include "Wallet/base58.h"
-#include "Utils/uint256.h"
-#include "util.h"
+#include "Helpers/uint256.h"
+#include "Helpers/util.h"
 
 using namespace std;
 

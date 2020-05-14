@@ -2,8 +2,8 @@
 
 #include "init.h"
 #include "main.h"
-#include "Utils/uint256.h"
-#include "util.h"
+#include "Helpers/uint256.h"
+#include "Helpers/util.h"
 #include "Miner/miner.h"
 #include "Wallet/wallet.h"
 
