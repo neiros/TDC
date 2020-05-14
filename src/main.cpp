@@ -3,14 +3,14 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "alert.h"
-#include "checkpoints.h"
+#include "Net/alert.h"
+#include "Net/checkpoints.h"
 #include "db.h"
 #include "txdb.h"
-#include "net.h"
+#include "Net/net.h"
 #include "AppSpecific/init.h"
 #include "Helpers/checkqueue.h"
-#include "chainparams.h"
+#include "Net/chainparams.h"
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>

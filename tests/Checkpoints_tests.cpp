@@ -5,7 +5,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/foreach.hpp>
 
-#include "checkpoints.h"
+#include "Net/checkpoints.h"
 #include "Helpers/util.h"
 
 using namespace std;

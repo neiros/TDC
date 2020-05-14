@@ -10,7 +10,7 @@
 
 #include "main.h"
 #include "Wallet/wallet.h"
-#include "net.h"
+#include "Net/net.h"
 #include "Helpers/util.h"
 
 BOOST_AUTO_TEST_SUITE(CheckBlock_tests)

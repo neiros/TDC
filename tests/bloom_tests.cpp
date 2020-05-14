@@ -1,7 +1,7 @@
 #include <boost/test/unit_test.hpp>
 #include <vector>
 
-#include "bloom.h"
+#include "Net/bloom.h"
 #include "Helpers/util.h"
 #include "Wallet/key.h"
 #include "Wallet/base58.h"

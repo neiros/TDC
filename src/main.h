@@ -8,7 +8,7 @@
 #include "Models/block.h"
 #include "Helpers/bignum.h"
 #include "Helpers/sync.h"
-#include "net.h"
+#include "Net/net.h"
 #include "Wallet/script.h"
 
 #include <list>

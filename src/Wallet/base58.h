@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "chainparams.h"
+#include "Net/chainparams.h"
 #include "Helpers/bignum.h"
 #include "Wallet/key.h"
 #include "script.h"

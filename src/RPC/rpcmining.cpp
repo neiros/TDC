@@ -3,7 +3,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "chainparams.h"
+#include "Net/chainparams.h"
 #include "db.h"
 #include "AppSpecific/init.h"
 #include "Miner/miner.h"

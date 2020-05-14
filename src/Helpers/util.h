@@ -27,7 +27,7 @@
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-#include "netbase.h" // for AddTimeData
+#include "Net/netbase.h" // for AddTimeData
 
 typedef long long  int64;
 typedef unsigned long long  uint64;

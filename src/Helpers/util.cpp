@@ -13,7 +13,7 @@
 #include <sys/resource.h>
 #endif
 
-#include "chainparams.h"
+#include "Net/chainparams.h"
 #include "util.h"
 #include "sync.h"
 #include "Versioning/version.h"

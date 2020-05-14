@@ -3,7 +3,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "chainparams.h"
+#include "Net/chainparams.h"
 #include "AppSpecific/init.h"
 #include "Helpers/util.h"
 #include "Helpers/sync.h"

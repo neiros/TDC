@@ -6,15 +6,15 @@
 #include "init.h"
 #include "main.h"
 #include "Models/transaction.h"
-#include "chainparams.h"
+#include "Net/chainparams.h"
 #include "txdb.h"
 #include "Wallet/walletdb.h"
 #include "RPC/bitcoinrpc.h"
-#include "net.h"
+#include "Net/net.h"
 #include "Helpers/util.h"
 #include "Miner/miner.h"
 #include "AppSpecific/ui_interface.h"
-#include "checkpoints.h"
+#include "Net/checkpoints.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>

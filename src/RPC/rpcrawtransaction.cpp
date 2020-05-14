@@ -9,7 +9,7 @@
 #include "bitcoinrpc.h"
 #include "db.h"
 #include "AppSpecific/init.h"
-#include "net.h"
+#include "Net/net.h"
 #include "Wallet/wallet.h"
 
 using namespace std;
