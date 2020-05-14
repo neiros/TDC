@@ -7,7 +7,6 @@
 
 #include "Utils/uint256.h"
 #include "Utils/serialize.h"
-//#include "script.h"
 #include "Lyra2RE.h"
 
 #include "transaction.h"
