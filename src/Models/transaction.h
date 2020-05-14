@@ -5,11 +5,10 @@
 #ifndef BITCOIN_CORE_H
 #define BITCOIN_CORE_H
 
-//TODO: check includes
+#include "script.h"
+
 #include "Utils/uint256.h"
 #include "Utils/serialize.h"
-#include "script.h"
-#include "Lyra2RE.h"
 
 #include <stdio.h>
 

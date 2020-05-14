@@ -4,8 +4,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "transaction.h"
-#include "util.h"
-#include "main.h"
+
+//#include "util.h"
+//#include "main.h"
 
 std::string COutPoint::ToString() const
 {
