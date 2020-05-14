@@ -6,7 +6,7 @@
 #include "chainparams.h"
 #include "db.h"
 #include "net.h"
-#include "core.h"
+#include "Models/transaction.h"
 #include "addrman.h"
 #include "ui_interface.h"
 #include "script.h"

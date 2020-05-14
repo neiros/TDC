@@ -6,7 +6,7 @@
 #include "assert.h"
 
 #include "chainparams.h"
-#include "core.h"
+#include "Models/block.h"
 #include "protocol.h"
 #include "util.h"
 

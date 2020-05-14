@@ -5,7 +5,7 @@
 
 #include "init.h"
 #include "main.h"
-#include "core.h"
+#include "Models/transaction.h"
 #include "chainparams.h"
 #include "txdb.h"
 #include "walletdb.h"

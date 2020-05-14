@@ -3,7 +3,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "core.h"
+#include "Models/transaction.h"
 #include "wallet.h"
 #include "miner.h"
 #include "main.h"

@@ -9,7 +9,7 @@ using namespace std;
 using namespace boost;
 
 #include "script.h"
-#include "core.h"
+#include "Models/transaction.h"
 #include "keystore.h"
 #include "bignum.h"
 #include "key.h"
