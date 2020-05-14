@@ -7,14 +7,10 @@
 #include "Net/checkpoints.h"
 #include "db.h"
 #include "txdb.h"
-#include "Net/net.h"
 #include "init.h"
 #include "Helpers/checkqueue.h"
-#include "Net/chainparams.h"
 
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
 
 using namespace std;
 using namespace boost;

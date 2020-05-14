@@ -5,23 +5,14 @@
 
 #include "init.h"
 #include "main.h"
-#include "Models/transaction.h"
-#include "Net/chainparams.h"
 #include "txdb.h"
-#include "Wallet/walletdb.h"
 #include "RPC/bitcoinrpc.h"
-#include "Net/net.h"
-#include "Helpers/util.h"
 #include "Miner/miner.h"
-#include "AppSpecific/ui_interface.h"
 #include "Net/checkpoints.h"
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/convenience.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <openssl/crypto.h>
+
 
 #ifndef WIN32
 #include <signal.h>

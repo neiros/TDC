@@ -5,8 +5,6 @@
 
 #include "transaction.h"
 
-//#include "util.h"
-//#include "main.h"
 
 std::string COutPoint::ToString() const
 {

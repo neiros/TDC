@@ -4,8 +4,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "protocol.h"
-#include "Helpers/util.h"
-#include "netbase.h"
 
 #ifndef WIN32
 # include <arpa/inet.h>

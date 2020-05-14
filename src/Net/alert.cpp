@@ -11,7 +11,6 @@
 #include "alert.h"
 #include "Wallet/key.h"
 #include "net.h"
-#include "Helpers/sync.h"
 #include "AppSpecific/ui_interface.h"
 
 using namespace std;

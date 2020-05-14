@@ -10,11 +10,7 @@ using namespace boost;
 
 #include "script.h"
 #include "Models/transaction.h"
-#include "Wallet/keystore.h"
-#include "Helpers/bignum.h"
-#include "Wallet/key.h"
-#include "Helpers/sync.h"
-#include "Helpers/util.h"
+
 
 bool CheckSig(vector<unsigned char> vchSig, const vector<unsigned char> &vchPubKey, const CScript &scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, int flags);
 

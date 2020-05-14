@@ -4,7 +4,6 @@
 
 #include "block.h"
 
-#include "Helpers/util.h"
 #include "main.h"
 
 uint256 CBlockHeader::GetHashFork(int tHeight) const

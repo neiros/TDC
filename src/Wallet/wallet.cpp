@@ -4,10 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "wallet.h"
-#include "walletdb.h"
-#include "Wallet/crypter.h"
-#include "AppSpecific/ui_interface.h"
-#include "Wallet/base58.h"
+
 #include <boost/algorithm/string/replace.hpp>
 
 using namespace std;

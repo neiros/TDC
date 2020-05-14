@@ -5,7 +5,6 @@
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 #include <vector>
-#include <string>
 #ifdef WIN32
 #include <windows.h>
 #endif
