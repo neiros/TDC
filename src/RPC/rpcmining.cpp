@@ -5,7 +5,7 @@
 
 #include "Net/chainparams.h"
 #include "db.h"
-#include "AppSpecific/init.h"
+#include "init.h"
 #include "Miner/miner.h"
 #include "bitcoinrpc.h"
 

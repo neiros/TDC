@@ -5,7 +5,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "AppSpecific/init.h" // for pwalletMain
+#include "init.h" // for pwalletMain
 #include "bitcoinrpc.h"
 #include "AppSpecific/ui_interface.h"
 #include "Wallet/base58.h"

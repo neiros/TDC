@@ -3,7 +3,7 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "AppSpecific/init.h"
+#include "init.h"
 #include "RPC/bitcoinrpc.h"
 #include <boost/algorithm/string/predicate.hpp>
 

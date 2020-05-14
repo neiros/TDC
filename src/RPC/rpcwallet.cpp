@@ -8,7 +8,7 @@
 #include "Wallet/wallet.h"
 #include "Wallet/walletdb.h"
 #include "bitcoinrpc.h"
-#include "AppSpecific/init.h"
+#include "init.h"
 #include "Wallet/base58.h"
 
 using namespace std;

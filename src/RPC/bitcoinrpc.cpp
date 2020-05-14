@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "Net/chainparams.h"
-#include "AppSpecific/init.h"
+#include "init.h"
 #include "Helpers/util.h"
 #include "Helpers/sync.h"
 #include "AppSpecific/ui_interface.h"

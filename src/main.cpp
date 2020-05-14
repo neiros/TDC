@@ -8,7 +8,7 @@
 #include "db.h"
 #include "txdb.h"
 #include "Net/net.h"
-#include "AppSpecific/init.h"
+#include "init.h"
 #include "Helpers/checkqueue.h"
 #include "Net/chainparams.h"
 

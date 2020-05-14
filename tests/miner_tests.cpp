@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 
-#include "AppSpecific/init.h"
+#include "init.h"
 #include "main.h"
 #include "Helpers/uint256.h"
 #include "Helpers/util.h"
