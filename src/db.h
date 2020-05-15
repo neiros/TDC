@@ -5,8 +5,8 @@
 #ifndef BITCOIN_DB_H
 #define BITCOIN_DB_H
 
-#include "sync.h"
-#include "serialize.h"
+#include "Helpers/sync.h"
+#include "Helpers/serialize.h"
 
 #include <map>
 #include <string>

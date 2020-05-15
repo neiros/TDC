@@ -3,8 +3,8 @@
 #include "json_spirit_writer_template.h"
 #include "json_spirit_utils.h"
 
-#include "base58.h"
-#include "util.h"
+#include "Wallet/base58.h"
+#include "Helpers/util.h"
 
 using namespace json_spirit;
 extern Array read_json(const std::string& filename);

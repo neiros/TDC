@@ -3,18 +3,14 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "alert.h"
-#include "checkpoints.h"
+#include "Net/alert.h"
+#include "Net/checkpoints.h"
 #include "db.h"
 #include "txdb.h"
-#include "net.h"
 #include "init.h"
-#include "ui_interface.h"
-#include "checkqueue.h"
-#include "chainparams.h"
+#include "Helpers/checkqueue.h"
+
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
 
 using namespace std;
 using namespace boost;

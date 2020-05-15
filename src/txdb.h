@@ -6,7 +6,7 @@
 #define BITCOIN_TXDB_LEVELDB_H
 
 #include "main.h"
-#include "leveldb.h"
+#include "Helpers/leveldb.h"
 
 /** CCoinsView backed by the LevelDB coin database (chainstate/)                    CCoinsView опирается на базу данных монет LevelDB */
 class CCoinsViewDB : public CCoinsView

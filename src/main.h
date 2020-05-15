@@ -5,11 +5,11 @@
 #ifndef BITCOIN_MAIN_H
 #define BITCOIN_MAIN_H
 
-#include "core.h"
-#include "bignum.h"
-#include "sync.h"
-#include "net.h"
-#include "script.h"
+#include "Models/block.h"
+#include "Helpers/bignum.h"
+#include "Helpers/sync.h"
+#include "Net/net.h"
+#include "Wallet/script.h"
 
 #include <list>
 

@@ -8,11 +8,11 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/foreach.hpp>
 
-#include "chainparams.h"
+#include "Net/chainparams.h"
 #include "main.h"
-#include "wallet.h"
-#include "net.h"
-#include "util.h"
+#include "Wallet/wallet.h"
+#include "Net/net.h"
+#include "Helpers/util.h"
 
 #include <stdint.h>
 

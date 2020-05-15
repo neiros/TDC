@@ -1,10 +1,10 @@
 #include <boost/test/unit_test.hpp>
 #include <vector>
 
-#include "bloom.h"
-#include "util.h"
-#include "key.h"
-#include "base58.h"
+#include "Net/bloom.h"
+#include "Helpers/util.h"
+#include "Wallet/key.h"
+#include "Wallet/base58.h"
 #include "main.h"
 
 using namespace std;

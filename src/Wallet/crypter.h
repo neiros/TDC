@@ -1,0 +1,111 @@
+// Copyright (c) 2009-2012 The Bitcoin Developers
+// Distributed under the MIT/X11 software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+#ifndef __CRYPTER_H__
+#define __CRYPTER_H__
+
+#include "Helpers/allocators.h" /* for SecureString */
+#include "Wallet/key.h"
+#include "Helpers/serialize.h"
+
+const unsigned int WALLET_CRYPTO_KEY_SIZE = 32;
+const unsigned int WALLET_CRYPTO_SALT_SIZE = 8;
+
+/*
+Private key encryption is done based on a CMasterKey,                           Приватный ключ шифрование сделан на основе CMasterKey,
+which holds a salt and random encryption key.                                   который держит соль и случайный шифрованный ключ.
+
+CMasterKeys are encrypted using AES-256-CBC using a key                         CMasterKeys, шифруются с помощью AES-256-CBC с помощью
+derived using derivation method nDerivationMethod                               ключа на основе использования метода расчета nDerivationMethod
+(0 == EVP_sha512()) and derivation iterations nDeriveIterations.                (0 EVP_sha512 ()) и дифференцированый итерацией nDeriveIterations.
+vchOtherDerivationParameters is provided for alternative algorithms             vchOtherDerivationParameters предусмотрен для альтернативных алгоритмов,
+which may require more parameters (such as scrypt).                             которому может потребоваться больше параметров (такие, как scrypt).
+
+Wallet Private Keys are then encrypted using AES-256-CBC                        Приватные ключи кошелька зашифрованы с помощью AES-256-CBC
+with the double-sha256 of the public key as the IV, and the                     с двойном-sha256 открытым ключём как IV,
+master key's key as the encryption key (see keystore.[ch]).                     и мастер ключ, ключ как шифрованный ключ (см. keystore.[ch]).
+
+*/
+
+/** Master key for wallet encryption                                            Мастер ключ для зашифрованного бумажника  */
+class CMasterKey
+{
+public:
+    std::vector<unsigned char> vchCryptedKey;
+    std::vector<unsigned char> vchSalt;
+    // 0 = EVP_sha512()
+    // 1 = scrypt()
+    unsigned int nDerivationMethod;
+    unsigned int nDeriveIterations;
+    // Use this for more parameters to key derivation,                          Используйте это для большего количества параметров для производного ключа,
+    // such as the various parameters to scrypt                                 таких как различные параметры для scrypt
+    std::vector<unsigned char> vchOtherDerivationParameters;
+
+    IMPLEMENT_SERIALIZE
+    (
+        READWRITE(vchCryptedKey);
+        READWRITE(vchSalt);
+        READWRITE(nDerivationMethod);
+        READWRITE(nDeriveIterations);
+        READWRITE(vchOtherDerivationParameters);
+    )
+    CMasterKey()
+    {
+        // 25000 rounds is just under 0.1 seconds on a 1.86 GHz Pentium M       25000 раундов — чуть менее 0,1 секунды на 1,86 ГГц  Pentium M т.е. несколько ниже,
+        // ie slightly lower than the lowest hardware we need bother supporting чем самая низкая (hardware) которую мы должны обеспечивать поддержку
+        nDeriveIterations = 25000;
+        nDerivationMethod = 0;
+        vchOtherDerivationParameters = std::vector<unsigned char>(0);
+    }
+};
+
+typedef std::vector<unsigned char, secure_allocator<unsigned char> > CKeyingMaterial;
+
+/** Encryption/decryption context with key information                          Шифрование/дешифрование контекста с ключевой информацией */
+class CCrypter
+{
+private:
+    unsigned char chKey[WALLET_CRYPTO_KEY_SIZE];
+    unsigned char chIV[WALLET_CRYPTO_KEY_SIZE];
+    bool fKeySet;
+
+public:
+    bool SetKeyFromPassphrase(const SecureString &strKeyData, const std::vector<unsigned char>& chSalt, const unsigned int nRounds, const unsigned int nDerivationMethod);
+    bool Encrypt(const CKeyingMaterial& vchPlaintext, std::vector<unsigned char> &vchCiphertext);
+    bool Decrypt(const std::vector<unsigned char>& vchCiphertext, CKeyingMaterial& vchPlaintext);
+    bool SetKey(const CKeyingMaterial& chNewKey, const std::vector<unsigned char>& chNewIV);
+
+    void CleanKey()
+    {
+        OPENSSL_cleanse(chKey, sizeof(chKey));
+        OPENSSL_cleanse(chIV, sizeof(chIV));
+        fKeySet = false;
+    }
+
+    CCrypter()
+    {
+        fKeySet = false;
+
+        // Try to keep the key data out of swap (and be a bit over-careful to keep the IV that we don't even use out of swap)
+        // Note that this does nothing about suspend-to-disk (which will put all our key data on disk)
+        // Note as well that at no point in this program is any attempt made to prevent stealing of keys by reading the memory of the running process.
+        //              Попробуйте сохранить данные ключа из свопа (и будьте немного сверхосторожны, чтобы держать IV, который мы даже не используем для свопа)
+        //              Обратите внимание, что это ничего не делает насчет приостановления-на-диск (который поместит все наши ключевые данные на диск)
+        //              обратите внимание также, что нет точки в этой программы для любой попытки осуществить кражу ключей путем чтения памяти выполняющегося процесса.
+        LockedPageManager::instance.LockRange(&chKey[0], sizeof chKey);
+        LockedPageManager::instance.LockRange(&chIV[0], sizeof chIV);
+    }
+
+    ~CCrypter()
+    {
+        CleanKey();
+
+        LockedPageManager::instance.UnlockRange(&chKey[0], sizeof chKey);
+        LockedPageManager::instance.UnlockRange(&chIV[0], sizeof chIV);
+    }
+};
+
+bool EncryptSecret(const CKeyingMaterial& vMasterKey, const CKeyingMaterial &vchPlaintext, const uint256& nIV, std::vector<unsigned char> &vchCiphertext);
+bool DecryptSecret(const CKeyingMaterial& vMasterKey, const std::vector<unsigned char>& vchCiphertext, const uint256& nIV, CKeyingMaterial& vchPlaintext);
+
+#endif

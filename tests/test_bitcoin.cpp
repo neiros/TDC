@@ -5,8 +5,8 @@
 #include "db.h"
 #include "txdb.h"
 #include "main.h"
-#include "wallet.h"
-#include "util.h"
+#include "Wallet/wallet.h"
+#include "Helpers/util.h"
 
 CWallet* pwalletMain;
 CClientUIInterface uiInterface;

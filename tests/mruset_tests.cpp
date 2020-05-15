@@ -2,8 +2,8 @@
 
 using namespace std;
 
-#include "mruset.h"
-#include "util.h"
+#include "Helpers/mruset.h"
+#include "Helpers/util.h"
 
 #define NUM_TESTS 16
 #define MAX_SIZE 100

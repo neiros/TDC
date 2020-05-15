@@ -2,7 +2,7 @@
 
 #include "init.h"
 #include "main.h"
-#include "util.h"
+#include "Helpers/util.h"
 
 BOOST_AUTO_TEST_SUITE(allocator_tests)
 

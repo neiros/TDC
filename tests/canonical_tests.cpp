@@ -5,9 +5,9 @@
 #include <boost/test/unit_test.hpp>
 #include <openssl/ecdsa.h>
 
-#include "key.h"
-#include "script.h"
-#include "util.h"
+#include "Wallet/key.h"
+#include "Wallet/script.h"
+#include "Helpers/util.h"
 
 using namespace std;
 using namespace json_spirit;

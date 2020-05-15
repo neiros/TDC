@@ -4,9 +4,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "txdb.h"
-#include "main.h"
-#include "hash.h"
-#include "chainparams.h"
 
 using namespace std;
 

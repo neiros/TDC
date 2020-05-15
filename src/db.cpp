@@ -3,14 +3,10 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "chainparams.h"
 #include "db.h"
-#include "util.h"
-#include "hash.h"
-#include "addrman.h"
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <openssl/rand.h>
+
+#include "Helpers/hash.h"
+#include "Net/addrman.h"
 
 #ifndef WIN32
 #include "sys/stat.h"

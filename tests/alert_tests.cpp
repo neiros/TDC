@@ -6,9 +6,9 @@
 #include <boost/test/unit_test.hpp>
 #include <fstream>
 
-#include "alert.h"
-#include "serialize.h"
-#include "util.h"
+#include "Net/alert.h"
+#include "Helpers/serialize.h"
+#include "Helpers/util.h"
 
 #if 0
 //

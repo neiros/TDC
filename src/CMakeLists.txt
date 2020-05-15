@@ -1,5 +1,5 @@
-file(GLOB CORE_SOURCES "*.cpp")
-file(GLOB CORE_HEADERS "*.h")
+file(GLOB_RECURSE CORE_SOURCES "*.cpp")
+file(GLOB_RECURSE CORE_HEADERS "*.h")
 
 add_library(TDC_Core ${CORE_SOURCES})
 

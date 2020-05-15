@@ -3,10 +3,10 @@
 #include <string>
 #include <vector>
 
-#include "key.h"
-#include "base58.h"
-#include "uint256.h"
-#include "util.h"
+#include "Wallet/key.h"
+#include "Wallet/base58.h"
+#include "Helpers/uint256.h"
+#include "Helpers/util.h"
 
 using namespace std;
 
