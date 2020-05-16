@@ -60,7 +60,7 @@ cd ..
 
 - Generate Visual Studio solution files:
 ```
-cmake -G "Visual Studio 2019" -DCMAKE_TOOLCHAIN_FILE=\vcpkg\scripts\buildsystems\vcpkg.cmake
+cmake -G "Visual Studio 2019" -DCMAKE_TOOLCHAIN_FILE=vcpkg\scripts\buildsystems\vcpkg.cmake
 ```
 
 - Open the generated solution and build the project.
