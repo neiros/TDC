@@ -1,3 +1,6 @@
+# vcpkg package manager
+vcpkg
+
 # Visual Studio 2019 specific
 .vs
 
