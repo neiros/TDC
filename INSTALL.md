@@ -13,7 +13,7 @@ sudo apt update && sudo apt upgrade
 
 - Install the dependencies:
 ```
-sudo apt-get install build-essential git autoconf libtool libssl-dev libboost-all-dev libdb++-dev libgmp-dev
+sudo apt-get install git cmake build-essential libssl-dev libboost-all-dev libdb++-dev
 ```
 
 - Clone this repository:
@@ -31,4 +31,36 @@ cmake .. -G "Unix Makefiles" && make
 - Built application will be written to ```/build/apps``` directory. 
 
 ## On Windows 10:
-This section is under development.
+:construction: **This section is under development.** :construction:
+
+- Install [Visual Studio](https://visualstudio.microsoft.com/vs/) with ```Desktop development with C++``` package.
+
+- Install Git either through [official release](https://git-scm.com/downloads) either from Visual Studio's individual components section.
+
+- Clone this repository: 
+
+**Tip:** Use _Developer_ powershell/cmd instead of the default one.
+```
+git clone https://github.com/neiros/TDC
+cd TDC
+```
+
+- Download and install [vcpkg package manager](https://github.com/microsoft/vcpkg):
+```
+git clone https://github.com/microsoft/vcpkg
+cd vcpkg
+.\bootstrap-vcpkg.bat
+```
+
+- Install dependencies:
+```
+.\vcpkg.exe install boost openssl berkeleydb
+cd ..
+```
+
+- Generate Visual Studio solution files:
+```
+cmake -G "Visual Studio 2019" -DCMAKE_TOOLCHAIN_FILE=\vcpkg\scripts\buildsystems\vcpkg.cmake
+```
+
+- Open the generated solution and build the project.
