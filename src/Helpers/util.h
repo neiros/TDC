@@ -9,6 +9,10 @@
 
 #include <stdarg.h>
 
+#ifndef WINDOWS
+#define pid_t int   // https://www.gnu.org/software/libc/manual/html_node/Process-Identification.html
+#endif
+
 #ifndef WIN32
 #include <sys/types.h>
 #include <sys/time.h>
