@@ -5,19 +5,20 @@
 #ifndef BITCOIN_WALLET_H
 #define BITCOIN_WALLET_H
 
-#include "walletdb.h"
-
 #include <string>
 #include <vector>
 
 #include <stdlib.h>
 
-#include "main.h"
-#include "Wallet/key.h"
-#include "Wallet/keystore.h"
-#include "script.h"
-#include "AppSpecific/ui_interface.h"
 #include "Helpers/util.h"
+
+#include "key.h"
+#include "keystore.h"
+#include "script.h"
+#include "walletdb.h"
+
+#include "main.h"
+#include "AppSpecific/ui_interface.h"
 
 
 class CAccountingEntry;

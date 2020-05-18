@@ -5,6 +5,7 @@
 
 #include "init.h"
 #include "RPC/bitcoinrpc.h"
+
 #include <boost/algorithm/string/predicate.hpp>
 
 void DetectShutdownThread(boost::thread_group* threadGroup)
@@ -123,7 +124,7 @@ bool AppInit(int argc, char* argv[])
     return fRet;
 }
 
-extern void noui_connect();
+extern void noui_connect(); // declared in noui.cpp
 int main(int argc, char* argv[])
 {
     bool fRet = false;

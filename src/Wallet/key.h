@@ -10,6 +10,7 @@
 #include "Helpers/allocators.h"
 #include "Helpers/serialize.h"
 #include "Helpers/uint256.h"
+
 #include "Helpers/hash.h"
 
 // secp256k1:

@@ -4,7 +4,8 @@
 
 #include "block.h"
 
-#include "main.h"
+#include "main.h" // for CBlockIndex, mapBlockIndex and HEIGHT_OTHER_ALGO
+                    // used in CBlockHeader::GetHash() and CBlockHeader::GetHashFork()
 
 uint256 CBlockHeader::GetHashFork(int tHeight) const
 {

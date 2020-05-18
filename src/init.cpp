@@ -4,8 +4,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "init.h"
+
 #include "main.h"
 #include "txdb.h"
+
 #include "RPC/bitcoinrpc.h"
 #include "Miner/miner.h"
 #include "Net/checkpoints.h"
@@ -373,7 +375,7 @@ bool AppInit2(boost::thread_group& threadGroup)
         return InitError(strprintf("Error: Winsock library failed to start (WSAStartup returned error %d)", ret));
     }
 #endif
-#ifndef WIN32       // если не в WIN
+#ifndef WIN32
     umask(077);     // user file creation mode mask — маска режима создания пользовательских файлов
 
     // Clean shutdown on SIGTERM

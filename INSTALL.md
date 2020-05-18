@@ -64,3 +64,22 @@ cmake -G "Visual Studio 2019" -DCMAKE_TOOLCHAIN_FILE=vcpkg\scripts\buildsystems\
 ```
 
 - Open the generated solution and build the project.
+
+## on Mac OS
+
+- Install the macOS command line tools:
+```
+xcode-select --install
+```
+
+- Then install [Homebrew](https://brew.sh).
+
+- brew install cmake boost openssl 
+
+
+berkeleydb
+
+
+git clone
+
+build

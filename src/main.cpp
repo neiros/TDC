@@ -4,10 +4,12 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "Net/alert.h"
+
 #include "Net/checkpoints.h"
 #include "db.h"
 #include "txdb.h"
 #include "init.h"
+
 #include "Helpers/checkqueue.h"
 
 #include <boost/algorithm/string/replace.hpp>
