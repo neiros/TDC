@@ -5,9 +5,11 @@
 
 #include "assert.h"
 
+
+#include "DataTypes/block.h"
+#include "protocol.h"   // for CAddress class
+
 #include "chainparams.h"
-#include "Models/block.h"
-#include "protocol.h"
 
 //
 // Main network

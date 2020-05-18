@@ -5,7 +5,7 @@
 #ifndef BITCOIN_MINER_H
 #define BITCOIN_MINER_H
 
-#include "Models/transaction.h"
+#include "DataTypes/transaction.h"
 #include "Wallet/wallet.h"
 #include "Lyra2RE.h"
 

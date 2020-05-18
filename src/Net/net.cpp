@@ -6,9 +6,11 @@
 #include "chainparams.h"
 #include "db.h"
 #include "net.h"
-#include "Models/transaction.h"
-#include "addrman.h"
+#include "DataTypes/transaction.h"
 #include "AppSpecific/ui_interface.h"
+
+// Looks like these 2 imports are unused on ubuntu
+#include "addrman.h"
 #include "Wallet/script.h"
 
 #ifdef WIN32

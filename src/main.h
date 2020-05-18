@@ -5,7 +5,7 @@
 #ifndef BITCOIN_MAIN_H
 #define BITCOIN_MAIN_H
 
-#include "Models/block.h"
+#include "DataTypes/block.h"
 #include "Helpers/bignum.h"
 #include "Helpers/sync.h"
 #include "Net/net.h"
