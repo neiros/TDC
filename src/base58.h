@@ -24,12 +24,12 @@
 #include "script.h"
 #include "allocators.h"
 
-
 static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 // Encode a byte sequence as a base58-encoded string                                    Закодировать последовательность байтов как base58-кодированную строку
 inline std::string EncodeBase58(const unsigned char* pbegin, const unsigned char* pend)
 {
+    CAutoBN_CTX pctx;
     CBigNum bn58 = 58;
     CBigNum bn0 = 0;
 
@@ -47,22 +47,13 @@ inline std::string EncodeBase58(const unsigned char* pbegin, const unsigned char
     // Expected size increase from base58 conversion is approximately 137%              Ожидаемое увеличение размера от преобразования base58 примерно 137%
     // use 138% to be safe                                                              используется 138%, чтобы быть безопасным
     str.reserve((pend - pbegin) * 138 / 100 + 1);
-
-    // TODO: Implement div in CBigNum and refactor this.
-    // I'll burn in hell because of this.
-    CBigNum res;
+    CBigNum dv;
     CBigNum rem;
     while (bn > bn0)
     {
-        try {
-            res = bn/bn58;
-            rem = bn%bn58;
-        }
-        catch (bignum_error) {
-            //TODO: handle exceptins here.
-            //Ops. cout << "EncodeBase58 : BN_div failed";
-        }
-        bn = res;
+        if (!BN_div(&dv, &rem, &bn, &bn58, pctx))
+            throw bignum_error("EncodeBase58 : BN_div failed");
+        bn = dv;
         unsigned int c = rem.getulong();
         str += pszBase58[c];
     }
@@ -86,6 +77,7 @@ inline std::string EncodeBase58(const std::vector<unsigned char>& vch)
 // returns true if decoding is successful                                               вернуть true если декодирование успешно
 inline bool DecodeBase58(const char* psz, std::vector<unsigned char>& vchRet)
 {
+    CAutoBN_CTX pctx;
     vchRet.clear();
     CBigNum bn58 = 58;
     CBigNum bn = 0;
@@ -106,7 +98,8 @@ inline bool DecodeBase58(const char* psz, std::vector<unsigned char>& vchRet)
             break;
         }
         bnChar.setulong(p1 - pszBase58);
-        bn *= bn58;
+        if (!BN_mul(&bn, &bn, &bn58, pctx))
+            throw bignum_error("DecodeBase58 : BN_mul failed");
         bn += bnChar;
     }
 
