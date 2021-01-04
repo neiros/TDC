@@ -19,7 +19,6 @@ git clone https://github.com/neiros/TDC.git -b U16_TDC U16_TDC
 
 - Build the source code:
 ```
-cd U16_TDC/src
 cd U16_TDC/src/leveldb && chmod +x build_detect_platform && cd .. && make -f makefile.unix USE_UPNP=-
 ```
 
