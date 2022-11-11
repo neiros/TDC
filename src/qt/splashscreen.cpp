@@ -9,9 +9,9 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f) :
     QSplashScreen(pixmap, f)
 {
     // set reference point, paddings
-    int paddingRight            = 320;
-    int paddingTop              = 57;
-    int titleVersionVSpace      = 23;
+    int paddingRight            = 343;
+    int paddingTop              = 60;
+    int titleVersionVSpace      = 17;
     int titleCopyrightVSpace    = 40;
 
     float fontFactor            = 1.0;
@@ -22,7 +22,7 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f) :
     QString copyrightText   = QChar(0xA9)+QString("2009-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The TDC developers"));
     QString testnetAddText  = QString(tr("[testnet]")); // define text to place as single text object
 
-    QString font            = "Verdana";
+    QString font            = "Arial";
 
     // load the bitmap for writing some text over it
     QPixmap newPixmap;
@@ -32,13 +32,12 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f) :
         newPixmap     = QPixmap(":/images/splash");
 
     QPainter pixPaint(&newPixmap);
-    if(GetBoolArg("-testnet", false))
-        pixPaint.setPen(QColor(100,100,100));
-    else
-        pixPaint.setPen(QColor(255,255,255));
+    pixPaint.setPen(QColor(100,100,100));
+
+
 
     // check font size and drawing with
-    pixPaint.setFont(QFont(font, 30*fontFactor, 75));
+    pixPaint.setFont(QFont(font, 33*fontFactor));
     QFontMetrics fm = pixPaint.fontMetrics();
     int titleTextWidth  = fm.width(titleText);
     if(titleTextWidth > 160) {
@@ -46,12 +45,12 @@ SplashScreen::SplashScreen(const QPixmap &pixmap, Qt::WindowFlags f) :
         fontFactor = 0.75;
     }
 
-    pixPaint.setFont(QFont(font, 26*fontFactor, 75));
+    pixPaint.setFont(QFont(font, 25*fontFactor));
     fm = pixPaint.fontMetrics();
     titleTextWidth  = fm.width(titleText);
     pixPaint.drawText(newPixmap.width()-titleTextWidth-paddingRight,paddingTop,titleText);
 
-    pixPaint.setFont(QFont(font, 10*fontFactor));
+    pixPaint.setFont(QFont(font, 12*fontFactor));
 
     // if the version string is to long, reduce size
     fm = pixPaint.fontMetrics();

@@ -40,7 +40,6 @@
         <file alias="qrcode">res/icons/qrcode.png</file>
         <file alias="debugwindow">res/icons/debugwindow.png</file>
         <file alias="bitcoin">res/icons/trueDec.png</file>
-        <file alias="tdc_community">res/icons/lion.png</file>
     </qresource>
     <qresource prefix="/images">
         <file alias="about">res/images/about.png</file>
