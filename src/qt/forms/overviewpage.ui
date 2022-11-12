@@ -247,10 +247,7 @@
           </font>
          </property>
          <property name="text">
-          <string/>
-         </property>
-         <property name="pixmap">
-          <pixmap resource="../bitcoin.qrc">:/icons/tdc_community</pixmap>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#dcdcdc;&quot;&gt;T&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -401,8 +398,5 @@
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../bitcoin.qrc"/>
- </resources>
  <connections/>
 </ui>
