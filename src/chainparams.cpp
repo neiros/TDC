@@ -59,10 +59,7 @@ public:
 
         vSeeds.push_back(CDNSSeedData("90.188.88.19", "90.188.88.19"));
         vSeeds.push_back(CDNSSeedData("95.181.198.113", "95.181.198.113"));
-        vSeeds.push_back(CDNSSeedData("51.83.201.185", "51.83.201.185"));
-        vSeeds.push_back(CDNSSeedData("185.172.129.235", "185.172.129.235"));
-        vSeeds.push_back(CDNSSeedData("185.117.119.160", "185.117.119.160"));
-        vSeeds.push_back(CDNSSeedData("45.144.64.254", "45.144.64.254"));
+        vSeeds.push_back(CDNSSeedData("88.204.18.202", "88.204.18.202"));
 
         base58Prefixes[PUBKEY_ADDRESS] = 65;    // T https://en.bitcoin.it/wiki/List_of_address_prefixes
         base58Prefixes[SCRIPT_ADDRESS] = 5;
